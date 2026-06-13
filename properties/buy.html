@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Properties for Sale in Cameroon — LANDLORDZS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../assets/css/main.css"/>
+</head>
+<body>
+<div id="lz-header"></div>
+<div id="lz-breadcrumb"></div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-header-content">
+    <div>
+      <span class="page-header-badge">12,400+ Listings</span>
+      <h1>Properties for Sale</h1>
+      <p>12,400+ verified listings across Cameroon</p>
+    </div>
+    <div class="page-header-actions">
+      <a href="../auth/register.html" class="btn btn-primary">Post Property Free</a>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+  <div class="listing-layout">
+
+    <!-- FILTER SIDEBAR -->
+    <aside class="filter-sidebar">
+      <div class="filter-panel">
+        <div class="filter-panel-title">
+          <span>Search Filters</span>
+          <button class="btn btn-sm btn-outline">Reset</button>
+        </div>
+
+        <!-- Location -->
+        <div class="filter-group">
+          <label class="filter-label">Location</label>
+          <select class="filter-select">
+            <option value="">All Cities</option>
+            <option value="yaounde">Yaoundé</option>
+            <option value="douala">Douala</option>
+            <option value="buea">Buea</option>
+            <option value="bamenda">Bamenda</option>
+            <option value="limbe">Limbe</option>
+            <option value="kribi">Kribi</option>
+          </select>
+        </div>
+
+        <!-- Property Type -->
+        <div class="filter-group">
+          <label class="filter-label">Property Type</label>
+          <label class="filter-check"><input type="checkbox" value="apartment"/> Apartment</label>
+          <label class="filter-check"><input type="checkbox" value="house"/> House</label>
+          <label class="filter-check"><input type="checkbox" value="villa"/> Villa</label>
+          <label class="filter-check"><input type="checkbox" value="duplex"/> Duplex</label>
+          <label class="filter-check"><input type="checkbox" value="studio"/> Studio</label>
+          <label class="filter-check"><input type="checkbox" value="penthouse"/> Penthouse</label>
+        </div>
+
+        <!-- Bedrooms -->
+        <div class="filter-group">
+          <label class="filter-label">Bedrooms</label>
+          <label class="filter-check"><input type="checkbox" value="1"/> 1</label>
+          <label class="filter-check"><input type="checkbox" value="2"/> 2</label>
+          <label class="filter-check"><input type="checkbox" value="3"/> 3</label>
+          <label class="filter-check"><input type="checkbox" value="4"/> 4</label>
+          <label class="filter-check"><input type="checkbox" value="5"/> 5+</label>
+        </div>
+
+        <!-- Price Range -->
+        <div class="filter-group">
+          <label class="filter-label">Price Range (FCFA)</label>
+          <div class="range-row">
+            <input type="number" class="filter-input" placeholder="Min"/>
+            <input type="number" class="filter-input" placeholder="Max"/>
+          </div>
+        </div>
+
+        <!-- Size -->
+        <div class="filter-group">
+          <label class="filter-label">Size (m²)</label>
+          <div class="range-row">
+            <input type="number" class="filter-input" placeholder="Min"/>
+            <input type="number" class="filter-input" placeholder="Max"/>
+          </div>
+        </div>
+
+        <!-- Features -->
+        <div class="filter-group">
+          <label class="filter-label">Features</label>
+          <label class="filter-check"><input type="checkbox" value="parking"/> Parking</label>
+          <label class="filter-check"><input type="checkbox" value="pool"/> Pool</label>
+          <label class="filter-check"><input type="checkbox" value="garden"/> Garden</label>
+          <label class="filter-check"><input type="checkbox" value="security"/> Security</label>
+          <label class="filter-check"><input type="checkbox" value="generator"/> Generator</label>
+          <label class="filter-check"><input type="checkbox" value="furnished"/> Furnished</label>
+          <label class="filter-check"><input type="checkbox" value="water"/> Water 24/7</label>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%;margin-top:8px;">Apply Filters</button>
+      </div>
+    </aside>
+
+    <!-- LISTING MAIN -->
+    <div class="listing-main">
+
+      <!-- TOOLBAR -->
+      <div class="listing-toolbar">
+        <span class="listing-count">Showing 1–12 of <strong>12,400</strong> properties</span>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <select class="sort-select listing-sort">
+            <option value="newest">Newest</option>
+            <option value="price-asc">Price Low–High</option>
+            <option value="price-desc">Price High–Low</option>
+            <option value="popular">Most Popular</option>
+          </select>
+          <div class="view-toggle">
+            <button class="view-btn active" data-view="grid" aria-label="Grid view">&#9783;</button>
+            <button class="view-btn" data-view="list" aria-label="List view">&#9776;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROPERTY GRID -->
+      <div class="property-grid">
+
+        <!-- Card 1 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-verified">Verified</span>
+              <span class="badge badge-featured">Featured</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">45,000,000 FCFA</div>
+            <h3 class="property-title">4 Bedroom Villa with Pool</h3>
+            <p class="property-location">📍 Bastos, Yaoundé</p>
+            <div class="property-meta">
+              <span>🛏 4 Beds</span>
+              <span>🚿 3 Baths</span>
+              <span>📐 320m²</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">JM</span>
+              <span>Jean Mfoula</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">18,500,000 FCFA</div>
+            <h3 class="property-title">3 Bedroom House</h3>
+            <p class="property-location">📍 Bonamoussadi, Douala</p>
+            <div class="property-meta">
+              <span>🛏 3 Beds</span>
+              <span>🚿 2 Baths</span>
+              <span>📐 180m²</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">AN</span>
+              <span>Alice Ngo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-verified">Verified</span>
+              <span class="badge badge-new">New</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">120,000,000 FCFA</div>
+            <h3 class="property-title">5 Bedroom Luxury Villa</h3>
+            <p class="property-location">📍 Omnisport, Yaoundé</p>
+            <div class="property-meta">
+              <span>🛏 5 Beds</span>
+              <span>🚿 4 Baths</span>
+              <span>📐 520m²</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">PM</span>
+              <span>Paul Manga</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">8,000,000 FCFA</div>
+            <h3 class="property-title">2 Bedroom Apartment</h3>
+            <p class="property-location">📍 Akwa, Douala</p>
+            <div class="property-meta">
+              <span>🛏 2 Beds</span>
+              <span>🚿 1 Bath</span>
+              <span>📐 95m²</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">EK</span>
+              <span>Eric Kamga</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">22,000,000 FCFA</div>
+            <h3 class="property-title">4 Bedroom Family House</h3>
+            <p class="property-location">📍 Buea, South West</p>
+            <div class="property-meta">
+              <span>🛏 4 Beds</span>
+              <span>🚿 2 Baths</span>
+              <span>📐 240m²</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">GE</span>
+              <span>Grace Ewane</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">12,000,000 FCFA</div>
+            <h3 class="property-title">3 Bedroom Apartment</h3>
+            <p class="property-location">📍 Limbe, South West</p>
+            <div class="property-meta">
+              <span>🛏 3 Beds</span>
+              <span>🚿 2 Baths</span>
+              <span>📐 140m²</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">TE</span>
+              <span>Thomas Epee</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 7 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">6,500,000 FCFA</div>
+            <h3 class="property-title">2 Bedroom Studio Apartment</h3>
+            <p class="property-location">📍 Bamenda, North West</p>
+            <div class="property-meta">
+              <span>🛏 2 Beds</span>
+              <span>🚿 1 Bath</span>
+              <span>📐 80m²</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">CB</span>
+              <span>Chantal Bih</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 8 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-verified">Verified</span>
+              <span class="badge badge-featured">Featured</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">85,000,000 FCFA</div>
+            <h3 class="property-title">5 Bedroom Beachfront Villa</h3>
+            <p class="property-location">📍 Kribi, South</p>
+            <div class="property-meta">
+              <span>🛏 5 Beds</span>
+              <span>🚿 4 Baths</span>
+              <span>📐 480m²</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">MB</span>
+              <span>Marc Bella</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.property-grid -->
+
+      <!-- PAGINATION -->
+      <div class="pagination">
+        <button class="page-btn" aria-label="Previous page">&laquo; Prev</button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <button class="page-btn">4</button>
+        <button class="page-btn">5</button>
+        <button class="page-btn" aria-label="Next page">Next &raquo;</button>
+      </div>
+
+    </div><!-- /.listing-main -->
+  </div><!-- /.listing-layout -->
+</div><!-- /.container -->
+
+<div id="lz-footer"></div>
+<button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
+<script>
+  window.LZ_BASE = '../';
+  window.LZ_BREADCRUMB = [
+    { label: 'Home', url: '../index.html' },
+    { label: 'Properties', url: null },
+    { label: 'Buy Property', url: null }
+  ];
+</script>
+<script src="../assets/js/nav.js"></script>
+</body>
+</html>

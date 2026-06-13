@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lawyer Dashboard — LANDLORDZS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../assets/css/main.css"/>
+</head>
+<body>
+<div id="lz-header"></div>
+
+<div class="dashboard-wrapper">
+
+  <!-- SIDEBAR -->
+  <aside class="dash-sidebar">
+    <div class="dash-user">
+      <div class="dash-user-avatar">ME</div>
+      <div class="dash-user-name">Marie Ekwueme</div>
+      <div class="dash-user-role">Property Lawyer · Bamenda</div>
+    </div>
+
+    <a href="#" class="dash-nav-item active"><span class="nav-icon">📊</span> Overview</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">⚖️</span> My Cases</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">📅</span> Consultations <span class="nav-badge">4</span></a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">📄</span> Documents</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">💬</span> Client Messages <span class="nav-badge">6</span></a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">💰</span> Fees &amp; Invoices</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">⭐</span> Reviews</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">👤</span> My Profile</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">🛡️</span> Bar Verification</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">🚪</span> Sign Out</a>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="dash-main">
+
+    <!-- Header -->
+    <div class="dash-header">
+      <div>
+        <div class="dash-title">Lawyer Dashboard</div>
+        <div class="dash-subtitle">Marie Ekwueme · Property Lawyer · Bamenda</div>
+      </div>
+      <div class="dash-actions">
+        <button class="btn btn-primary btn-sm">New Case</button>
+        <button class="btn btn-outline-dark btn-sm">Schedule Consultation</button>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fce4e4;">⚖️</div>
+        <div class="stat-value">12</div>
+        <div class="stat-label">Active Cases</div>
+        <div class="stat-change">4 new this month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e3f2fd;">📅</div>
+        <div class="stat-value">4</div>
+        <div class="stat-label">Pending Consultations</div>
+        <div class="stat-change">Booked this week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e8f5e9;">💰</div>
+        <div class="stat-value">8,750,000 FCFA</div>
+        <div class="stat-label">Fees Earned (2026)</div>
+        <div class="stat-change up">▲ 35% vs 2025</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fff3e0;">⭐</div>
+        <div class="stat-value">4.9/5</div>
+        <div class="stat-label">Rating</div>
+        <div class="stat-change">95 client reviews</div>
+      </div>
+    </div>
+
+    <!-- Active Cases -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <div class="dash-card-title">Active Cases</div>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Case</th>
+              <th>Client</th>
+              <th>Type</th>
+              <th>Location</th>
+              <th>Opened</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Property Title Transfer</strong></td>
+              <td>Mr. Nkouandou</td>
+              <td>Conveyancing</td>
+              <td>Bamenda</td>
+              <td>May 5, 2026</td>
+              <td><span class="table-status status-active">In Progress</span></td>
+            </tr>
+            <tr>
+              <td><strong>Land Boundary Dispute</strong></td>
+              <td>Mrs. Bih</td>
+              <td>Dispute Resolution</td>
+              <td>Buea</td>
+              <td>Apr 20, 2026</td>
+              <td><span class="table-status status-active">In Progress</span></td>
+            </tr>
+            <tr>
+              <td><strong>Commercial Lease Review</strong></td>
+              <td>TechHub CM</td>
+              <td>Contract</td>
+              <td>Yaoundé</td>
+              <td>Jun 1, 2026</td>
+              <td><span class="table-status status-pending">Awaiting Docs</span></td>
+            </tr>
+            <tr>
+              <td><strong>Estate Inheritance</strong></td>
+              <td>Famille Mfoula</td>
+              <td>Estate Law</td>
+              <td>Douala</td>
+              <td>Mar 15, 2026</td>
+              <td><span class="table-status status-active">Court Scheduled</span></td>
+            </tr>
+            <tr>
+              <td><strong>Title Deed Registration</strong></td>
+              <td>Mr. Ateba</td>
+              <td>Registration</td>
+              <td>Kribi</td>
+              <td>Jun 5, 2026</td>
+              <td><span class="table-status status-pending">Pending Submission</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Upcoming Consultations -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <div class="dash-card-title">Upcoming Consultations</div>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Topic</th>
+              <th>Date &amp; Time</th>
+              <th>Mode</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="table-avatar">
+                  <div class="table-avatar-img">GN</div>
+                  Grace Njoku
+                </div>
+              </td>
+              <td>Property Purchase Advice</td>
+              <td>Jun 12, 2026 · 10:00 AM</td>
+              <td>Video Call</td>
+              <td><span class="table-status status-active">Confirmed</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="table-avatar">
+                  <div class="table-avatar-img">TM</div>
+                  Thomas Mpesso
+                </div>
+              </td>
+              <td>Lease Agreement Review</td>
+              <td>Jun 13, 2026 · 2:00 PM</td>
+              <td>In-Person · Bamenda</td>
+              <td><span class="table-status status-active">Confirmed</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="table-avatar">
+                  <div class="table-avatar-img">FN</div>
+                  Fatima Ndikum
+                </div>
+              </td>
+              <td>Land Dispute</td>
+              <td>Jun 15, 2026 · 11:00 AM</td>
+              <td>Video Call</td>
+              <td><span class="table-status status-pending">Pending Confirmation</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="table-avatar">
+                  <div class="table-avatar-img">OE</div>
+                  Olivier Essama
+                </div>
+              </td>
+              <td>Title Transfer</td>
+              <td>Jun 16, 2026 · 3:00 PM</td>
+              <td>In-Person · Buea</td>
+              <td><span class="table-status status-active">Confirmed</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Alert -->
+    <div class="alert alert-info">
+      Your Bar Association verification expires on Dec 31, 2026. Renew to maintain your Verified Badge.
+    </div>
+
+  </main>
+</div>
+
+<div id="lz-footer"></div>
+<button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
+<script>
+  window.LZ_BASE = '../';
+  window.LZ_BREADCRUMB = [];
+</script>
+<script src="../assets/js/nav.js"></script>
+</body>
+</html>

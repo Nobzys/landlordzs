@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contractor Dashboard — LANDLORDZS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../assets/css/main.css"/>
+</head>
+<body>
+<div id="lz-header"></div>
+
+<div class="dashboard-wrapper">
+
+  <!-- SIDEBAR -->
+  <aside class="dash-sidebar">
+    <div class="dash-user">
+      <div class="dash-user-avatar">MT</div>
+      <div class="dash-user-name">Michel Tchamba</div>
+      <div class="dash-user-role">General Contractor · Douala</div>
+    </div>
+
+    <a href="#" class="dash-nav-item active"><span class="nav-icon">📊</span> Overview</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">📋</span> Active Projects</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">🔧</span> Job Bids <span class="nav-badge">7</span></a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">📦</span> Material Orders</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">💬</span> Messages <span class="nav-badge">3</span></a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">⭐</span> Reviews</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">💰</span> Payments &amp; Invoices</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">👤</span> My Profile</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">🛡️</span> Verification Badge</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">🚪</span> Sign Out</a>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="dash-main">
+
+    <!-- Header -->
+    <div class="dash-header">
+      <div>
+        <div class="dash-title">Contractor Dashboard</div>
+        <div class="dash-subtitle">Michel Tchamba · General Contractor · Douala</div>
+      </div>
+      <div class="dash-actions">
+        <button class="btn btn-outline-dark btn-sm">Browse New Jobs</button>
+        <button class="btn btn-primary btn-sm">Update Profile</button>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fce4e4;">🔨</div>
+        <div class="stat-value">4</div>
+        <div class="stat-label">Active Projects</div>
+        <div class="stat-change">2 in Douala, 2 in Buea</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fff3e0;">📋</div>
+        <div class="stat-value">7</div>
+        <div class="stat-label">Pending Bids</div>
+        <div class="stat-change up">Submitted this month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e8f5e9;">💰</div>
+        <div class="stat-value">34,500,000 FCFA</div>
+        <div class="stat-label">Revenue (This Year)</div>
+        <div class="stat-change up">▲ 28%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e3f2fd;">⭐</div>
+        <div class="stat-value">4.9/5</div>
+        <div class="stat-label">Rating</div>
+        <div class="stat-change">142 client reviews</div>
+      </div>
+    </div>
+
+    <!-- Active Projects -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <div class="dash-card-title">Active Projects</div>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th>Client</th>
+              <th>Location</th>
+              <th>Value</th>
+              <th>Start Date</th>
+              <th>Progress</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Residential Build 4-Bed</strong></td>
+              <td>Mr. Ngono Paul</td>
+              <td>Douala, Bonamoussadi</td>
+              <td>18M FCFA</td>
+              <td>Mar 1, 2026</td>
+              <td>65%</td>
+              <td><span class="table-status status-active">On Track</span></td>
+            </tr>
+            <tr>
+              <td><strong>Commercial Renovation</strong></td>
+              <td>ABC Corp</td>
+              <td>Douala, Bonanjo</td>
+              <td>8.5M FCFA</td>
+              <td>Apr 15, 2026</td>
+              <td>40%</td>
+              <td><span class="table-status status-active">On Track</span></td>
+            </tr>
+            <tr>
+              <td><strong>3-Bed House</strong></td>
+              <td>Mrs. Ewane</td>
+              <td>Buea</td>
+              <td>12M FCFA</td>
+              <td>Feb 10, 2026</td>
+              <td>85%</td>
+              <td><span class="table-status status-active">Near Completion</span></td>
+            </tr>
+            <tr>
+              <td><strong>Office Fit-out</strong></td>
+              <td>StartupHub CM</td>
+              <td>Buea</td>
+              <td>5M FCFA</td>
+              <td>May 1, 2026</td>
+              <td>20%</td>
+              <td><span class="table-status status-pending">Delayed</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Bids Submitted -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <div class="dash-card-title">Recent Bids Submitted</div>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Job</th>
+              <th>Posted By</th>
+              <th>Value (Bid)</th>
+              <th>Submitted</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>4-Bed Villa Construction</strong></td>
+              <td>Mr. Akono</td>
+              <td>22M FCFA</td>
+              <td>Jun 9, 2026</td>
+              <td><span class="table-status status-pending">Under Review</span></td>
+            </tr>
+            <tr>
+              <td><strong>School Renovation</strong></td>
+              <td>APEE Yaoundé</td>
+              <td>4.5M FCFA</td>
+              <td>Jun 8, 2026</td>
+              <td><span class="table-status status-pending">Shortlisted</span></td>
+            </tr>
+            <tr>
+              <td><strong>Warehouse Build 800m²</strong></td>
+              <td>Logistics CM</td>
+              <td>35M FCFA</td>
+              <td>Jun 5, 2026</td>
+              <td><span class="table-status status-rejected">Not Selected</span></td>
+            </tr>
+            <tr>
+              <td><strong>3-Bed House Douala</strong></td>
+              <td>Mrs. Ndoumbe</td>
+              <td>14M FCFA</td>
+              <td>Jun 3, 2026</td>
+              <td><span class="table-status status-active">Awarded ✓</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="lz-footer"></div>
+<button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
+<script>
+  window.LZ_BASE = '../';
+  window.LZ_BREADCRUMB = [];
+</script>
+<script src="../assets/js/nav.js"></script>
+</body>
+</html>

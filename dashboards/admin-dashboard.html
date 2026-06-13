@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard — LANDLORDZS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../assets/css/main.css"/>
+</head>
+<body>
+<div id="lz-header"></div>
+
+<div class="dashboard-wrapper">
+
+  <!-- SIDEBAR -->
+  <aside class="dash-sidebar">
+    <div class="dash-user">
+      <div class="dash-user-avatar">AD</div>
+      <div class="dash-user-name">Admin User</div>
+      <div class="dash-user-role">Platform Administrator</div>
+    </div>
+
+    <div class="dash-nav-label">MAIN</div>
+    <a href="#" class="dash-nav-item active"><span class="nav-icon">📊</span> Overview</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">👥</span> Users</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">🏠</span> Listings</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">🏪</span> Vendors</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">💼</span> Professionals</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">📋</span> Verifications <span class="nav-badge">24</span></a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">💬</span> Messages <span class="nav-badge">8</span></a>
+
+    <div class="dash-nav-label">FINANCE</div>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">💰</span> Transactions</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">🏦</span> Escrow</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">📈</span> Revenue</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">💳</span> Payouts</a>
+
+    <div class="dash-nav-label">PLATFORM</div>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">📣</span> Announcements</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">🛡️</span> Reports &amp; Flags <span class="nav-badge">3</span></a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">📊</span> Analytics</a>
+
+    <div class="dash-nav-label">ACCOUNT</div>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">👤</span> My Profile</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">🚪</span> Sign Out</a>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="dash-main">
+
+    <!-- Header -->
+    <div class="dash-header">
+      <div>
+        <div class="dash-title">Platform Overview</div>
+        <div class="dash-subtitle">Welcome back, Admin. Last login: Today at 09:14</div>
+      </div>
+      <div class="dash-actions">
+        <button class="btn btn-outline-dark btn-sm">Export Report</button>
+        <button class="btn btn-primary btn-sm">Add Announcement</button>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e3f2fd;">👥</div>
+        <div class="stat-value">52,340</div>
+        <div class="stat-label">Registered Users</div>
+        <div class="stat-change up">▲ 12% this month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e8f5e9;">🏠</div>
+        <div class="stat-value">24,180</div>
+        <div class="stat-label">Live Listings</div>
+        <div class="stat-change up">▲ 8% this month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fce4e4;">💰</div>
+        <div class="stat-value">18.4M</div>
+        <div class="stat-label">FCFA This Month</div>
+        <div class="stat-change up">▲ 24% vs last month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fff3e0;">📋</div>
+        <div class="stat-value">24</div>
+        <div class="stat-label">Awaiting Review</div>
+        <div class="stat-change down">▼ 3 from yesterday</div>
+      </div>
+    </div>
+
+    <!-- Two-column section -->
+    <div class="dash-grid-2">
+      <!-- Recent Activity -->
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <div class="dash-card-title">Recent Activity</div>
+        </div>
+        <div class="chart-placeholder">📊 Activity Chart — Last 30 Days</div>
+        <div class="mini-chart">
+          <div class="mini-bar" style="height:40%;"></div>
+          <div class="mini-bar" style="height:60%;"></div>
+          <div class="mini-bar" style="height:80%;"></div>
+          <div class="mini-bar" style="height:55%;"></div>
+          <div class="mini-bar" style="height:90%;"></div>
+          <div class="mini-bar" style="height:70%;"></div>
+          <div class="mini-bar" style="height:85%;"></div>
+          <div class="mini-bar" style="height:65%;"></div>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <div class="dash-card-title">Quick Stats</div>
+        </div>
+        <div class="table-wrap">
+          <table class="table">
+            <tbody>
+              <tr>
+                <td>Today's new users</td>
+                <td><strong>142</strong></td>
+              </tr>
+              <tr>
+                <td>Today's new listings</td>
+                <td><strong>38</strong></td>
+              </tr>
+              <tr>
+                <td>Today's transactions</td>
+                <td><strong>17</strong></td>
+              </tr>
+              <tr>
+                <td>Escrow held</td>
+                <td><strong>45.2M FCFA</strong></td>
+              </tr>
+              <tr>
+                <td>Flagged content</td>
+                <td><strong>3</strong></td>
+              </tr>
+              <tr>
+                <td>Verification queue</td>
+                <td><strong>24</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Users -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <div class="dash-card-title">Recent Users</div>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Role</th>
+              <th>City</th>
+              <th>Joined</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="table-avatar">
+                  <div class="table-avatar-img">GN</div>
+                  Grace Njoku
+                </div>
+              </td>
+              <td>Buyer</td>
+              <td>Yaoundé</td>
+              <td>Jun 10, 2026</td>
+              <td><span class="table-status status-active">Active</span></td>
+              <td><button class="btn btn-outline btn-sm">View</button></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="table-avatar">
+                  <div class="table-avatar-img">MT</div>
+                  Michel Tchamba
+                </div>
+              </td>
+              <td>Contractor</td>
+              <td>Douala</td>
+              <td>Jun 10, 2026</td>
+              <td><span class="table-status status-active">Active</span></td>
+              <td><button class="btn btn-outline btn-sm">View</button></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="table-avatar">
+                  <div class="table-avatar-img">SN</div>
+                  Sophie Nkemdirim
+                </div>
+              </td>
+              <td>Architect</td>
+              <td>Buea</td>
+              <td>Jun 9, 2026</td>
+              <td><span class="table-status status-pending">Pending</span></td>
+              <td><button class="btn btn-primary btn-sm">Verify</button></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="table-avatar">
+                  <div class="table-avatar-img">JN</div>
+                  Jacques Nkondji
+                </div>
+              </td>
+              <td>Lawyer</td>
+              <td>Bamenda</td>
+              <td>Jun 9, 2026</td>
+              <td><span class="table-status status-active">Active</span></td>
+              <td><button class="btn btn-outline btn-sm">View</button></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="table-avatar">
+                  <div class="table-avatar-img">RE</div>
+                  Rita Etoa
+                </div>
+              </td>
+              <td>Vendor</td>
+              <td>Kribi</td>
+              <td>Jun 8, 2026</td>
+              <td><span class="table-status status-inactive">Inactive</span></td>
+              <td><button class="btn btn-outline btn-sm">Review</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Listings Pending Verification -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <div class="dash-card-title">Recent Listings Pending Verification</div>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Type</th>
+              <th>Location</th>
+              <th>Owner</th>
+              <th>Submitted</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>3-Bed House, Bonamoussadi</td>
+              <td>For Sale</td>
+              <td>Douala</td>
+              <td>Alice Ngo</td>
+              <td>Jun 10</td>
+              <td><span class="table-status status-pending">Pending</span></td>
+              <td>
+                <button class="btn btn-primary btn-sm">Approve</button>
+                <button class="btn btn-outline btn-sm">Reject</button>
+              </td>
+            </tr>
+            <tr>
+              <td>500m² Plot, Biyem-Assi</td>
+              <td>Land</td>
+              <td>Yaoundé</td>
+              <td>Paul Mba</td>
+              <td>Jun 9</td>
+              <td><span class="table-status status-pending">Pending</span></td>
+              <td>
+                <button class="btn btn-primary btn-sm">Approve</button>
+                <button class="btn btn-outline btn-sm">Reject</button>
+              </td>
+            </tr>
+            <tr>
+              <td>Office Space, Bonanjo</td>
+              <td>Commercial</td>
+              <td>Douala</td>
+              <td>Akono RE</td>
+              <td>Jun 9</td>
+              <td><span class="table-status status-pending">Pending</span></td>
+              <td>
+                <button class="btn btn-primary btn-sm">Approve</button>
+                <button class="btn btn-outline btn-sm">Reject</button>
+              </td>
+            </tr>
+            <tr>
+              <td>4-Bed Villa, Kribi</td>
+              <td>For Sale</td>
+              <td>Kribi</td>
+              <td>Marc Bella</td>
+              <td>Jun 8</td>
+              <td><span class="table-status status-pending">Pending</span></td>
+              <td>
+                <button class="btn btn-primary btn-sm">Approve</button>
+                <button class="btn btn-outline btn-sm">Reject</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="lz-footer"></div>
+<button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
+<script>
+  window.LZ_BASE = '../';
+  window.LZ_BREADCRUMB = [];
+</script>
+<script src="../assets/js/nav.js"></script>
+</body>
+</html>

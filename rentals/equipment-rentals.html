@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Equipment Rentals in Cameroon — LANDLORDZS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../assets/css/main.css"/>
+</head>
+<body>
+<div id="lz-header"></div>
+<div id="lz-breadcrumb"></div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-header-content">
+    <div>
+      <span class="page-header-badge">600+ Equipment</span>
+      <h1>Equipment Rentals</h1>
+      <p>600+ pieces of heavy machinery &amp; construction tools available</p>
+    </div>
+    <div class="page-header-actions">
+      <a href="../auth/register.html" class="btn btn-primary">List Your Equipment</a>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+  <div class="listing-layout">
+
+    <!-- FILTER SIDEBAR -->
+    <aside class="filter-sidebar">
+      <div class="filter-panel">
+        <div class="filter-panel-title">
+          <span>Search Filters</span>
+          <button class="btn btn-sm btn-outline">Reset</button>
+        </div>
+
+        <!-- Equipment Type -->
+        <div class="filter-group">
+          <label class="filter-label">Equipment Type</label>
+          <label class="filter-check"><input type="checkbox" value="excavators"/> Excavators</label>
+          <label class="filter-check"><input type="checkbox" value="bulldozers"/> Bulldozers</label>
+          <label class="filter-check"><input type="checkbox" value="graders"/> Graders</label>
+          <label class="filter-check"><input type="checkbox" value="dump-trucks"/> Dump Trucks</label>
+          <label class="filter-check"><input type="checkbox" value="concrete-mixers"/> Concrete Mixers</label>
+          <label class="filter-check"><input type="checkbox" value="concrete-pumps"/> Concrete Pumps</label>
+          <label class="filter-check"><input type="checkbox" value="generators"/> Generators</label>
+          <label class="filter-check"><input type="checkbox" value="compressors"/> Compressors</label>
+          <label class="filter-check"><input type="checkbox" value="scaffolding"/> Scaffolding</label>
+          <label class="filter-check"><input type="checkbox" value="cranes"/> Cranes</label>
+          <label class="filter-check"><input type="checkbox" value="forklifts"/> Forklifts</label>
+          <label class="filter-check"><input type="checkbox" value="compactors"/> Compactors</label>
+        </div>
+
+        <!-- Location -->
+        <div class="filter-group">
+          <label class="filter-label">Location</label>
+          <select class="filter-select">
+            <option value="">All Cities</option>
+            <option value="yaounde">Yaoundé</option>
+            <option value="douala">Douala</option>
+            <option value="buea">Buea</option>
+            <option value="bamenda">Bamenda</option>
+            <option value="limbe">Limbe</option>
+            <option value="kribi">Kribi</option>
+          </select>
+        </div>
+
+        <!-- Rental Duration -->
+        <div class="filter-group">
+          <label class="filter-label">Rental Duration</label>
+          <label class="filter-check"><input type="checkbox" value="daily"/> Daily</label>
+          <label class="filter-check"><input type="checkbox" value="weekly"/> Weekly</label>
+          <label class="filter-check"><input type="checkbox" value="monthly"/> Monthly</label>
+        </div>
+
+        <!-- Price Range -->
+        <div class="filter-group">
+          <label class="filter-label">Price Range Per Day (FCFA)</label>
+          <div class="range-row">
+            <input type="number" class="filter-input" placeholder="Min"/>
+            <input type="number" class="filter-input" placeholder="Max"/>
+          </div>
+        </div>
+
+        <!-- Availability -->
+        <div class="filter-group">
+          <label class="filter-label">Availability</label>
+          <label class="filter-check"><input type="checkbox" value="available-now"/> Available Now</label>
+        </div>
+
+        <!-- Operator -->
+        <div class="filter-group">
+          <label class="filter-label">Operator</label>
+          <label class="filter-check"><input type="checkbox" value="operator-included"/> Operator Included</label>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%;margin-top:8px;">Apply Filters</button>
+      </div>
+    </aside>
+
+    <!-- LISTING MAIN -->
+    <div class="listing-main">
+
+      <!-- TOOLBAR -->
+      <div class="listing-toolbar">
+        <span class="listing-count">Showing 1–9 of <strong>600</strong> equipment listings</span>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <select class="sort-select listing-sort">
+            <option value="newest">Newest</option>
+            <option value="price-asc">Price Low–High</option>
+            <option value="price-desc">Price High–Low</option>
+            <option value="popular">Most Popular</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- EQUIPMENT GRID -->
+      <div class="rental-grid">
+
+        <!-- Card 1: Caterpillar 320 Excavator -->
+        <div class="rental-card">
+          <div class="rental-card-img">🚜</div>
+          <div class="rental-card-body">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <h3 class="rental-card-title">Caterpillar 320 Excavator</h3>
+            <div class="rental-price">185,000 FCFA<span>/day</span></div>
+            <div class="rental-specs">📍 Douala &nbsp;·&nbsp; Operator: Included &nbsp;·&nbsp; Min. 1 day</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="../auth/register.html" class="btn btn-primary btn-sm">Book Now</a>
+              <a href="../auth/register.html" class="btn btn-outline btn-sm">Get Quote</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Komatsu D65 Bulldozer -->
+        <div class="rental-card">
+          <div class="rental-card-img">🏗️</div>
+          <div class="rental-card-body">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <h3 class="rental-card-title">Komatsu D65 Bulldozer</h3>
+            <div class="rental-price">165,000 FCFA<span>/day</span></div>
+            <div class="rental-specs">📍 Yaoundé &nbsp;·&nbsp; Operator: Optional &nbsp;·&nbsp; Min. 1 day</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="../auth/register.html" class="btn btn-primary btn-sm">Book Now</a>
+              <a href="../auth/register.html" class="btn btn-outline btn-sm">Get Quote</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: 10T Dump Truck -->
+        <div class="rental-card">
+          <div class="rental-card-img">🚛</div>
+          <div class="rental-card-body">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <span class="badge badge-verified">Verified</span>
+              <span class="badge badge-new">New</span>
+            </div>
+            <h3 class="rental-card-title">10T Dump Truck</h3>
+            <div class="rental-price">55,000 FCFA<span>/day</span></div>
+            <div class="rental-specs">📍 Buea &nbsp;·&nbsp; Driver: Included &nbsp;·&nbsp; Min. 1 day</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="../auth/register.html" class="btn btn-primary btn-sm">Book Now</a>
+              <a href="../auth/register.html" class="btn btn-outline btn-sm">Get Quote</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Concrete Mixer 500L -->
+        <div class="rental-card">
+          <div class="rental-card-img">🏭</div>
+          <div class="rental-card-body">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <h3 class="rental-card-title">Concrete Mixer 500L</h3>
+            <div class="rental-price">22,000 FCFA<span>/day</span></div>
+            <div class="rental-specs">📍 Bamenda &nbsp;·&nbsp; Operator: Self-operated &nbsp;·&nbsp; Min. 1 day</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="../auth/register.html" class="btn btn-primary btn-sm">Book Now</a>
+              <a href="../auth/register.html" class="btn btn-outline btn-sm">Get Quote</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5: 100KVA Generator -->
+        <div class="rental-card">
+          <div class="rental-card-img">⚡</div>
+          <div class="rental-card-body">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <h3 class="rental-card-title">100KVA Generator</h3>
+            <div class="rental-price">35,000 FCFA<span>/day</span></div>
+            <div class="rental-specs">📍 Limbe &nbsp;·&nbsp; Technician: Available &nbsp;·&nbsp; Min. 1 day</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="../auth/register.html" class="btn btn-primary btn-sm">Book Now</a>
+              <a href="../auth/register.html" class="btn btn-outline btn-sm">Get Quote</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6: Scaffolding System -->
+        <div class="rental-card">
+          <div class="rental-card-img">🔩</div>
+          <div class="rental-card-body">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <h3 class="rental-card-title">Scaffolding System (per 100m²)</h3>
+            <div class="rental-price">18,000 FCFA<span>/day</span></div>
+            <div class="rental-specs">📍 Douala &nbsp;·&nbsp; Operator: Self-operated &nbsp;·&nbsp; Min. 1 day</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="../auth/register.html" class="btn btn-primary btn-sm">Book Now</a>
+              <a href="../auth/register.html" class="btn btn-outline btn-sm">Get Quote</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 7: Tower Crane 40T -->
+        <div class="rental-card">
+          <div class="rental-card-img">🏗️</div>
+          <div class="rental-card-body">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <h3 class="rental-card-title">Tower Crane 40T</h3>
+            <div class="rental-price">450,000 FCFA<span>/day</span></div>
+            <div class="rental-specs">📍 Yaoundé &nbsp;·&nbsp; Operator: Included &nbsp;·&nbsp; Min. 1 day</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="../auth/register.html" class="btn btn-primary btn-sm">Book Now</a>
+              <a href="../auth/register.html" class="btn btn-outline btn-sm">Get Quote</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 8: Concrete Pump -->
+        <div class="rental-card">
+          <div class="rental-card-img">🚛</div>
+          <div class="rental-card-body">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <h3 class="rental-card-title">Concrete Pump</h3>
+            <div class="rental-price">120,000 FCFA<span>/day</span></div>
+            <div class="rental-specs">📍 Douala &nbsp;·&nbsp; Operator: Included &nbsp;·&nbsp; Min. 1 day</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="../auth/register.html" class="btn btn-primary btn-sm">Book Now</a>
+              <a href="../auth/register.html" class="btn btn-outline btn-sm">Get Quote</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 9: Road Compactor 10T -->
+        <div class="rental-card">
+          <div class="rental-card-img">🏭</div>
+          <div class="rental-card-body">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <h3 class="rental-card-title">Road Compactor 10T</h3>
+            <div class="rental-price">85,000 FCFA<span>/day</span></div>
+            <div class="rental-specs">📍 Kribi &nbsp;·&nbsp; Operator: Optional &nbsp;·&nbsp; Min. 1 day</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="../auth/register.html" class="btn btn-primary btn-sm">Book Now</a>
+              <a href="../auth/register.html" class="btn btn-outline btn-sm">Get Quote</a>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.rental-grid -->
+
+      <!-- PAGINATION -->
+      <div class="pagination">
+        <button class="page-btn" aria-label="Previous page">&laquo; Prev</button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <button class="page-btn" aria-label="Next page">Next &raquo;</button>
+      </div>
+
+    </div><!-- /.listing-main -->
+  </div><!-- /.listing-layout -->
+</div><!-- /.container -->
+
+<!-- WHY RENT WITH US -->
+<section class="section section-gray">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Why Rent With Us</h2>
+      <p class="section-sub">The safest way to access heavy equipment in Cameroon</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:32px;margin-top:32px;">
+      <div style="text-align:center;padding:32px 24px;">
+        <div style="font-size:3rem;margin-bottom:16px;">✅</div>
+        <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:8px;">Verified Owners</h3>
+        <p style="color:#6b7280;line-height:1.6;">Every equipment owner is vetted and verified before listing on our platform, giving you full confidence in who you rent from.</p>
+      </div>
+      <div style="text-align:center;padding:32px 24px;">
+        <div style="font-size:3rem;margin-bottom:16px;">📅</div>
+        <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:8px;">Flexible Duration</h3>
+        <p style="color:#6b7280;line-height:1.6;">Rent by the day, week, or month. We accommodate both short-term site needs and long-term project requirements with competitive rates.</p>
+      </div>
+      <div style="text-align:center;padding:32px 24px;">
+        <div style="font-size:3rem;margin-bottom:16px;">🛡️</div>
+        <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:8px;">Insured Equipment</h3>
+        <p style="color:#6b7280;line-height:1.6;">All equipment listed on LANDLORDZS carries valid insurance coverage, protecting your project and workforce on-site.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="lz-footer"></div>
+<button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
+<script>
+  window.LZ_BASE = '../';
+  window.LZ_BREADCRUMB = [
+    { label: 'Home', url: '../index.html' },
+    { label: 'Rentals', url: null },
+    { label: 'Equipment Rentals', url: null }
+  ];
+</script>
+<script src="../assets/js/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contact Us — LANDLORDZS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../assets/css/main.css"/>
+</head>
+<body>
+<div id="lz-header"></div>
+<div id="lz-breadcrumb"></div>
+
+<!-- PAGE CONTENT -->
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-header-content">
+    <h1>Contact Us</h1>
+    <p>We're here to help — reach out and we'll respond within 24 hours.</p>
+  </div>
+</div>
+
+<!-- Contact Grid -->
+<div class="section">
+  <div class="container">
+    <div class="contact-grid">
+
+      <!-- LEFT: Info Cards -->
+      <div>
+        <!-- Office Locations -->
+        <div class="contact-info-card">
+          <h3 style="margin-bottom:1.25rem;">Our Offices</h3>
+
+          <div class="contact-item">
+            <div class="contact-item-icon">🏢</div>
+            <div>
+              <strong>Douala Headquarters</strong>
+              <p class="text-gray" style="margin:0.25rem 0 0;">Immeuble Bonanjo Centre, Rue Joffre<br/>Bonanjo, Douala, Littoral Region</p>
+            </div>
+          </div>
+
+          <div class="contact-item">
+            <div class="contact-item-icon">📞</div>
+            <div>
+              <strong>Douala Phone</strong>
+              <p class="text-gray" style="margin:0.25rem 0 0;">+237 233 42 10 00</p>
+            </div>
+          </div>
+
+          <div class="contact-item">
+            <div class="contact-item-icon">✉️</div>
+            <div>
+              <strong>General Email</strong>
+              <p class="text-gray" style="margin:0.25rem 0 0;">hello@landlordzs.cm</p>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="contact-item">
+            <div class="contact-item-icon">🏛️</div>
+            <div>
+              <strong>Yaoundé Office</strong>
+              <p class="text-gray" style="margin:0.25rem 0 0;">Avenue Kennedy, Plateau Atemengue<br/>Bastos, Yaoundé, Centre Region</p>
+            </div>
+          </div>
+
+          <div class="contact-item">
+            <div class="contact-item-icon">📞</div>
+            <div>
+              <strong>Yaoundé Phone</strong>
+              <p class="text-gray" style="margin:0.25rem 0 0;">+237 222 20 44 00</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Social & Hours -->
+        <div class="contact-info-card" style="margin-top:1.5rem;">
+          <h3 style="margin-bottom:1.25rem;">Connect &amp; Hours</h3>
+
+          <div class="contact-item">
+            <div class="contact-item-icon">🕐</div>
+            <div>
+              <strong>Business Hours</strong>
+              <p class="text-gray" style="margin:0.25rem 0 0;">Monday – Friday: 8:00 AM – 6:00 PM<br/>Saturday: 9:00 AM – 1:00 PM<br/>Sunday: Closed</p>
+            </div>
+          </div>
+
+          <div class="contact-item">
+            <div class="contact-item-icon">💬</div>
+            <div>
+              <strong>WhatsApp Support</strong>
+              <p class="text-gray" style="margin:0.25rem 0 0;">+237 650 00 12 34</p>
+            </div>
+          </div>
+
+          <div class="contact-item">
+            <div class="contact-item-icon">📘</div>
+            <div>
+              <strong>Facebook</strong>
+              <p class="text-gray" style="margin:0.25rem 0 0;">facebook.com/LANDLORDZS</p>
+            </div>
+          </div>
+
+          <div class="contact-item">
+            <div class="contact-item-icon">📸</div>
+            <div>
+              <strong>Instagram</strong>
+              <p class="text-gray" style="margin:0.25rem 0 0;">@landlordzs.cm</p>
+            </div>
+          </div>
+
+          <div class="contact-item">
+            <div class="contact-item-icon">🔗</div>
+            <div>
+              <strong>LinkedIn</strong>
+              <p class="text-gray" style="margin:0.25rem 0 0;">linkedin.com/company/landlordzs</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Contact Form -->
+      <div class="contact-form-card">
+        <h3 style="margin-bottom:0.5rem;">Send Us a Message</h3>
+        <p class="text-gray" style="margin-bottom:1.5rem;">Fill in the form and our team will get back to you within 24 hours.</p>
+
+        <form id="contact-form" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="contact-name">Full Name</label>
+              <input id="contact-name" type="text" class="form-control" placeholder="e.g. Marie Tchoupo" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="contact-email">Email Address</label>
+              <input id="contact-email" type="email" class="form-control" placeholder="you@example.com" required/>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="contact-phone">Phone Number</label>
+              <input id="contact-phone" type="tel" class="form-control" placeholder="+237 6XX XXX XXX"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="contact-subject">Subject</label>
+              <select id="contact-subject" class="form-control form-control-select" required>
+                <option value="" disabled selected>Select a subject…</option>
+                <option value="general">General Inquiry</option>
+                <option value="property-issue">Property Issue</option>
+                <option value="verification">Professional Verification</option>
+                <option value="partnership">Partnership</option>
+                <option value="report">Report a Listing</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="contact-message">Message</label>
+            <textarea id="contact-message" class="form-control" rows="6" placeholder="Tell us how we can help you…" required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg btn-block">Send Message</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- FAQ Section -->
+<div class="section section-gray">
+  <div class="container-sm">
+    <div class="section-header text-center">
+      <h2 class="section-title">Frequently Asked Questions</h2>
+      <p class="section-sub">Quick answers to the questions we hear most often</p>
+    </div>
+
+    <div style="margin-top:2rem;">
+
+      <details style="margin-bottom:1rem; background:#fff; border-radius:10px; padding:1.25rem 1.5rem; border:1px solid #e5e7eb;">
+        <summary style="font-weight:600; cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center;">
+          How do I list my property on LANDLORDZS?
+          <span style="font-size:1.25rem; color:#888;">+</span>
+        </summary>
+        <p style="margin-top:0.75rem; color:#555; line-height:1.7;">
+          Create a free account, choose the "Property Owner" role, and click "Add New Listing" from your dashboard. You'll be guided through uploading photos, entering property details, setting your price, and choosing whether the listing is for sale or rent. Listings in Yaoundé, Douala, Buea, Bamenda, Limbe, and Kribi go live immediately after a quick review by our moderation team.
+        </p>
+      </details>
+
+      <details style="margin-bottom:1rem; background:#fff; border-radius:10px; padding:1.25rem 1.5rem; border:1px solid #e5e7eb;">
+        <summary style="font-weight:600; cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center;">
+          How does professional verification work?
+          <span style="font-size:1.25rem; color:#888;">+</span>
+        </summary>
+        <p style="margin-top:0.75rem; color:#555; line-height:1.7;">
+          Agents, contractors, architects, lawyers, and vendors can apply for a Verified badge through their account settings. You'll need to upload your professional licence or registration certificate, a government-issued ID, and proof of address. Our team typically reviews applications within 2–3 business days. Verified professionals receive a blue checkmark and rank higher in search results.
+        </p>
+      </details>
+
+      <details style="margin-bottom:1rem; background:#fff; border-radius:10px; padding:1.25rem 1.5rem; border:1px solid #e5e7eb;">
+        <summary style="font-weight:600; cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center;">
+          Does LANDLORDZS offer an escrow service?
+          <span style="font-size:1.25rem; color:#888;">+</span>
+        </summary>
+        <p style="margin-top:0.75rem; color:#555; line-height:1.7;">
+          Yes. Our secure escrow service is available for property purchases and large rental deposits. Funds are held by our licensed financial partner until both parties confirm that all conditions of the transaction have been met. This protects buyers from fraud and gives sellers confidence that payment is guaranteed. Escrow is available for transactions in all six of our cities.
+        </p>
+      </details>
+
+      <details style="margin-bottom:1rem; background:#fff; border-radius:10px; padding:1.25rem 1.5rem; border:1px solid #e5e7eb;">
+        <summary style="font-weight:600; cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center;">
+          Is LANDLORDZS free to use?
+          <span style="font-size:1.25rem; color:#888;">+</span>
+        </summary>
+        <p style="margin-top:0.75rem; color:#555; line-height:1.7;">
+          Browsing listings, searching for professionals, and creating a basic account are completely free. Property owners can post their first two listings at no cost. Agents and professionals have a free tier with limited visibility and a premium subscription that unlocks advanced analytics, priority placement, and unlimited listings. Visit our Pricing page for full details.
+        </p>
+      </details>
+
+      <details style="background:#fff; border-radius:10px; padding:1.25rem 1.5rem; border:1px solid #e5e7eb;">
+        <summary style="font-weight:600; cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center;">
+          How do I report a suspicious or fraudulent listing?
+          <span style="font-size:1.25rem; color:#888;">+</span>
+        </summary>
+        <p style="margin-top:0.75rem; color:#555; line-height:1.7;">
+          Every listing has a "Report this listing" button. Click it, select the reason (e.g. suspected fraud, incorrect information, already sold/rented), and add any details that might help our team investigate. You can also email us directly at <strong>report@landlordzs.cm</strong> or use the contact form above and select "Report a Listing" as the subject. We investigate all reports within 48 hours.
+        </p>
+      </details>
+
+    </div>
+  </div>
+</div>
+
+<div id="lz-footer"></div>
+<button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
+<script>
+  window.LZ_BASE = '../';
+  window.LZ_BREADCRUMB = [
+    { label: 'Home', url: '../index.html' },
+    { label: 'Contact', url: null }
+  ];
+</script>
+<script src="../assets/js/nav.js"></script>
+</body>
+</html>

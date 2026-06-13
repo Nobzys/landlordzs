@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Waste Collection Services — LANDLORDZS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../assets/css/main.css"/>
+</head>
+<body>
+<div id="lz-header"></div>
+<div id="lz-breadcrumb"></div>
+
+<!-- PAGE CONTENT -->
+<div class="page-header">
+  <div class="page-header-content">
+    <h1>Waste Collection</h1>
+    <p>Connect with 150+ waste management companies across Cameroon for household, commercial, and construction waste removal.</p>
+    <div class="page-header-actions">
+      <span class="page-header-badge">150+ Providers</span>
+      <a href="../auth/register.html" class="btn btn-primary">Register as Provider</a>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="listing-layout">
+
+    <!-- FILTER SIDEBAR -->
+    <aside class="filter-sidebar">
+      <div class="filter-panel">
+
+        <div class="filter-group">
+          <label class="filter-label">Location</label>
+          <select class="filter-select">
+            <option value="">All Cities</option>
+            <option value="yaounde">Yaoundé</option>
+            <option value="douala">Douala</option>
+            <option value="buea">Buea</option>
+            <option value="bamenda">Bamenda</option>
+            <option value="limbe">Limbe</option>
+            <option value="kribi">Kribi</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Rating</label>
+          <label class="filter-check"><input type="checkbox"/> 5 Stars Only</label>
+          <label class="filter-check"><input type="checkbox"/> 4+ Stars</label>
+          <label class="filter-check"><input type="checkbox"/> 3+ Stars</label>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Availability</label>
+          <label class="filter-check"><input type="checkbox"/> Available Now</label>
+          <label class="filter-check"><input type="checkbox"/> This Week</label>
+          <label class="filter-check"><input type="checkbox"/> This Month</label>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Price Range (FCFA/collection)</label>
+          <input class="filter-input" type="number" placeholder="Min (FCFA)"/>
+          <input class="filter-input" type="number" placeholder="Max (FCFA)"/>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Verified Only</label>
+          <label class="filter-check"><input type="checkbox"/> Show Verified Only</label>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Service Type</label>
+          <label class="filter-check"><input type="checkbox"/> Household Waste</label>
+          <label class="filter-check"><input type="checkbox"/> Commercial Waste</label>
+          <label class="filter-check"><input type="checkbox"/> Construction Rubble</label>
+          <label class="filter-check"><input type="checkbox"/> Recycling Services</label>
+          <label class="filter-check"><input type="checkbox"/> Medical Waste</label>
+          <label class="filter-check"><input type="checkbox"/> Skip Hire</label>
+        </div>
+
+        <button class="btn btn-primary btn-block">Apply Filters</button>
+      </div>
+    </aside>
+
+    <!-- MAIN LISTING -->
+    <main>
+      <div class="listing-toolbar">
+        <span class="listing-count">Showing 6 of 150+ providers</span>
+        <div class="listing-sort">
+          <label class="filter-label">Sort by:</label>
+          <select class="sort-select">
+            <option>Top Rated</option>
+            <option>Most Reviews</option>
+            <option>Price: Low to High</option>
+            <option>Newest</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="professional-grid">
+
+        <!-- Card 1 -->
+        <div class="professional-card">
+          <div class="pro-avatar">🗑️</div>
+          <div class="pro-info">
+            <h3>EcoClear Douala</h3>
+            <p class="pro-role">Waste Management &mdash; Douala</p>
+            <div class="pro-rating">
+              <span>★★★★★</span>
+              <span>(201 reviews)</span>
+            </div>
+            <div class="pro-tags">
+              <span class="tag">Household</span>
+              <span class="tag">Commercial</span>
+              <span class="tag">Recycling</span>
+            </div>
+            <p class="pro-role"><strong>From 8,000 FCFA/collection</strong></p>
+            <span class="pro-badge">✓ Verified</span>
+            <a href="../auth/register.html" class="btn btn-outline btn-sm">Contact</a>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="professional-card">
+          <div class="pro-avatar">🗑️</div>
+          <div class="pro-info">
+            <h3>GreenWaste CM</h3>
+            <p class="pro-role">Waste Management &mdash; Yaoundé</p>
+            <div class="pro-rating">
+              <span>★★★★☆</span>
+              <span>(143 reviews)</span>
+            </div>
+            <div class="pro-tags">
+              <span class="tag">Household</span>
+              <span class="tag">Construction Rubble</span>
+            </div>
+            <p class="pro-role"><strong>From 7,500 FCFA</strong></p>
+            <span class="pro-badge">✓ Verified</span>
+            <a href="../auth/register.html" class="btn btn-outline btn-sm">Contact</a>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="professional-card">
+          <div class="pro-avatar">🗑️</div>
+          <div class="pro-info">
+            <h3>SkipMaster</h3>
+            <p class="pro-role">Waste Management &mdash; Buea</p>
+            <div class="pro-rating">
+              <span>★★★★★</span>
+              <span>(89 reviews)</span>
+            </div>
+            <div class="pro-tags">
+              <span class="tag">Skip Hire</span>
+              <span class="tag">Rubble</span>
+              <span class="tag">Construction</span>
+            </div>
+            <p class="pro-role"><strong>From 25,000 FCFA/skip</strong></p>
+            <span class="pro-badge">✓ Verified</span>
+            <a href="../auth/register.html" class="btn btn-outline btn-sm">Contact</a>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="professional-card">
+          <div class="pro-avatar">🗑️</div>
+          <div class="pro-info">
+            <h3>CleanCity Bamenda</h3>
+            <p class="pro-role">Waste Management &mdash; Bamenda</p>
+            <div class="pro-rating">
+              <span>★★★★☆</span>
+              <span>(67 reviews)</span>
+            </div>
+            <div class="pro-tags">
+              <span class="tag">Household</span>
+              <span class="tag">Commercial</span>
+            </div>
+            <p class="pro-role"><strong>From 6,500 FCFA</strong></p>
+            <span class="pro-badge">✓ Verified</span>
+            <a href="../auth/register.html" class="btn btn-outline btn-sm">Contact</a>
+          </div>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="professional-card">
+          <div class="pro-avatar">🗑️</div>
+          <div class="pro-info">
+            <h3>CoastalWaste</h3>
+            <p class="pro-role">Waste Management &mdash; Limbe</p>
+            <div class="pro-rating">
+              <span>★★★★★</span>
+              <span>(54 reviews)</span>
+            </div>
+            <div class="pro-tags">
+              <span class="tag">Beach Cleanup</span>
+              <span class="tag">Household</span>
+              <span class="tag">Hotel</span>
+            </div>
+            <p class="pro-role"><strong>From 10,000 FCFA</strong></p>
+            <span class="pro-badge">✓ Verified</span>
+            <a href="../auth/register.html" class="btn btn-outline btn-sm">Contact</a>
+          </div>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="professional-card">
+          <div class="pro-avatar">🗑️</div>
+          <div class="pro-info">
+            <h3>RecyclePlus Kribi</h3>
+            <p class="pro-role">Waste Management &mdash; Kribi</p>
+            <div class="pro-rating">
+              <span>★★★★☆</span>
+              <span>(38 reviews)</span>
+            </div>
+            <div class="pro-tags">
+              <span class="tag">Recycling</span>
+              <span class="tag">Household</span>
+              <span class="tag">Resort</span>
+            </div>
+            <p class="pro-role"><strong>From 9,000 FCFA</strong></p>
+            <span class="pro-badge">✓ Verified</span>
+            <a href="../auth/register.html" class="btn btn-outline btn-sm">Contact</a>
+          </div>
+        </div>
+
+      </div><!-- /.professional-grid -->
+
+      <div class="pagination">
+        <button class="page-btn" disabled>&laquo;</button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <span class="page-btn">…</span>
+        <button class="page-btn">25</button>
+        <button class="page-btn">&raquo;</button>
+      </div>
+    </main>
+
+  </div><!-- /.listing-layout -->
+</div><!-- /.container -->
+
+<!-- HOW TO BOOK -->
+<section class="section section-gray">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">How to Book Waste Collection</h2>
+      <p class="section-sub">Get your waste removed in 3 simple steps</p>
+    </div>
+    <div class="services-grid">
+      <div class="service-card">
+        <div class="service-icon">1</div>
+        <h3>Browse &amp; Filter</h3>
+        <p>Find waste collection companies in your city, filtering by waste type, price per collection, and ratings.</p>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">2</div>
+        <h3>Schedule a Collection</h3>
+        <p>Contact the provider, specify the volume and type of waste, and agree on a collection schedule and price.</p>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">3</div>
+        <h3>Collected &amp; Cleared</h3>
+        <p>The team arrives on schedule to remove your waste. Rate the service to help the LANDLORDZS community.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="lz-footer"></div>
+<button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
+<script>
+  window.LZ_BASE = '../';
+  window.LZ_BREADCRUMB = [
+    { label: 'Home', url: '../index.html' },
+    { label: 'Services', url: null },
+    { label: 'Waste Collection', url: null }
+  ];
+</script>
+<script src="../assets/js/nav.js"></script>
+</body>
+</html>

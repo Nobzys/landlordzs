@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Account — LANDLORDZS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../assets/css/main.css"/>
+</head>
+<body>
+<div id="lz-header"></div>
+<div id="lz-breadcrumb"></div>
+
+<!-- PAGE CONTENT -->
+<div class="auth-page">
+  <div class="auth-card">
+
+    <!-- Logo -->
+    <div class="auth-logo">
+      <a href="../index.html">LANDLORDZS</a>
+    </div>
+
+    <!-- Title -->
+    <h1 class="auth-title">Create Your Account</h1>
+    <p class="auth-sub">Join 50,000+ users on LANDLORDZS</p>
+
+    <!-- Role Selector -->
+    <div class="form-group">
+      <p class="form-label" style="margin-bottom:0.75rem;">I am a…</p>
+      <div class="role-grid">
+        <label class="role-card">
+          <input type="radio" name="role" value="buyer" style="display:none;"/>
+          <div class="role-icon">🏠</div>
+          <span>Buyer / Renter</span>
+        </label>
+        <label class="role-card">
+          <input type="radio" name="role" value="owner" style="display:none;"/>
+          <div class="role-icon">🏷️</div>
+          <span>Property Owner</span>
+        </label>
+        <label class="role-card">
+          <input type="radio" name="role" value="contractor" style="display:none;"/>
+          <div class="role-icon">👷</div>
+          <span>Contractor</span>
+        </label>
+        <label class="role-card">
+          <input type="radio" name="role" value="architect" style="display:none;"/>
+          <div class="role-icon">📐</div>
+          <span>Architect / Engineer</span>
+        </label>
+        <label class="role-card">
+          <input type="radio" name="role" value="lawyer" style="display:none;"/>
+          <div class="role-icon">⚖️</div>
+          <span>Lawyer</span>
+        </label>
+        <label class="role-card">
+          <input type="radio" name="role" value="vendor" style="display:none;"/>
+          <div class="role-icon">🏪</div>
+          <span>Vendor</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Registration Form -->
+    <form id="register-form" novalidate>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="reg-first-name">First Name</label>
+          <input id="reg-first-name" type="text" class="form-control" placeholder="e.g. Marie" autocomplete="given-name" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="reg-last-name">Last Name</label>
+          <input id="reg-last-name" type="text" class="form-control" placeholder="e.g. Tchoupo" autocomplete="family-name" required/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="reg-email">Email Address</label>
+        <div class="input-icon-wrap">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </span>
+          <input id="reg-email" type="email" class="form-control" placeholder="you@example.com" autocomplete="email" required/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="reg-phone">Phone Number</label>
+        <div class="input-icon-wrap">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.77a16 16 0 0 0 6.29 6.29l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </span>
+          <input id="reg-phone" type="tel" class="form-control" placeholder="+237 6XX XXX XXX" autocomplete="tel" required/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="reg-password">Password</label>
+        <div class="input-icon-wrap">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <input id="reg-password" type="password" class="form-control" placeholder="At least 8 characters" autocomplete="new-password" required/>
+        </div>
+        <p class="form-hint">Use at least 8 characters including a number and a symbol.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="reg-confirm-password">Confirm Password</label>
+        <div class="input-icon-wrap">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <input id="reg-confirm-password" type="password" class="form-control" placeholder="Re-enter your password" autocomplete="new-password" required/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-check">
+          <input type="checkbox" id="reg-terms" required/>
+          <span>I agree to the <a href="#terms" onclick="window.showToast && window.showToast('Terms of Service coming soon')">Terms of Service</a> and <a href="#privacy" onclick="window.showToast && window.showToast('Privacy Policy coming soon')">Privacy Policy</a></span>
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg btn-block">Create Account</button>
+
+    </form>
+
+    <div class="auth-footer">
+      Already have an account? <a href="login.html">Sign in</a>
+    </div>
+
+  </div>
+</div>
+
+<div id="lz-footer"></div>
+<button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
+<script>
+  window.LZ_BASE = '../';
+  window.LZ_BREADCRUMB = [
+    { label: 'Home', url: '../index.html' },
+    { label: 'Create Account', url: null }
+  ];
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.role-card').forEach(function (card) {
+      card.addEventListener('click', function () {
+        document.querySelectorAll('.role-card').forEach(function (c) { c.classList.remove('active'); });
+        card.classList.add('active');
+      });
+    });
+  });
+</script>
+<script src="../assets/js/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Commercial Property in Cameroon — LANDLORDZS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../assets/css/main.css"/>
+</head>
+<body>
+<div id="lz-header"></div>
+<div id="lz-breadcrumb"></div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-header-content">
+    <div>
+      <span class="page-header-badge">1,800+ Listings</span>
+      <h1>Commercial Property</h1>
+      <p>1,800+ commercial listings across Cameroon</p>
+    </div>
+    <div class="page-header-actions">
+      <a href="../auth/register.html" class="btn btn-primary">Post Property Free</a>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+  <div class="listing-layout">
+
+    <!-- FILTER SIDEBAR -->
+    <aside class="filter-sidebar">
+      <div class="filter-panel">
+        <div class="filter-panel-title">
+          <span>Search Filters</span>
+          <button class="btn btn-sm btn-outline">Reset</button>
+        </div>
+
+        <!-- Location -->
+        <div class="filter-group">
+          <label class="filter-label">Location</label>
+          <select class="filter-select">
+            <option value="">All Cities</option>
+            <option value="yaounde">Yaoundé</option>
+            <option value="douala">Douala</option>
+            <option value="buea">Buea</option>
+            <option value="bamenda">Bamenda</option>
+            <option value="limbe">Limbe</option>
+            <option value="kribi">Kribi</option>
+          </select>
+        </div>
+
+        <!-- Commercial Type -->
+        <div class="filter-group">
+          <label class="filter-label">Commercial Type</label>
+          <label class="filter-check"><input type="checkbox" value="office"/> Office Space</label>
+          <label class="filter-check"><input type="checkbox" value="shop"/> Shop / Retail</label>
+          <label class="filter-check"><input type="checkbox" value="warehouse"/> Warehouse</label>
+          <label class="filter-check"><input type="checkbox" value="factory"/> Factory</label>
+          <label class="filter-check"><input type="checkbox" value="hotel"/> Hotel</label>
+          <label class="filter-check"><input type="checkbox" value="restaurant"/> Restaurant</label>
+          <label class="filter-check"><input type="checkbox" value="mixed-use"/> Mixed Use</label>
+        </div>
+
+        <!-- Floor Area -->
+        <div class="filter-group">
+          <label class="filter-label">Floor Area (m²)</label>
+          <div class="range-row">
+            <input type="number" class="filter-input" placeholder="Min"/>
+            <input type="number" class="filter-input" placeholder="Max"/>
+          </div>
+        </div>
+
+        <!-- Price Range -->
+        <div class="filter-group">
+          <label class="filter-label">Price Range (FCFA)</label>
+          <div class="range-row">
+            <input type="number" class="filter-input" placeholder="Min"/>
+            <input type="number" class="filter-input" placeholder="Max"/>
+          </div>
+        </div>
+
+        <!-- Parking -->
+        <div class="filter-group">
+          <label class="filter-label">Parking</label>
+          <label class="filter-check"><input type="checkbox" value="parking"/> Has Parking Spaces</label>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%;margin-top:8px;">Apply Filters</button>
+      </div>
+    </aside>
+
+    <!-- LISTING MAIN -->
+    <div class="listing-main">
+
+      <!-- TOOLBAR -->
+      <div class="listing-toolbar">
+        <span class="listing-count">Showing 1–8 of <strong>1,800</strong> listings</span>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <select class="sort-select listing-sort">
+            <option value="newest">Newest</option>
+            <option value="price-asc">Price Low–High</option>
+            <option value="price-desc">Price High–Low</option>
+            <option value="popular">Most Popular</option>
+          </select>
+          <div class="view-toggle">
+            <button class="view-btn active" data-view="grid" aria-label="Grid view">&#9783;</button>
+            <button class="view-btn" data-view="list" aria-label="List view">&#9776;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROPERTY GRID -->
+      <div class="property-grid">
+
+        <!-- Card 1 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-commercial">Commercial</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">35,000,000 FCFA</div>
+            <h3 class="property-title">Office Space</h3>
+            <p class="property-location">📍 Bonanjo, Douala</p>
+            <div class="property-meta">
+              <span>🏢 Office</span>
+              <span>📐 250m²</span>
+              <span>🅿 Parking</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">AR</span>
+              <span>Akono Real Estate</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-commercial">Commercial</span>
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">18,000,000 FCFA</div>
+            <h3 class="property-title">Shop / Retail Space</h3>
+            <p class="property-location">📍 Marché Central, Yaoundé</p>
+            <div class="property-meta">
+              <span>🛒 Retail</span>
+              <span>📐 120m²</span>
+              <span>Ground Floor</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">BT</span>
+              <span>Brice Tanyi</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-commercial">Commercial</span>
+              <span class="badge badge-featured">Featured</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">55,000,000 FCFA</div>
+            <h3 class="property-title">Warehouse</h3>
+            <p class="property-location">📍 Bonabéri, Douala</p>
+            <div class="property-meta">
+              <span>🏭 Warehouse</span>
+              <span>📐 800m²</span>
+              <span>🅿 Parking</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">IM</span>
+              <span>Isaac Mpondo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-commercial">Commercial</span>
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">22,000,000 FCFA</div>
+            <h3 class="property-title">Restaurant Space</h3>
+            <p class="property-location">📍 Beach Road, Limbe</p>
+            <div class="property-meta">
+              <span>🍽 Restaurant</span>
+              <span>📐 200m²</span>
+              <span>Beachfront</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">FN</span>
+              <span>Florence Ndoumbe</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1486325212027-8081e485255e?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-commercial">Commercial</span>
+              <span class="badge badge-verified">Verified</span>
+              <span class="badge badge-featured">Featured</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">65,000,000 FCFA</div>
+            <h3 class="property-title">Mixed-Use Building</h3>
+            <p class="property-location">📍 Buea, South West</p>
+            <div class="property-meta">
+              <span>🏗 Mixed Use</span>
+              <span>📐 500m²</span>
+              <span>🅿 Parking</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">AN</span>
+              <span>Armand Nkeng</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-commercial">Commercial</span>
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">12,000,000 FCFA</div>
+            <h3 class="property-title">Office Suite</h3>
+            <p class="property-location">📍 Bamenda, North West</p>
+            <div class="property-meta">
+              <span>🏢 Office</span>
+              <span>📐 180m²</span>
+              <span>3rd Floor</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">OT</span>
+              <span>Olivier Tabi</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 7 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-commercial">Commercial</span>
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">9,000,000 FCFA</div>
+            <h3 class="property-title">Retail Shop</h3>
+            <p class="property-location">📍 Kribi, South</p>
+            <div class="property-meta">
+              <span>🛒 Retail</span>
+              <span>📐 80m²</span>
+              <span>Ground Floor</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">CE</span>
+              <span>Celestin Ebogo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 8 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-commercial">Commercial</span>
+              <span class="badge badge-verified">Verified</span>
+              <span class="badge badge-featured">Featured</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">250,000,000 FCFA</div>
+            <h3 class="property-title">Hotel Building</h3>
+            <p class="property-location">📍 Bonanjo, Douala</p>
+            <div class="property-meta">
+              <span>🏨 Hotel</span>
+              <span>📐 1,200m²</span>
+              <span>🅿 Parking</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">MN</span>
+              <span>Michel Ndi</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.property-grid -->
+
+      <!-- PAGINATION -->
+      <div class="pagination">
+        <button class="page-btn" aria-label="Previous page">&laquo; Prev</button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <button class="page-btn">4</button>
+        <button class="page-btn">5</button>
+        <button class="page-btn" aria-label="Next page">Next &raquo;</button>
+      </div>
+
+    </div><!-- /.listing-main -->
+  </div><!-- /.listing-layout -->
+</div><!-- /.container -->
+
+<div id="lz-footer"></div>
+<button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
+<script>
+  window.LZ_BASE = '../';
+  window.LZ_BREADCRUMB = [
+    { label: 'Home', url: '../index.html' },
+    { label: 'Properties', url: null },
+    { label: 'Commercial Property', url: null }
+  ];
+</script>
+<script src="../assets/js/nav.js"></script>
+</body>
+</html>

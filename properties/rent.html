@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Properties for Rent in Cameroon — LANDLORDZS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../assets/css/main.css"/>
+</head>
+<body>
+<div id="lz-header"></div>
+<div id="lz-breadcrumb"></div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-header-content">
+    <div>
+      <span class="page-header-badge">8,200+ Rentals</span>
+      <h1>Properties for Rent</h1>
+      <p>8,200+ rental listings across Cameroon</p>
+    </div>
+    <div class="page-header-actions">
+      <a href="../auth/register.html" class="btn btn-primary">Post Property Free</a>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+  <div class="listing-layout">
+
+    <!-- FILTER SIDEBAR -->
+    <aside class="filter-sidebar">
+      <div class="filter-panel">
+        <div class="filter-panel-title">
+          <span>Search Filters</span>
+          <button class="btn btn-sm btn-outline">Reset</button>
+        </div>
+
+        <!-- Location -->
+        <div class="filter-group">
+          <label class="filter-label">Location</label>
+          <select class="filter-select">
+            <option value="">All Cities</option>
+            <option value="yaounde">Yaoundé</option>
+            <option value="douala">Douala</option>
+            <option value="buea">Buea</option>
+            <option value="bamenda">Bamenda</option>
+            <option value="limbe">Limbe</option>
+            <option value="kribi">Kribi</option>
+          </select>
+        </div>
+
+        <!-- Property Type -->
+        <div class="filter-group">
+          <label class="filter-label">Property Type</label>
+          <label class="filter-check"><input type="checkbox" value="apartment"/> Apartment</label>
+          <label class="filter-check"><input type="checkbox" value="house"/> House</label>
+          <label class="filter-check"><input type="checkbox" value="villa"/> Villa</label>
+          <label class="filter-check"><input type="checkbox" value="duplex"/> Duplex</label>
+          <label class="filter-check"><input type="checkbox" value="studio"/> Studio</label>
+          <label class="filter-check"><input type="checkbox" value="penthouse"/> Penthouse</label>
+        </div>
+
+        <!-- Bedrooms -->
+        <div class="filter-group">
+          <label class="filter-label">Bedrooms</label>
+          <label class="filter-check"><input type="checkbox" value="1"/> 1</label>
+          <label class="filter-check"><input type="checkbox" value="2"/> 2</label>
+          <label class="filter-check"><input type="checkbox" value="3"/> 3</label>
+          <label class="filter-check"><input type="checkbox" value="4"/> 4</label>
+          <label class="filter-check"><input type="checkbox" value="5"/> 5+</label>
+        </div>
+
+        <!-- Monthly Rent Range -->
+        <div class="filter-group">
+          <label class="filter-label">Monthly Rent (FCFA)</label>
+          <div class="range-row">
+            <input type="number" class="filter-input" placeholder="Min"/>
+            <input type="number" class="filter-input" placeholder="Max"/>
+          </div>
+        </div>
+
+        <!-- Size -->
+        <div class="filter-group">
+          <label class="filter-label">Size (m²)</label>
+          <div class="range-row">
+            <input type="number" class="filter-input" placeholder="Min"/>
+            <input type="number" class="filter-input" placeholder="Max"/>
+          </div>
+        </div>
+
+        <!-- Features -->
+        <div class="filter-group">
+          <label class="filter-label">Features</label>
+          <label class="filter-check"><input type="checkbox" value="parking"/> Parking</label>
+          <label class="filter-check"><input type="checkbox" value="pool"/> Pool</label>
+          <label class="filter-check"><input type="checkbox" value="garden"/> Garden</label>
+          <label class="filter-check"><input type="checkbox" value="security"/> Security</label>
+          <label class="filter-check"><input type="checkbox" value="generator"/> Generator</label>
+          <label class="filter-check"><input type="checkbox" value="furnished"/> Furnished</label>
+          <label class="filter-check"><input type="checkbox" value="water"/> Water 24/7</label>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%;margin-top:8px;">Apply Filters</button>
+      </div>
+    </aside>
+
+    <!-- LISTING MAIN -->
+    <div class="listing-main">
+
+      <!-- TOOLBAR -->
+      <div class="listing-toolbar">
+        <span class="listing-count">Showing 1–12 of <strong>8,200</strong> rentals</span>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <select class="sort-select listing-sort">
+            <option value="newest">Newest</option>
+            <option value="price-asc">Price Low–High</option>
+            <option value="price-desc">Price High–Low</option>
+            <option value="popular">Most Popular</option>
+          </select>
+          <div class="view-toggle">
+            <button class="view-btn active" data-view="grid" aria-label="Grid view">&#9783;</button>
+            <button class="view-btn" data-view="list" aria-label="List view">&#9776;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROPERTY GRID -->
+      <div class="property-grid">
+
+        <!-- Card 1 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-rent">For Rent</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">85,000 FCFA<span style="font-size:0.75rem;font-weight:400;">/month</span></div>
+            <h3 class="property-title">2 Bedroom Apartment</h3>
+            <p class="property-location">📍 Bonanjo, Douala</p>
+            <div class="property-meta">
+              <span>🛏 2 Beds</span>
+              <span>🚿 1 Bath</span>
+              <span>📐 90m²</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">DK</span>
+              <span>Daniel Kotto</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-rent">For Rent</span>
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">150,000 FCFA<span style="font-size:0.75rem;font-weight:400;">/month</span></div>
+            <h3 class="property-title">3 Bedroom House</h3>
+            <p class="property-location">📍 Bastos, Yaoundé</p>
+            <div class="property-meta">
+              <span>🛏 3 Beds</span>
+              <span>🚿 2 Baths</span>
+              <span>📐 200m²</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">SN</span>
+              <span>Sophie Nkomo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-rent">For Rent</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">45,000 FCFA<span style="font-size:0.75rem;font-weight:400;">/month</span></div>
+            <h3 class="property-title">Studio Apartment</h3>
+            <p class="property-location">📍 Akwa, Douala</p>
+            <div class="property-meta">
+              <span>🛏 1 Bed</span>
+              <span>🚿 1 Bath</span>
+              <span>📐 45m²</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">LN</span>
+              <span>Lionel Ngassa</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1575517111839-3a3843ee7f5d?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-rent">For Rent</span>
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">120,000 FCFA<span style="font-size:0.75rem;font-weight:400;">/month</span></div>
+            <h3 class="property-title">4 Bedroom Family House</h3>
+            <p class="property-location">📍 Buea Town, South West</p>
+            <div class="property-meta">
+              <span>🛏 4 Beds</span>
+              <span>🚿 2 Baths</span>
+              <span>📐 260m²</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">RM</span>
+              <span>Rachel Mbu</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1484154218962-a197022b5858?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-rent">For Rent</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">60,000 FCFA<span style="font-size:0.75rem;font-weight:400;">/month</span></div>
+            <h3 class="property-title">1 Bedroom Apartment</h3>
+            <p class="property-location">📍 Limbe, South West</p>
+            <div class="property-meta">
+              <span>🛏 1 Bed</span>
+              <span>🚿 1 Bath</span>
+              <span>📐 60m²</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">BF</span>
+              <span>Boris Fotso</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-rent">For Rent</span>
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">95,000 FCFA<span style="font-size:0.75rem;font-weight:400;">/month</span></div>
+            <h3 class="property-title">3 Bedroom Duplex</h3>
+            <p class="property-location">📍 Bamenda, North West</p>
+            <div class="property-meta">
+              <span>🛏 3 Beds</span>
+              <span>🚿 2 Baths</span>
+              <span>📐 170m²</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">CK</span>
+              <span>Caroline Kom</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 7 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1505873242700-f289a29e1724?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-rent">For Rent</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">75,000 FCFA<span style="font-size:0.75rem;font-weight:400;">/month</span></div>
+            <h3 class="property-title">2 Bedroom Apartment</h3>
+            <p class="property-location">📍 Kribi, South</p>
+            <div class="property-meta">
+              <span>🛏 2 Beds</span>
+              <span>🚿 1 Bath</span>
+              <span>📐 85m²</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">HA</span>
+              <span>Henri Abono</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 8 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1536376072261-38c75010e6c9?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-rent">For Rent</span>
+              <span class="badge badge-featured">Featured</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">65,000 FCFA<span style="font-size:0.75rem;font-weight:400;">/month</span></div>
+            <h3 class="property-title">Furnished Studio</h3>
+            <p class="property-location">📍 Santa Barbara, Douala</p>
+            <div class="property-meta">
+              <span>🛏 1 Bed</span>
+              <span>🚿 1 Bath</span>
+              <span>📐 50m²</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">YD</span>
+              <span>Yvette Dika</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.property-grid -->
+
+      <!-- PAGINATION -->
+      <div class="pagination">
+        <button class="page-btn" aria-label="Previous page">&laquo; Prev</button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <button class="page-btn">4</button>
+        <button class="page-btn">5</button>
+        <button class="page-btn" aria-label="Next page">Next &raquo;</button>
+      </div>
+
+    </div><!-- /.listing-main -->
+  </div><!-- /.listing-layout -->
+</div><!-- /.container -->
+
+<div id="lz-footer"></div>
+<button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
+<script>
+  window.LZ_BASE = '../';
+  window.LZ_BREADCRUMB = [
+    { label: 'Home', url: '../index.html' },
+    { label: 'Properties', url: null },
+    { label: 'Rent Property', url: null }
+  ];
+</script>
+<script src="../assets/js/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vendor Dashboard — LANDLORDZS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../assets/css/main.css"/>
+</head>
+<body>
+<div id="lz-header"></div>
+
+<div class="dashboard-wrapper">
+
+  <!-- SIDEBAR -->
+  <aside class="dash-sidebar">
+    <div class="dash-user">
+      <div class="dash-user-avatar">VD</div>
+      <div class="dash-user-name">CimBTP Supplies</div>
+      <div class="dash-user-role">Verified Vendor · Douala</div>
+    </div>
+
+    <a href="#" class="dash-nav-item active"><span class="nav-icon">📦</span> My Products</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">➕</span> Add Product</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">📋</span> Orders</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">💰</span> Earnings</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">⭐</span> Reviews</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">👤</span> Store Profile</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">🚪</span> Sign Out</a>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="dash-main">
+
+    <!-- Header -->
+    <div class="dash-header">
+      <div>
+        <div class="dash-title">Vendor Dashboard</div>
+        <div class="dash-subtitle">CimBTP Supplies · Douala</div>
+      </div>
+      <div class="dash-actions">
+        <button class="btn btn-primary btn-sm">Add Product</button>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e3f2fd;">📦</div>
+        <div class="stat-value">145</div>
+        <div class="stat-label">My Products</div>
+        <div class="stat-change up">▲ 5 this week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e8f5e9;">💰</div>
+        <div class="stat-value">2,340,000 FCFA</div>
+        <div class="stat-label">This Month's Sales</div>
+        <div class="stat-change up">▲ 18%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fff3e0;">📋</div>
+        <div class="stat-value">8</div>
+        <div class="stat-label">Pending Orders</div>
+        <div class="stat-change">Awaiting fulfillment</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fce4e4;">⭐</div>
+        <div class="stat-value">4.8/5</div>
+        <div class="stat-label">Average Rating</div>
+        <div class="stat-change up">98 total reviews</div>
+      </div>
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <div class="dash-card-title">Recent Orders</div>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Product</th>
+              <th>Buyer</th>
+              <th>Qty</th>
+              <th>Amount</th>
+              <th>City</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>#ORD-5521</strong></td>
+              <td>CEM I 50kg (×20 bags)</td>
+              <td>Jean Mfoula</td>
+              <td>20</td>
+              <td>130,000 FCFA</td>
+              <td>Yaoundé</td>
+              <td><span class="table-status status-active">Fulfilled</span></td>
+            </tr>
+            <tr>
+              <td><strong>#ORD-5520</strong></td>
+              <td>CEM II 25kg (×50)</td>
+              <td>Chantier Pro</td>
+              <td>50</td>
+              <td>160,000 FCFA</td>
+              <td>Douala</td>
+              <td><span class="table-status status-pending">Processing</span></td>
+            </tr>
+            <tr>
+              <td><strong>#ORD-5519</strong></td>
+              <td>Bulk Cement 1T (×3)</td>
+              <td>BuildFast SA</td>
+              <td>3</td>
+              <td>330,000 FCFA</td>
+              <td>Buea</td>
+              <td><span class="table-status status-active">Fulfilled</span></td>
+            </tr>
+            <tr>
+              <td><strong>#ORD-5518</strong></td>
+              <td>CEM I 50kg (×10)</td>
+              <td>Patrick Ngono</td>
+              <td>10</td>
+              <td>65,000 FCFA</td>
+              <td>Bamenda</td>
+              <td><span class="table-status status-pending">Pending Payment</span></td>
+            </tr>
+            <tr>
+              <td><strong>#ORD-5517</strong></td>
+              <td>Rapid-Set Cement (×5)</td>
+              <td>Alice Ekwueme</td>
+              <td>5</td>
+              <td>40,000 FCFA</td>
+              <td>Kribi</td>
+              <td><span class="table-status status-active">Fulfilled</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Top Performing Products -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <div class="dash-card-title">Top Performing Products</div>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Price</th>
+              <th>Sales This Month</th>
+              <th>Revenue</th>
+              <th>Rating</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>CEM I 50kg Bag</strong></td>
+              <td>6,500 FCFA</td>
+              <td>348 bags</td>
+              <td>2,262,000 FCFA</td>
+              <td>★★★★★</td>
+            </tr>
+            <tr>
+              <td><strong>CEM II 25kg</strong></td>
+              <td>3,400 FCFA</td>
+              <td>124 bags</td>
+              <td>421,600 FCFA</td>
+              <td>★★★★☆</td>
+            </tr>
+            <tr>
+              <td><strong>Bulk Cement 1T</strong></td>
+              <td>110,000 FCFA</td>
+              <td>7 tonnes</td>
+              <td>770,000 FCFA</td>
+              <td>★★★★★</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="lz-footer"></div>
+<button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
+<script>
+  window.LZ_BASE = '../';
+  window.LZ_BREADCRUMB = [];
+</script>
+<script src="../assets/js/nav.js"></script>
+</body>
+</html>

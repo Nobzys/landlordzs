@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Land &amp; Plots for Sale in Cameroon — LANDLORDZS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../assets/css/main.css"/>
+</head>
+<body>
+<div id="lz-header"></div>
+<div id="lz-breadcrumb"></div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-header-content">
+    <div>
+      <span class="page-header-badge">3,600+ Plots</span>
+      <h1>Land &amp; Plots</h1>
+      <p>3,600+ land listings across Cameroon</p>
+    </div>
+    <div class="page-header-actions">
+      <a href="../auth/register.html" class="btn btn-primary">Post Property Free</a>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+  <div class="listing-layout">
+
+    <!-- FILTER SIDEBAR -->
+    <aside class="filter-sidebar">
+      <div class="filter-panel">
+        <div class="filter-panel-title">
+          <span>Search Filters</span>
+          <button class="btn btn-sm btn-outline">Reset</button>
+        </div>
+
+        <!-- Location -->
+        <div class="filter-group">
+          <label class="filter-label">Location</label>
+          <select class="filter-select">
+            <option value="">All Cities</option>
+            <option value="yaounde">Yaoundé</option>
+            <option value="douala">Douala</option>
+            <option value="buea">Buea</option>
+            <option value="bamenda">Bamenda</option>
+            <option value="limbe">Limbe</option>
+            <option value="kribi">Kribi</option>
+          </select>
+        </div>
+
+        <!-- Plot Size -->
+        <div class="filter-group">
+          <label class="filter-label">Plot Size</label>
+          <label class="filter-check"><input type="checkbox" value="under250"/> Under 250m²</label>
+          <label class="filter-check"><input type="checkbox" value="250-500"/> 250–500m²</label>
+          <label class="filter-check"><input type="checkbox" value="500-1000"/> 500m²–1000m²</label>
+          <label class="filter-check"><input type="checkbox" value="1000-5000"/> 1000m²–5000m²</label>
+          <label class="filter-check"><input type="checkbox" value="above5000"/> Above 5000m²</label>
+        </div>
+
+        <!-- Land Type -->
+        <div class="filter-group">
+          <label class="filter-label">Land Type</label>
+          <label class="filter-check"><input type="checkbox" value="residential"/> Residential Land</label>
+          <label class="filter-check"><input type="checkbox" value="commercial"/> Commercial Land</label>
+          <label class="filter-check"><input type="checkbox" value="industrial"/> Industrial Land</label>
+          <label class="filter-check"><input type="checkbox" value="agricultural"/> Agricultural Land</label>
+        </div>
+
+        <!-- Title Type -->
+        <div class="filter-group">
+          <label class="filter-label">Title Type</label>
+          <label class="filter-check"><input type="checkbox" value="freehold"/> Freehold</label>
+          <label class="filter-check"><input type="checkbox" value="leasehold"/> Leasehold</label>
+          <label class="filter-check"><input type="checkbox" value="under-process"/> Under Process</label>
+        </div>
+
+        <!-- Price Range -->
+        <div class="filter-group">
+          <label class="filter-label">Price Range (FCFA)</label>
+          <div class="range-row">
+            <input type="number" class="filter-input" placeholder="Min"/>
+            <input type="number" class="filter-input" placeholder="Max"/>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%;margin-top:8px;">Apply Filters</button>
+      </div>
+    </aside>
+
+    <!-- LISTING MAIN -->
+    <div class="listing-main">
+
+      <!-- TOOLBAR -->
+      <div class="listing-toolbar">
+        <span class="listing-count">Showing 1–8 of <strong>3,600</strong> plots</span>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <select class="sort-select listing-sort">
+            <option value="newest">Newest</option>
+            <option value="price-asc">Price Low–High</option>
+            <option value="price-desc">Price High–Low</option>
+            <option value="popular">Most Popular</option>
+          </select>
+          <div class="view-toggle">
+            <button class="view-btn active" data-view="grid" aria-label="Grid view">&#9783;</button>
+            <button class="view-btn" data-view="list" aria-label="List view">&#9776;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROPERTY GRID -->
+      <div class="property-grid">
+
+        <!-- Card 1 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-land">Land</span>
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">8,000,000 FCFA</div>
+            <h3 class="property-title">Residential Plot</h3>
+            <p class="property-location">📍 Biyem-Assi, Yaoundé</p>
+            <div class="property-meta">
+              <span>📐 500m²</span>
+              <span>📄 Freehold</span>
+              <span>🏡 Residential</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">PM</span>
+              <span>Paul Mba</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-land">Land</span>
+              <span class="badge badge-verified">Verified</span>
+              <span class="badge badge-featured">Featured</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">15,000,000 FCFA</div>
+            <h3 class="property-title">Large Residential Plot</h3>
+            <p class="property-location">📍 Logbessou, Douala</p>
+            <div class="property-meta">
+              <span>📐 1,000m²</span>
+              <span>📄 Freehold</span>
+              <span>🏡 Residential</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">RE</span>
+              <span>Rita Etoa</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-land">Land</span>
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">6,000,000 FCFA</div>
+            <h3 class="property-title">Residential Plot</h3>
+            <p class="property-location">📍 Buea, South West</p>
+            <div class="property-meta">
+              <span>📐 750m²</span>
+              <span>📄 Freehold</span>
+              <span>🏡 Residential</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">FN</span>
+              <span>Felix Ngwa</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-land">Land</span>
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">25,000,000 FCFA</div>
+            <h3 class="property-title">Commercial Land</h3>
+            <p class="property-location">📍 Bamenda, North West</p>
+            <div class="property-meta">
+              <span>📐 2,000m²</span>
+              <span>📄 Freehold</span>
+              <span>🏢 Commercial</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">BS</span>
+              <span>Berthe Simo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-land">Land</span>
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">12,000,000 FCFA</div>
+            <h3 class="property-title">Beachside Plot</h3>
+            <p class="property-location">📍 Near Beach, Kribi</p>
+            <div class="property-meta">
+              <span>📐 500m²</span>
+              <span>📄 Freehold</span>
+              <span>🏡 Residential</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">HA</span>
+              <span>Hugo Ateba</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-land">Land</span>
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">4,500,000 FCFA</div>
+            <h3 class="property-title">Residential Plot</h3>
+            <p class="property-location">📍 Limbe, South West</p>
+            <div class="property-meta">
+              <span>📐 400m²</span>
+              <span>📄 Freehold</span>
+              <span>🏡 Residential</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">VE</span>
+              <span>Viviane Essame</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 7 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1565118531796-763e5082d113?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-land">Land</span>
+              <span class="badge badge-verified">Verified</span>
+              <span class="badge badge-featured">Featured</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">80,000,000 FCFA</div>
+            <h3 class="property-title">Industrial Land</h3>
+            <p class="property-location">📍 Douala, Littoral</p>
+            <div class="property-meta">
+              <span>📐 5,000m²</span>
+              <span>📄 Freehold</span>
+              <span>🏭 Industrial</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">SN</span>
+              <span>Samuel Nkwenti</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 8 -->
+        <div class="property-card">
+          <div class="property-img" style="background-image:url('https://images.unsplash.com/photo-1491555103944-7c647fd857e6?w=600&q=80');">
+            <div class="property-badges">
+              <span class="badge badge-land">Land</span>
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <button class="wishlist-btn" aria-label="Save to wishlist">♡</button>
+          </div>
+          <div class="property-body">
+            <div class="property-price">9,500,000 FCFA</div>
+            <h3 class="property-title">Residential Plot</h3>
+            <p class="property-location">📍 Omnisport, Yaoundé</p>
+            <div class="property-meta">
+              <span>📐 300m²</span>
+              <span>📄 Freehold</span>
+              <span>🏡 Residential</span>
+            </div>
+            <div class="property-agent">
+              <span class="agent-avatar">NF</span>
+              <span>Nadège Fouda</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.property-grid -->
+
+      <!-- PAGINATION -->
+      <div class="pagination">
+        <button class="page-btn" aria-label="Previous page">&laquo; Prev</button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <button class="page-btn">4</button>
+        <button class="page-btn">5</button>
+        <button class="page-btn" aria-label="Next page">Next &raquo;</button>
+      </div>
+
+    </div><!-- /.listing-main -->
+  </div><!-- /.listing-layout -->
+</div><!-- /.container -->
+
+<div id="lz-footer"></div>
+<button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
+<script>
+  window.LZ_BASE = '../';
+  window.LZ_BREADCRUMB = [
+    { label: 'Home', url: '../index.html' },
+    { label: 'Properties', url: null },
+    { label: 'Land & Plots', url: null }
+  ];
+</script>
+<script src="../assets/js/nav.js"></script>
+</body>
+</html>

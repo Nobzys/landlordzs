@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vehicle Rentals in Cameroon — LANDLORDZS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../assets/css/main.css"/>
+</head>
+<body>
+<div id="lz-header"></div>
+<div id="lz-breadcrumb"></div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-header-content">
+    <div>
+      <span class="page-header-badge">400+ Vehicles</span>
+      <h1>Vehicle Rentals</h1>
+      <p>400+ vehicles available across 6 cities</p>
+    </div>
+    <div class="page-header-actions">
+      <a href="../auth/register.html" class="btn btn-primary">List Your Vehicle</a>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+  <div class="listing-layout">
+
+    <!-- FILTER SIDEBAR -->
+    <aside class="filter-sidebar">
+      <div class="filter-panel">
+        <div class="filter-panel-title">
+          <span>Search Filters</span>
+          <button class="btn btn-sm btn-outline">Reset</button>
+        </div>
+
+        <!-- Vehicle Type -->
+        <div class="filter-group">
+          <label class="filter-label">Vehicle Type</label>
+          <label class="filter-check"><input type="checkbox" value="sedan"/> Sedan</label>
+          <label class="filter-check"><input type="checkbox" value="suv"/> SUV</label>
+          <label class="filter-check"><input type="checkbox" value="pickup"/> Pickup Truck</label>
+          <label class="filter-check"><input type="checkbox" value="minivan"/> Minivan</label>
+          <label class="filter-check"><input type="checkbox" value="bus"/> Bus</label>
+          <label class="filter-check"><input type="checkbox" value="luxury"/> Luxury Car</label>
+          <label class="filter-check"><input type="checkbox" value="cargo-van"/> Cargo Van</label>
+          <label class="filter-check"><input type="checkbox" value="motorcycle"/> Motorcycle</label>
+        </div>
+
+        <!-- Location -->
+        <div class="filter-group">
+          <label class="filter-label">Location</label>
+          <select class="filter-select">
+            <option value="">All Cities</option>
+            <option value="yaounde">Yaoundé</option>
+            <option value="douala">Douala</option>
+            <option value="buea">Buea</option>
+            <option value="bamenda">Bamenda</option>
+            <option value="limbe">Limbe</option>
+            <option value="kribi">Kribi</option>
+          </select>
+        </div>
+
+        <!-- Features -->
+        <div class="filter-group">
+          <label class="filter-label">Features</label>
+          <label class="filter-check"><input type="checkbox" value="driver"/> Driver Included</label>
+          <label class="filter-check"><input type="checkbox" value="ac"/> Air Conditioning</label>
+          <label class="filter-check"><input type="checkbox" value="gps"/> GPS Navigation</label>
+          <label class="filter-check"><input type="checkbox" value="child-seat"/> Child Seat</label>
+        </div>
+
+        <!-- Fuel Type -->
+        <div class="filter-group">
+          <label class="filter-label">Fuel Type</label>
+          <label class="filter-check"><input type="checkbox" value="petrol"/> Petrol</label>
+          <label class="filter-check"><input type="checkbox" value="diesel"/> Diesel</label>
+          <label class="filter-check"><input type="checkbox" value="electric"/> Electric</label>
+        </div>
+
+        <!-- Price Range -->
+        <div class="filter-group">
+          <label class="filter-label">Price Range Per Day (FCFA)</label>
+          <div class="range-row">
+            <input type="number" class="filter-input" placeholder="Min"/>
+            <input type="number" class="filter-input" placeholder="Max"/>
+          </div>
+        </div>
+
+        <!-- Availability -->
+        <div class="filter-group">
+          <label class="filter-label">Availability</label>
+          <label class="filter-check"><input type="checkbox" value="available-now"/> Available Now</label>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%;margin-top:8px;">Apply Filters</button>
+      </div>
+    </aside>
+
+    <!-- LISTING MAIN -->
+    <div class="listing-main">
+
+      <!-- TOOLBAR -->
+      <div class="listing-toolbar">
+        <span class="listing-count">Showing 1–9 of <strong>400</strong> vehicles</span>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <select class="sort-select listing-sort">
+            <option value="newest">Newest</option>
+            <option value="price-asc">Price Low–High</option>
+            <option value="price-desc">Price High–Low</option>
+            <option value="popular">Most Popular</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- VEHICLE GRID -->
+      <div class="rental-grid">
+
+        <!-- Card 1: Toyota Corolla -->
+        <div class="rental-card">
+          <div class="rental-card-img">🚗</div>
+          <div class="rental-card-body">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <h3 class="rental-card-title">Toyota Corolla 2021</h3>
+            <div class="rental-price">28,000 FCFA<span>/day</span></div>
+            <div class="rental-specs">📍 Douala &nbsp;·&nbsp; AC · GPS · Driver Optional</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="../auth/register.html" class="btn btn-primary btn-sm">Book Now</a>
+              <a href="../auth/register.html" class="btn btn-outline btn-sm">Get Quote</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Toyota Land Cruiser Prado -->
+        <div class="rental-card">
+          <div class="rental-card-img">🚙</div>
+          <div class="rental-card-body">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <span class="badge badge-verified">Verified</span>
+              <span class="badge badge-featured">Featured</span>
+            </div>
+            <h3 class="rental-card-title">Toyota Land Cruiser Prado</h3>
+            <div class="rental-price">85,000 FCFA<span>/day</span></div>
+            <div class="rental-specs">📍 Yaoundé &nbsp;·&nbsp; AC · 4WD · Driver Available</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="../auth/register.html" class="btn btn-primary btn-sm">Book Now</a>
+              <a href="../auth/register.html" class="btn btn-outline btn-sm">Get Quote</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Toyota Hilux Double Cab -->
+        <div class="rental-card">
+          <div class="rental-card-img">🛻</div>
+          <div class="rental-card-body">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <h3 class="rental-card-title">Toyota Hilux Double Cab</h3>
+            <div class="rental-price">45,000 FCFA<span>/day</span></div>
+            <div class="rental-specs">📍 Buea &nbsp;·&nbsp; 4WD · AC · Driver Optional</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="../auth/register.html" class="btn btn-primary btn-sm">Book Now</a>
+              <a href="../auth/register.html" class="btn btn-outline btn-sm">Get Quote</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Mercedes-Benz C300 -->
+        <div class="rental-card">
+          <div class="rental-card-img">🏎️</div>
+          <div class="rental-card-body">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <h3 class="rental-card-title">Mercedes-Benz C300</h3>
+            <div class="rental-price">150,000 FCFA<span>/day</span></div>
+            <div class="rental-specs">📍 Douala &nbsp;·&nbsp; Luxury · Driver Included</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="../auth/register.html" class="btn btn-primary btn-sm">Book Now</a>
+              <a href="../auth/register.html" class="btn btn-outline btn-sm">Get Quote</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5: Toyota Hiace Minivan -->
+        <div class="rental-card">
+          <div class="rental-card-img">🚌</div>
+          <div class="rental-card-body">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <h3 class="rental-card-title">Toyota Hiace Minivan (14-seat)</h3>
+            <div class="rental-price">65,000 FCFA<span>/day</span></div>
+            <div class="rental-specs">📍 Bamenda &nbsp;·&nbsp; Driver Included</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="../auth/register.html" class="btn btn-primary btn-sm">Book Now</a>
+              <a href="../auth/register.html" class="btn btn-outline btn-sm">Get Quote</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6: Hyundai Tucson 2022 -->
+        <div class="rental-card">
+          <div class="rental-card-img">🚗</div>
+          <div class="rental-card-body">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <h3 class="rental-card-title">Hyundai Tucson 2022</h3>
+            <div class="rental-price">55,000 FCFA<span>/day</span></div>
+            <div class="rental-specs">📍 Limbe &nbsp;·&nbsp; AC · GPS · Driver Optional</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="../auth/register.html" class="btn btn-primary btn-sm">Book Now</a>
+              <a href="../auth/register.html" class="btn btn-outline btn-sm">Get Quote</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 7: VW Transporter Cargo -->
+        <div class="rental-card">
+          <div class="rental-card-img">🚐</div>
+          <div class="rental-card-body">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <h3 class="rental-card-title">VW Transporter Cargo</h3>
+            <div class="rental-price">40,000 FCFA<span>/day</span></div>
+            <div class="rental-specs">📍 Douala &nbsp;·&nbsp; Cargo · Driver Optional</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="../auth/register.html" class="btn btn-primary btn-sm">Book Now</a>
+              <a href="../auth/register.html" class="btn btn-outline btn-sm">Get Quote</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 8: Mitsubishi Pajero -->
+        <div class="rental-card">
+          <div class="rental-card-img">🚙</div>
+          <div class="rental-card-body">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <span class="badge badge-verified">Verified</span>
+            </div>
+            <h3 class="rental-card-title">Mitsubishi Pajero</h3>
+            <div class="rental-price">70,000 FCFA<span>/day</span></div>
+            <div class="rental-specs">📍 Kribi &nbsp;·&nbsp; 4WD · AC · Beachside Service</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="../auth/register.html" class="btn btn-primary btn-sm">Book Now</a>
+              <a href="../auth/register.html" class="btn btn-outline btn-sm">Get Quote</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 9: Range Rover Sport -->
+        <div class="rental-card">
+          <div class="rental-card-img">🏎️</div>
+          <div class="rental-card-body">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <span class="badge badge-verified">Verified</span>
+              <span class="badge badge-featured">Featured</span>
+            </div>
+            <h3 class="rental-card-title">Range Rover Sport</h3>
+            <div class="rental-price">200,000 FCFA<span>/day</span></div>
+            <div class="rental-specs">📍 Yaoundé &nbsp;·&nbsp; Luxury · Driver Included</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="../auth/register.html" class="btn btn-primary btn-sm">Book Now</a>
+              <a href="../auth/register.html" class="btn btn-outline btn-sm">Get Quote</a>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.rental-grid -->
+
+      <!-- PAGINATION -->
+      <div class="pagination">
+        <button class="page-btn" aria-label="Previous page">&laquo; Prev</button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <button class="page-btn" aria-label="Next page">Next &raquo;</button>
+      </div>
+
+    </div><!-- /.listing-main -->
+  </div><!-- /.listing-layout -->
+</div><!-- /.container -->
+
+<!-- BENEFITS SECTION -->
+<section class="section section-gray">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Benefits of Renting with LANDLORDZS</h2>
+      <p class="section-sub">Peace of mind every kilometre of the way</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:32px;margin-top:32px;">
+      <div style="text-align:center;padding:32px 24px;">
+        <div style="font-size:3rem;margin-bottom:16px;">🛡️</div>
+        <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:8px;">Insured Vehicles</h3>
+        <p style="color:#6b7280;line-height:1.6;">Every vehicle on our platform carries valid insurance and roadworthiness certification, so you travel with complete confidence.</p>
+      </div>
+      <div style="text-align:center;padding:32px 24px;">
+        <div style="font-size:3rem;margin-bottom:16px;">🆘</div>
+        <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:8px;">24/7 Roadside Assistance</h3>
+        <p style="color:#6b7280;line-height:1.6;">Breakdowns happen. Our round-the-clock roadside support team is always on standby across all six cities to get you moving again.</p>
+      </div>
+      <div style="text-align:center;padding:32px 24px;">
+        <div style="font-size:3rem;margin-bottom:16px;">📍</div>
+        <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:8px;">Flexible Pickup &amp; Drop-off</h3>
+        <p style="color:#6b7280;line-height:1.6;">Choose pickup and drop-off locations that suit your schedule. Airport, hotel, or office — we deliver to your door.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="lz-footer"></div>
+<button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
+<script>
+  window.LZ_BASE = '../';
+  window.LZ_BREADCRUMB = [
+    { label: 'Home', url: '../index.html' },
+    { label: 'Rentals', url: null },
+    { label: 'Vehicle Rentals', url: null }
+  ];
+</script>
+<script src="../assets/js/nav.js"></script>
+</body>
+</html>

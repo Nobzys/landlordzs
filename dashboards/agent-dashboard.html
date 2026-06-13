@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Agent Dashboard — LANDLORDZS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../assets/css/main.css"/>
+</head>
+<body>
+<div id="lz-header"></div>
+
+<div class="dashboard-wrapper">
+
+  <!-- SIDEBAR -->
+  <aside class="dash-sidebar">
+    <div class="dash-user">
+      <div class="dash-user-avatar">JM</div>
+      <div class="dash-user-name">Jean Mfoula</div>
+      <div class="dash-user-role">Licensed Agent · Yaoundé</div>
+    </div>
+
+    <a href="#" class="dash-nav-item active"><span class="nav-icon">📊</span> Overview</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">🏠</span> My Listings</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">➕</span> Add Listing</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">👥</span> Leads &amp; Enquiries <span class="nav-badge">12</span></a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">❤️</span> Saved Properties</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">💬</span> Messages <span class="nav-badge">5</span></a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">📅</span> Viewings</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">💰</span> Commissions</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">⭐</span> Reviews</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">👤</span> My Profile</a>
+    <a href="#" class="dash-nav-item"><span class="nav-icon">🚪</span> Sign Out</a>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="dash-main">
+
+    <!-- Header -->
+    <div class="dash-header">
+      <div>
+        <div class="dash-title">Agent Dashboard</div>
+        <div class="dash-subtitle">Jean Mfoula · Licensed Agent · Yaoundé</div>
+      </div>
+      <div class="dash-actions">
+        <button class="btn btn-primary btn-sm">Add New Listing</button>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fce4e4;">🏠</div>
+        <div class="stat-value">18</div>
+        <div class="stat-label">Active Listings</div>
+        <div class="stat-change up">▲ 3 this month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fff3e0;">📩</div>
+        <div class="stat-value">12</div>
+        <div class="stat-label">Pending Enquiries</div>
+        <div class="stat-change">Awaiting response</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e3f2fd;">📅</div>
+        <div class="stat-value">5</div>
+        <div class="stat-label">Viewings Scheduled</div>
+        <div class="stat-change">This week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e8f5e9;">💰</div>
+        <div class="stat-value">3,450,000 FCFA</div>
+        <div class="stat-label">Total Commission</div>
+        <div class="stat-change up">▲ 32% this year</div>
+      </div>
+    </div>
+
+    <!-- My Active Listings -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <div class="dash-card-title">My Active Listings</div>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Type</th>
+              <th>Location</th>
+              <th>Price</th>
+              <th>Views</th>
+              <th>Enquiries</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>4-Bed Villa, Bastos</strong></td>
+              <td>For Sale</td>
+              <td>Yaoundé</td>
+              <td>45M FCFA</td>
+              <td>1,240</td>
+              <td>18</td>
+              <td><span class="table-status status-active">Live</span></td>
+            </tr>
+            <tr>
+              <td><strong>3-Bed House, Odza</strong></td>
+              <td>For Sale</td>
+              <td>Yaoundé</td>
+              <td>22M FCFA</td>
+              <td>876</td>
+              <td>11</td>
+              <td><span class="table-status status-active">Live</span></td>
+            </tr>
+            <tr>
+              <td><strong>2-Bed Apt, Biyem-Assi</strong></td>
+              <td>For Rent</td>
+              <td>Yaoundé</td>
+              <td>80K/mo</td>
+              <td>543</td>
+              <td>8</td>
+              <td><span class="table-status status-active">Live</span></td>
+            </tr>
+            <tr>
+              <td><strong>Office Space 120m²</strong></td>
+              <td>Commercial</td>
+              <td>Yaoundé</td>
+              <td>15M FCFA</td>
+              <td>234</td>
+              <td>4</td>
+              <td><span class="table-status status-pending">Under Review</span></td>
+            </tr>
+            <tr>
+              <td><strong>Land 500m², Soa</strong></td>
+              <td>Land</td>
+              <td>Yaoundé</td>
+              <td>7.5M FCFA</td>
+              <td>189</td>
+              <td>3</td>
+              <td><span class="table-status status-active">Live</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Enquiries -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <div class="dash-card-title">Recent Enquiries</div>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Property</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="table-avatar">
+                  <div class="table-avatar-img">GN</div>
+                  Grace Njoku
+                </div>
+              </td>
+              <td>+237 6XX XXX XXX</td>
+              <td>4-Bed Villa, Bastos</td>
+              <td>Jun 10</td>
+              <td><span class="table-status status-active">New</span></td>
+              <td><button class="btn btn-primary btn-sm">Reply</button></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="table-avatar">
+                  <div class="table-avatar-img">TM</div>
+                  Thomas Mpesso
+                </div>
+              </td>
+              <td>+237 6XX XXX XXX</td>
+              <td>3-Bed House, Odza</td>
+              <td>Jun 9</td>
+              <td><span class="table-status status-pending">Responded</span></td>
+              <td><button class="btn btn-outline btn-sm">View</button></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="table-avatar">
+                  <div class="table-avatar-img">FN</div>
+                  Fatima Ndikum
+                </div>
+              </td>
+              <td>+237 6XX XXX XXX</td>
+              <td>2-Bed Apt</td>
+              <td>Jun 9</td>
+              <td><span class="table-status status-active">New</span></td>
+              <td><button class="btn btn-primary btn-sm">Reply</button></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="table-avatar">
+                  <div class="table-avatar-img">OB</div>
+                  Olivier Baba
+                </div>
+              </td>
+              <td>+237 6XX XXX XXX</td>
+              <td>4-Bed Villa, Bastos</td>
+              <td>Jun 8</td>
+              <td><span class="table-status status-active">Viewing Booked</span></td>
+              <td><button class="btn btn-outline btn-sm">View</button></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="table-avatar">
+                  <div class="table-avatar-img">CM</div>
+                  Christelle Mbe
+                </div>
+              </td>
+              <td>+237 6XX XXX XXX</td>
+              <td>Land 500m²</td>
+              <td>Jun 7</td>
+              <td><span class="table-status status-inactive">Closed</span></td>
+              <td><button class="btn btn-outline btn-sm">Archive</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="lz-footer"></div>
+<button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
+<script>
+  window.LZ_BASE = '../';
+  window.LZ_BREADCRUMB = [];
+</script>
+<script src="../assets/js/nav.js"></script>
+</body>
+</html>

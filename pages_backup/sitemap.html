@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sitemap — LANDLORDZS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../assets/css/main.css"/>
+  <style>
+    .sitemap-section { margin-bottom: 48px; }
+    .sitemap-section h2 { font-size: 16px; font-weight: 700; color: var(--dark); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--red); display: inline-block; }
+    .sitemap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+    .sitemap-link { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--white); border: 1.5px solid var(--gray-200); border-radius: var(--r-sm); font-size: 13.5px; color: var(--dark); font-weight: 500; transition: all var(--transition); }
+    .sitemap-link:hover { border-color: var(--red); background: var(--red-light); color: var(--red); transform: translateX(3px); }
+    .sitemap-link-icon { font-size: 18px; flex-shrink: 0; }
+    .sitemap-link small { display: block; font-size: 11.5px; color: var(--gray-500); font-weight: 400; margin-top: 2px; }
+    .sitemap-tree { background: var(--gray-100); border-radius: var(--r-md); padding: 28px; margin-bottom: 32px; }
+    .sitemap-tree h3 { font-size: 14px; font-weight: 700; color: var(--gray-600); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 16px; }
+    .tree-root { font-size: 15px; font-weight: 800; color: var(--red); margin-bottom: 12px; }
+    .tree-branch { margin-left: 24px; border-left: 2px solid var(--gray-300); padding-left: 16px; margin-bottom: 8px; }
+    .tree-branch-label { font-size: 13px; font-weight: 700; color: var(--gray-700); margin-bottom: 6px; }
+    .tree-leaf { font-size: 12.5px; color: var(--gray-600); padding: 2px 0; }
+    .tree-leaf a { color: var(--gray-700); }
+    .tree-leaf a:hover { color: var(--red); text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div id="lz-header"></div>
+<div id="lz-breadcrumb"></div>
+
+<div class="page-header">
+  <div class="container page-header-content">
+    <div>
+      <h1>Site Map</h1>
+      <p>Every page on LANDLORDZS — find what you need quickly</p>
+    </div>
+    <div class="page-header-badge">39 Pages</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="container">
+
+    <!-- Visual Tree -->
+    <div class="sitemap-tree">
+      <h3>Navigation Tree</h3>
+      <div class="tree-root">🏠 LANDLORDZS (index.html)</div>
+      <div style="margin-left:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;">
+
+        <div class="tree-branch">
+          <div class="tree-branch-label">📄 Pages</div>
+          <div class="tree-leaf"><a href="../index.html">Home</a></div>
+          <div class="tree-leaf"><a href="about.html">About Us</a></div>
+          <div class="tree-leaf"><a href="contact.html">Contact</a></div>
+          <div class="tree-leaf"><a href="sitemap.html">Sitemap</a></div>
+        </div>
+
+        <div class="tree-branch">
+          <div class="tree-branch-label">🏠 Properties</div>
+          <div class="tree-leaf"><a href="../properties/buy.html">Properties for Sale</a></div>
+          <div class="tree-leaf"><a href="../properties/rent.html">Properties for Rent</a></div>
+          <div class="tree-leaf"><a href="../properties/land.html">Land &amp; Plots</a></div>
+          <div class="tree-leaf"><a href="../properties/commercial.html">Commercial Property</a></div>
+          <div class="tree-leaf"><a href="../properties/property-details.html">Property Details</a></div>
+        </div>
+
+        <div class="tree-branch">
+          <div class="tree-branch-label">🧱 Materials</div>
+          <div class="tree-leaf"><a href="../materials/materials-home.html">Materials Home</a></div>
+          <div class="tree-leaf"><a href="../materials/cement.html">Cement &amp; Concrete</a></div>
+          <div class="tree-leaf"><a href="../materials/roofing.html">Roofing</a></div>
+          <div class="tree-leaf"><a href="../materials/electrical.html">Electrical Supplies</a></div>
+          <div class="tree-leaf"><a href="../materials/plumbing.html">Plumbing Materials</a></div>
+          <div class="tree-leaf"><a href="../materials/tiles.html">Tiles &amp; Flooring</a></div>
+        </div>
+
+        <div class="tree-branch">
+          <div class="tree-branch-label">👷 Professionals</div>
+          <div class="tree-leaf"><a href="../professionals/contractors.html">Contractors</a></div>
+          <div class="tree-leaf"><a href="../professionals/engineers.html">Engineers</a></div>
+          <div class="tree-leaf"><a href="../professionals/architects.html">Architects</a></div>
+          <div class="tree-leaf"><a href="../professionals/lawyers.html">Property Lawyers</a></div>
+          <div class="tree-leaf"><a href="../professionals/surveyors.html">Land Surveyors</a></div>
+          <div class="tree-leaf"><a href="../professionals/property-managers.html">Agents &amp; Managers</a></div>
+        </div>
+
+        <div class="tree-branch">
+          <div class="tree-branch-label">🧹 Services</div>
+          <div class="tree-leaf"><a href="../services/cleaning.html">Cleaning Services</a></div>
+          <div class="tree-leaf"><a href="../services/security.html">Security Services</a></div>
+          <div class="tree-leaf"><a href="../services/waste-collection.html">Waste Collection</a></div>
+          <div class="tree-leaf"><a href="../services/landscaping.html">Landscaping</a></div>
+          <div class="tree-leaf"><a href="../services/plumbing-services.html">Plumbing Services</a></div>
+          <div class="tree-leaf"><a href="../services/electrical-services.html">Electrical Services</a></div>
+        </div>
+
+        <div class="tree-branch">
+          <div class="tree-branch-label">🚜 Rentals</div>
+          <div class="tree-leaf"><a href="../rentals/equipment-rentals.html">Equipment Rentals</a></div>
+          <div class="tree-leaf"><a href="../rentals/vehicle-rentals.html">Vehicle Rentals</a></div>
+        </div>
+
+        <div class="tree-branch">
+          <div class="tree-branch-label">💼 Jobs</div>
+          <div class="tree-leaf"><a href="../jobs/jobs.html">Job Listings</a></div>
+          <div class="tree-leaf"><a href="../jobs/tenders.html">Tenders</a></div>
+        </div>
+
+        <div class="tree-branch">
+          <div class="tree-branch-label">🔐 Auth</div>
+          <div class="tree-leaf"><a href="../auth/login.html">Sign In</a></div>
+          <div class="tree-leaf"><a href="../auth/register.html">Create Account</a></div>
+          <div class="tree-leaf"><a href="../auth/forgot-password.html">Reset Password</a></div>
+        </div>
+
+        <div class="tree-branch">
+          <div class="tree-branch-label">📊 Dashboards</div>
+          <div class="tree-leaf"><a href="../dashboards/admin-dashboard.html">Admin Dashboard</a></div>
+          <div class="tree-leaf"><a href="../dashboards/vendor-dashboard.html">Vendor Dashboard</a></div>
+          <div class="tree-leaf"><a href="../dashboards/agent-dashboard.html">Agent Dashboard</a></div>
+          <div class="tree-leaf"><a href="../dashboards/contractor-dashboard.html">Contractor Dashboard</a></div>
+          <div class="tree-leaf"><a href="../dashboards/lawyer-dashboard.html">Lawyer Dashboard</a></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Pages section -->
+    <div class="sitemap-section">
+      <h2>Core Pages</h2>
+      <div class="sitemap-grid">
+        <a href="../index.html" class="sitemap-link"><span class="sitemap-link-icon">🏠</span><div>Homepage<small>Hero, featured listings, all sections</small></div></a>
+        <a href="about.html" class="sitemap-link"><span class="sitemap-link-icon">ℹ️</span><div>About Us<small>Story, team, values, stats</small></div></a>
+        <a href="contact.html" class="sitemap-link"><span class="sitemap-link-icon">📬</span><div>Contact<small>Form, offices, FAQ</small></div></a>
+      </div>
+    </div>
+
+    <!-- Properties -->
+    <div class="sitemap-section">
+      <h2>Properties</h2>
+      <div class="sitemap-grid">
+        <a href="../properties/buy.html" class="sitemap-link"><span class="sitemap-link-icon">🏠</span><div>Buy Property<small>12,400+ sale listings</small></div></a>
+        <a href="../properties/rent.html" class="sitemap-link"><span class="sitemap-link-icon">🔑</span><div>Rent Property<small>8,200+ rental listings</small></div></a>
+        <a href="../properties/land.html" class="sitemap-link"><span class="sitemap-link-icon">🌍</span><div>Land &amp; Plots<small>3,600+ land listings</small></div></a>
+        <a href="../properties/commercial.html" class="sitemap-link"><span class="sitemap-link-icon">🏢</span><div>Commercial Property<small>1,800+ commercial listings</small></div></a>
+        <a href="../properties/property-details.html" class="sitemap-link"><span class="sitemap-link-icon">🔍</span><div>Property Details<small>Sample detail page</small></div></a>
+      </div>
+    </div>
+
+    <!-- Materials -->
+    <div class="sitemap-section">
+      <h2>Building Materials</h2>
+      <div class="sitemap-grid">
+        <a href="../materials/materials-home.html" class="sitemap-link"><span class="sitemap-link-icon">🧱</span><div>Materials Marketplace<small>800+ vendors</small></div></a>
+        <a href="../materials/cement.html" class="sitemap-link"><span class="sitemap-link-icon">🏗️</span><div>Cement &amp; Concrete<small>420+ products</small></div></a>
+        <a href="../materials/roofing.html" class="sitemap-link"><span class="sitemap-link-icon">🏠</span><div>Roofing Materials<small>280+ products</small></div></a>
+        <a href="../materials/electrical.html" class="sitemap-link"><span class="sitemap-link-icon">⚡</span><div>Electrical Supplies<small>960+ products</small></div></a>
+        <a href="../materials/plumbing.html" class="sitemap-link"><span class="sitemap-link-icon">🔧</span><div>Plumbing Materials<small>540+ products</small></div></a>
+        <a href="../materials/tiles.html" class="sitemap-link"><span class="sitemap-link-icon">🟫</span><div>Tiles &amp; Flooring<small>1,200+ products</small></div></a>
+      </div>
+    </div>
+
+    <!-- Professionals -->
+    <div class="sitemap-section">
+      <h2>Professionals</h2>
+      <div class="sitemap-grid">
+        <a href="../professionals/contractors.html" class="sitemap-link"><span class="sitemap-link-icon">🔨</span><div>Contractors<small>1,800+ verified</small></div></a>
+        <a href="../professionals/engineers.html" class="sitemap-link"><span class="sitemap-link-icon">⚙️</span><div>Civil &amp; Structural Engineers<small>650+ verified</small></div></a>
+        <a href="../professionals/architects.html" class="sitemap-link"><span class="sitemap-link-icon">📐</span><div>Architects &amp; Designers<small>340+ registered</small></div></a>
+        <a href="../professionals/lawyers.html" class="sitemap-link"><span class="sitemap-link-icon">⚖️</span><div>Property Lawyers<small>420+ verified</small></div></a>
+        <a href="../professionals/surveyors.html" class="sitemap-link"><span class="sitemap-link-icon">📏</span><div>Land Surveyors<small>280+ certified</small></div></a>
+        <a href="../professionals/property-managers.html" class="sitemap-link"><span class="sitemap-link-icon">🏷️</span><div>Agents &amp; Managers<small>3,200+ verified</small></div></a>
+      </div>
+    </div>
+
+    <!-- Services -->
+    <div class="sitemap-section">
+      <h2>Home Services</h2>
+      <div class="sitemap-grid">
+        <a href="../services/cleaning.html" class="sitemap-link"><span class="sitemap-link-icon">🧹</span><div>Cleaning Services<small>500+ providers</small></div></a>
+        <a href="../services/security.html" class="sitemap-link"><span class="sitemap-link-icon">🔒</span><div>Security Services<small>200+ providers</small></div></a>
+        <a href="../services/waste-collection.html" class="sitemap-link"><span class="sitemap-link-icon">🗑️</span><div>Waste Collection<small>150+ providers</small></div></a>
+        <a href="../services/landscaping.html" class="sitemap-link"><span class="sitemap-link-icon">🌿</span><div>Landscaping<small>180+ providers</small></div></a>
+        <a href="../services/plumbing-services.html" class="sitemap-link"><span class="sitemap-link-icon">🔧</span><div>Plumbing Services<small>400+ plumbers</small></div></a>
+        <a href="../services/electrical-services.html" class="sitemap-link"><span class="sitemap-link-icon">⚡</span><div>Electrical Services<small>350+ electricians</small></div></a>
+      </div>
+    </div>
+
+    <!-- Rentals & Jobs -->
+    <div class="sitemap-section">
+      <h2>Rentals &amp; Jobs</h2>
+      <div class="sitemap-grid">
+        <a href="../rentals/equipment-rentals.html" class="sitemap-link"><span class="sitemap-link-icon">🚜</span><div>Equipment Rentals<small>600+ machines</small></div></a>
+        <a href="../rentals/vehicle-rentals.html" class="sitemap-link"><span class="sitemap-link-icon">🚗</span><div>Vehicle Rentals<small>400+ vehicles</small></div></a>
+        <a href="../jobs/jobs.html" class="sitemap-link"><span class="sitemap-link-icon">💼</span><div>Job Listings<small>2,400+ opportunities</small></div></a>
+        <a href="../jobs/tenders.html" class="sitemap-link"><span class="sitemap-link-icon">📋</span><div>Tenders<small>340+ active tenders</small></div></a>
+      </div>
+    </div>
+
+    <!-- Auth -->
+    <div class="sitemap-section">
+      <h2>Account &amp; Auth</h2>
+      <div class="sitemap-grid">
+        <a href="../auth/login.html" class="sitemap-link"><span class="sitemap-link-icon">🔐</span><div>Sign In<small>Email or social login</small></div></a>
+        <a href="../auth/register.html" class="sitemap-link"><span class="sitemap-link-icon">✍️</span><div>Create Account<small>Buyer, seller, professional</small></div></a>
+        <a href="../auth/forgot-password.html" class="sitemap-link"><span class="sitemap-link-icon">🔑</span><div>Reset Password<small>Email recovery</small></div></a>
+      </div>
+    </div>
+
+    <!-- Dashboards -->
+    <div class="sitemap-section">
+      <h2>Dashboards</h2>
+      <div class="sitemap-grid">
+        <a href="../dashboards/admin-dashboard.html" class="sitemap-link"><span class="sitemap-link-icon">🛡️</span><div>Admin Dashboard<small>Platform management</small></div></a>
+        <a href="../dashboards/vendor-dashboard.html" class="sitemap-link"><span class="sitemap-link-icon">🏪</span><div>Vendor Dashboard<small>Products &amp; orders</small></div></a>
+        <a href="../dashboards/agent-dashboard.html" class="sitemap-link"><span class="sitemap-link-icon">🏷️</span><div>Agent Dashboard<small>Listings &amp; leads</small></div></a>
+        <a href="../dashboards/contractor-dashboard.html" class="sitemap-link"><span class="sitemap-link-icon">🔨</span><div>Contractor Dashboard<small>Projects &amp; bids</small></div></a>
+        <a href="../dashboards/lawyer-dashboard.html" class="sitemap-link"><span class="sitemap-link-icon">⚖️</span><div>Lawyer Dashboard<small>Cases &amp; consultations</small></div></a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="lz-footer"></div>
+<button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
+<script>
+  window.LZ_BASE = '../';
+  window.LZ_BREADCRUMB = [
+    { label: 'Home', url: '../index.html' },
+    { label: 'Sitemap', url: null }
+  ];
+</script>
+<script src="../assets/js/nav.js"></script>
+</body>
+</html>
