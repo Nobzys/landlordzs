@@ -119,7 +119,7 @@ export default async function AdminProfessionalsPage({
 
         const toUrl = async (path: string | null) => {
           if (!path) return null
-          const { data } = await supabaseStorage.from('verification-docs').createSignedUrl(path, 3600)
+          const { data } = await supabaseStorage.from('verification-documents').createSignedUrl(path, 3600)
           return data?.signedUrl ?? null
         }
 

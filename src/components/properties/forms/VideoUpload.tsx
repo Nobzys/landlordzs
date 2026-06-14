@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { uploadPropertyVideo } from '@/lib/supabase/storage'
+import { uploadViaApi } from '@/lib/supabase/storage'
+import { STORAGE_BUCKETS } from '@/lib/utils/constants'
 import { addPropertyVideo } from '@/lib/actions/properties'
 import { cn } from '@/lib/utils/cn'
 import { toast } from 'sonner'
@@ -49,7 +50,7 @@ export function VideoUpload({
       setProgress(20)
 
       try {
-        const result = await uploadPropertyVideo(propertyId, file, userId)
+        const result = await uploadViaApi(STORAGE_BUCKETS.PROPERTY_VIDEOS, propertyId, file)
         setProgress(70)
         const saved = await addPropertyVideo(propertyId, result.url, titleInput || undefined)
         if (saved.error) throw new Error(saved.error)

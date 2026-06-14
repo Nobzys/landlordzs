@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { Upload, X, Star, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { uploadPropertyImage } from '@/lib/supabase/storage'
+import { uploadViaApi } from '@/lib/supabase/storage'
 import { addPropertyImage, removePropertyImage } from '@/lib/actions/properties'
 import { STORAGE_BUCKETS } from '@/lib/utils/constants'
 import { cn } from '@/lib/utils/cn'
@@ -51,7 +51,7 @@ export function ImageUpload({
       for (let i = 0; i < toUpload.length; i++) {
         try {
           const file   = toUpload[i]
-          const result = await uploadPropertyImage(propertyId, file, userId)
+          const result = await uploadViaApi(STORAGE_BUCKETS.PROPERTY_IMAGES, propertyId, file)
           const isPrimary = images.length === 0 && i === 0
 
           const saved = await addPropertyImage(propertyId, result.url, result.path, isPrimary)

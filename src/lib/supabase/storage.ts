@@ -12,7 +12,7 @@ export interface UploadResult {
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024  // 10 MB
 const MAX_VIDEO_SIZE = 100 * 1024 * 1024 // 100 MB
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif']
-const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/mov']
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime']
 
 export function getPublicUrl(bucket: string, path: string): string {
   const supabase = createClient()
@@ -89,6 +89,22 @@ export async function uploadAvatar(file: File, userId: string): Promise<UploadRe
   if (error) throw new Error(error.message)
 
   return { path, url: getPublicUrl(STORAGE_BUCKETS.USER_AVATARS, path) }
+}
+
+export async function uploadViaApi(
+  bucket: string,
+  resourceId: string,
+  file: File
+): Promise<UploadResult> {
+  const form = new FormData()
+  form.append('file', file)
+  form.append('bucket', bucket)
+  form.append('resource_id', resourceId)
+
+  const res = await fetch('/api/upload', { method: 'POST', body: form })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error ?? 'Upload failed')
+  return { url: data.url as string, path: data.path as string }
 }
 
 export async function deleteStorageFile(bucket: string, path: string): Promise<void> {

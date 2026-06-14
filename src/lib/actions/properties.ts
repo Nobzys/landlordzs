@@ -23,7 +23,7 @@ export async function createProperty(
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
-  const { amenities, has_security, has_generator, has_borehole, ...fields } = parsed.data
+  const { amenities, has_security, has_generator, has_borehole, is_negotiable, land_area_sqm, ...fields } = parsed.data
   const slug = `${slugify(fields.title)}-${Date.now()}`
 
   const { data: property, error } = await (supabase as any)
@@ -36,6 +36,8 @@ export async function createProperty(
       has_security,
       has_generator,
       has_borehole,
+      price_negotiable: is_negotiable,
+      plot_area_sqm: land_area_sqm,
     })
     .select('id, slug')
     .single()
@@ -62,11 +64,15 @@ export async function updateProperty(
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
-  const { amenities, ...fields } = data
+  const { amenities, is_negotiable, land_area_sqm, ...fields } = data
 
   const { error } = await (supabase as any)
     .from('properties')
-    .update(fields)
+    .update({
+      ...fields,
+      ...(is_negotiable !== undefined && { price_negotiable: is_negotiable }),
+      ...(land_area_sqm !== undefined && { plot_area_sqm: land_area_sqm }),
+    })
     .eq('id', propertyId)
     .eq('owner_id', user.id)
 
@@ -206,7 +212,7 @@ export async function addPropertyVideo(
 
   const { data, error } = await (supabase as any)
     .from('property_videos')
-    .insert({ property_id: propertyId, url, title: title ?? null, is_primary: false })
+    .insert({ property_id: propertyId, url, title: title ?? null })
     .select('id')
     .single()
 

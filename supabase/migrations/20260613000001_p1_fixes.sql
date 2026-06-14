@@ -162,9 +162,18 @@ $$;
 -- No RLS policies reference the profiles.status column so rename is safe.
 -- ============================================================
 
-ALTER TABLE public.profiles RENAME COLUMN status TO account_status;
--- Index name stays idx_profiles_status but now covers account_status (PostgreSQL
--- automatically tracks column renames in index definitions).
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'profiles'
+      AND column_name = 'status'
+  ) THEN
+    ALTER TABLE public.profiles RENAME COLUMN status TO account_status;
+  END IF;
+END;
+$$;
 
 
 -- ============================================================
