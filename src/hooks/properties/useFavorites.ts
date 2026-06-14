@@ -10,10 +10,11 @@ import type { PropertyWithImages } from '@/types/property'
 
 async function fetchFavorites(): Promise<PropertyWithImages[]> {
   const supabase = createClient()
-  const { data, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .from('property_favorites')
     .select('property:properties(*, property_images(*))')
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false }) as { data: Array<{ property: any }> | null; error: any }
 
   if (error) throw new Error(error.message)
   return (data?.map(r => r.property).filter(Boolean) ?? []) as unknown as PropertyWithImages[]
@@ -21,9 +22,10 @@ async function fetchFavorites(): Promise<PropertyWithImages[]> {
 
 async function fetchFavoriteIds(): Promise<Set<string>> {
   const supabase = createClient()
-  const { data, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .from('property_favorites')
-    .select('property_id')
+    .select('property_id') as { data: Array<{ property_id: string }> | null; error: any }
 
   if (error) return new Set()
   return new Set(data?.map(r => r.property_id) ?? [])

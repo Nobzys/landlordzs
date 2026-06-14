@@ -16,19 +16,21 @@ const PROFILE_COLS = 'id, full_name, display_name, avatar_url, phone, is_verifie
 async function getProperty(id: string): Promise<PropertyWithDetails | null> {
   const supabase = await createClient()
 
-  const { data, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .from('properties')
     .select('*, property_images(*), property_videos(*), property_amenities(*)')
     .eq('id', id)
-    .single()
+    .single() as { data: Record<string, any> | null; error: any }
 
   if (error || !data) return null
 
   // Fetch owner and agent profiles separately to avoid relying on FK constraint names
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [{ data: owner }, { data: agent }] = await Promise.all([
-    supabase.from('profiles').select(PROFILE_COLS).eq('id', data.owner_id).single(),
+    (supabase as any).from('profiles').select(PROFILE_COLS).eq('id', data.owner_id).single() as Promise<{ data: Record<string, any> | null }>,
     data.agent_id
-      ? supabase.from('profiles').select(PROFILE_COLS).eq('id', data.agent_id).single()
+      ? (supabase as any).from('profiles').select(PROFILE_COLS).eq('id', data.agent_id).single() as Promise<{ data: Record<string, any> | null }>
       : Promise.resolve({ data: null }),
   ])
 

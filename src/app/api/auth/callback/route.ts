@@ -32,14 +32,8 @@ export async function GET(request: Request) {
     )
   }
 
-  // Check if this is an email verification (next=/onboarding)
-  // vs a password reset (next=/reset-password)
-  if (next === '/onboarding') {
-    // Mark as email-verified in the params so the verify-email page shows success
-    const url = new URL(`${origin}/verify-email`)
-    url.searchParams.set('verified', 'true')
-    return NextResponse.redirect(url.toString())
-  }
-
+  // Session is now set — send the user straight to their destination.
+  // For email verification (next=/onboarding) this removes the extra
+  // "Continue to Setup" click that the old /verify-email intermediate page required.
   return NextResponse.redirect(`${origin}${next}`)
 }

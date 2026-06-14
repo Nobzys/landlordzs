@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'file, bucket, and resource_id are required' }, { status: 400 })
   }
 
-  if (!ALLOWED_BUCKETS.has(bucket)) {
+  if (!ALLOWED_BUCKETS.has(bucket as any)) {
     return NextResponse.json({ error: 'Invalid bucket' }, { status: 400 })
   }
 

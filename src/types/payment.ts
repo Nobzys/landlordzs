@@ -15,6 +15,16 @@ export type CommissionType   = 'agent' | 'platform' | 'referral'
 
 // ─── Row types ────────────────────────────────────────────────────────────────
 
+export interface WalletRow {
+  id:         string
+  user_id:    string
+  balance:    number
+  locked:     number
+  currency:   string
+  created_at: string
+  updated_at: string
+}
+
 export interface TransactionRow {
   id:              string
   payer_id:        string | null

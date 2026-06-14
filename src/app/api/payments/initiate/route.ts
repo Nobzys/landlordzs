@@ -23,7 +23,7 @@ export async function POST(request: Request) {
 
   const parsed = initiatePaymentSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 })
+    return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
   }
 
   const { amount, provider, phone, reference_type, reference_id, escrow_id, description, transaction_type } = parsed.data
@@ -32,7 +32,8 @@ export async function POST(request: Request) {
 
   // Check wallet balance for wallet payments
   if (provider === 'wallet') {
-    const { data: wallet } = await supabase.from('wallets').select('balance, locked').eq('user_id', user.id).single()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: wallet } = await (supabase as any).from('wallets').select('balance, locked').eq('user_id', user.id).single() as { data: { balance: number; locked: number } | null }
     const available = (wallet?.balance ?? 0) - (wallet?.locked ?? 0)
     if (available < amount) {
       return NextResponse.json({ error: 'Insufficient wallet balance' }, { status: 422 })
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
   if (provider === 'wallet') {
     const { error: rpcError } = await (supabase as any).rpc('wallet_transfer', {
       p_from_id:  user.id,
-      p_to_id:    user.id,
+      p_to_id:    null,
       p_amount:   amount,
       p_ref_type: reference_type ?? 'transaction',
       p_ref_id:   txnId,
@@ -113,11 +114,12 @@ export async function POST(request: Request) {
       })
 
       const paymentUrl = result.data?.payment_url ?? null
-      const payToken   = result.data?.pay_token ?? null
+      const payToken   = result.data?.pay_token   ?? null
+      const notifToken = result.data?.notif_token ?? null
 
       await (supabase as any).from('transactions').update({
         status:        'processing',
-        provider_meta: { pay_token: payToken, order_id: txnId },
+        provider_meta: { pay_token: payToken, order_id: txnId, notif_token: notifToken },
       }).eq('id', txnId)
 
       return NextResponse.json({

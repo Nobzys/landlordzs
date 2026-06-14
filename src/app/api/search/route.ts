@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { propertySearchSchema } from '@/lib/validations/property'
 
@@ -7,7 +7,7 @@ export async function GET(request: Request) {
 
   const parsed = propertySearchSchema.safeParse(Object.fromEntries(searchParams))
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 })
+    return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
   }
 
   const { q, listing_type, property_type, city, min_price, max_price, bedrooms, is_furnished, page, limit } = parsed.data

@@ -74,15 +74,15 @@ export interface ActionResult<T = undefined> {
 // ─── Role metadata ────────────────────────────────────────────────────────────
 
 export const ROLE_DASHBOARDS: Record<UserRole, string> = {
-  admin:      '/seller/listings',   // no admin UI yet — fallback to listings
+  admin:      '/admin',
   buyer:      '/buyer/favorites',
   seller:     '/seller/listings',
   agent:      '/agent/commissions',
-  vendor:     '/account/wallet',
-  contractor: '/account/wallet',
-  engineer:   '/account/wallet',
-  architect:  '/account/wallet',
-  lawyer:     '/account/wallet',
+  vendor:     '/vendor',
+  contractor: '/contractor',
+  engineer:   '/engineer',
+  architect:  '/architect',
+  lawyer:     '/lawyer',
 }
 
 export const ROLE_LABELS: Record<UserRole, string> = {

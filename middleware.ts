@@ -35,15 +35,15 @@ export async function middleware(request: NextRequest) {
   if (isAuthRoute) {
     if (user) {
       // Fetch minimal profile to know where to send them
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from('profiles')
         .select('role, onboarding_completed')
         .eq('id', user.id)
-        .single()
+        .single() as { data: { role: string; onboarding_completed: boolean } | null }
 
       const dest = !profile?.onboarding_completed
         ? '/onboarding'
-        : (ROLE_DASHBOARDS[profile.role as UserRole] ?? '/account')
+        : (ROLE_DASHBOARDS[(profile?.role ?? 'buyer') as UserRole] ?? '/account')
 
       return NextResponse.redirect(new URL(dest, request.url))
     }
@@ -58,11 +58,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // Fetch profile for role + status checks
-  const { data: profile } = await supabase
+  const { data: profile } = await (supabase as any)
     .from('profiles')
     .select('role, onboarding_completed, account_status')
     .eq('id', user.id)
-    .single()
+    .single() as { data: { role: string; onboarding_completed: boolean; account_status: string } | null }
 
   if (!profile) {
     // No profile row yet (new user or table not yet seeded).

@@ -68,12 +68,17 @@ export const STORAGE_BUCKETS = {
   PROPERTY_IMAGES:   'property-images',
   PROPERTY_VIDEOS:   'property-videos',
   USER_AVATARS:      'user-avatars',
-  VERIFY_DOCS:       'verification-documents',
+  VERIFY_DOCS:       'verification-docs',
   MARKETPLACE:       'marketplace-products',
   PORTFOLIOS:        'service-portfolios',
   FORUM_IMAGES:      'forum-images',
   CHAT_ATTACHMENTS:  'chat-attachments',
 } as const
+
+export const PROFESSIONAL_ROLES = [
+  'agent', 'contractor', 'engineer', 'architect', 'lawyer',
+] as const
+export type ProfessionalRole = (typeof PROFESSIONAL_ROLES)[number]
 
 // ─── Onboarding ───────────────────────────────────────────────────────────────
 

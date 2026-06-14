@@ -19,7 +19,7 @@ export async function GET(
 
   const { data: txn, error: txnError } = await (supabase as any)
     .from('transactions')
-    .select('id, status, provider, provider_meta, provider_ref, payer_id')
+    .select('id, status, provider, provider_meta, provider_ref, payer_id, net_amount, escrow_id')
     .eq('id', id)
     .single()
 
@@ -71,21 +71,26 @@ export async function GET(
     if (newStatus === 'completed') update.completed_at = new Date().toISOString()
     if (newStatus === 'failed')    update.failed_at    = new Date().toISOString()
 
-    await (supabase as any).from('transactions').update(update).eq('id', id)
+    // Filter on the current status so concurrent polls only credit the wallet once:
+    // the first request to execute the UPDATE wins; subsequent ones get 0 rows back.
+    const { data: updated } = await (supabase as any)
+      .from('transactions')
+      .update(update)
+      .eq('id', id)
+      .eq('status', txn.status)
+      .select('id')
 
-    // On success: credit wallet if this was a top-up (no escrow)
-    if (newStatus === 'completed' && !txn.escrow_id) {
-      const { data: t } = await (supabase as any).from('transactions').select('amount, currency, escrow_id').eq('id', id).single()
-      if (t && !t.escrow_id) {
-        await (supabase as any).rpc('wallet_transfer', {
-          p_from_id:  null,
-          p_to_id:    user.id,
-          p_amount:   t.amount,
-          p_ref_type: 'transaction',
-          p_ref_id:   id,
-          p_desc:     `Top-up via ${txn.provider}`,
-        })
-      }
+    // On success: credit wallet if this was a top-up (no escrow).
+    // Only the request that performed the status transition (updated.length > 0) credits the wallet.
+    if (newStatus === 'completed' && !txn.escrow_id && updated && updated.length > 0) {
+      await (supabase as any).rpc('wallet_transfer', {
+        p_from_id:  null,
+        p_to_id:    user.id,
+        p_amount:   txn.net_amount,
+        p_ref_type: 'transaction',
+        p_ref_id:   id,
+        p_desc:     `Top-up via ${txn.provider}`,
+      })
     }
   }
 

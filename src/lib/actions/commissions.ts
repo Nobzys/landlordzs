@@ -1,11 +1,11 @@
-'use server'
+﻿'use server'
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { ActionResult } from '@/types/auth'
 
-// ─── Record commission ────────────────────────────────────────────────────────
+// â”€â”€â”€ Record commission â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Called internally when a property sale/rent transaction completes.
 
 export async function recordAgentCommission(
@@ -39,14 +39,14 @@ export async function recordAgentCommission(
   return { success: true, data: { id: data.id } }
 }
 
-// ─── Pay commission (credit agent wallet) ────────────────────────────────────
+// â”€â”€â”€ Pay commission (credit agent wallet) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function payCommission(commissionId: string): Promise<ActionResult> {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
-  const { data: caller } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: caller } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single() as { data: { role: string } | null }
   if (caller?.role !== 'admin') return { error: 'Insufficient permissions' }
 
   const adminClient = createAdminClient()
@@ -81,14 +81,14 @@ export async function payCommission(commissionId: string): Promise<ActionResult>
   return { success: true }
 }
 
-// ─── Cancel commission ────────────────────────────────────────────────────────
+// â”€â”€â”€ Cancel commission â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function cancelCommission(commissionId: string): Promise<ActionResult> {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
-  const { data: caller } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: caller } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single() as { data: { role: string } | null }
   if (caller?.role !== 'admin') return { error: 'Insufficient permissions' }
 
   const adminClient = createAdminClient()
@@ -103,7 +103,7 @@ export async function cancelCommission(commissionId: string): Promise<ActionResu
   return { success: true }
 }
 
-// ─── Get commission summary for an agent ─────────────────────────────────────
+// â”€â”€â”€ Get commission summary for an agent â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getCommissionSummary(agentId: string): Promise<
   ActionResult<{ pending: number; paid: number; pending_amount: number; paid_amount: number }>
@@ -113,7 +113,7 @@ export async function getCommissionSummary(agentId: string): Promise<
   if (authError || !user) return { error: 'Unauthorized' }
 
   if (user.id !== agentId) {
-    const { data: caller } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    const { data: caller } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single() as { data: { role: string } | null }
     if (caller?.role !== 'admin') return { error: 'Insufficient permissions' }
   }
 

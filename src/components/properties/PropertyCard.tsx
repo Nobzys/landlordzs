@@ -26,14 +26,18 @@ export function PropertyCard({ property, className }: PropertyCardProps) {
   const href = `/properties/${property.id}`
 
   return (
-    <Link
-      href={href}
+    <div
       className={cn(
-        'group flex flex-col rounded-xl overflow-hidden border bg-card shadow-sm',
+        'group relative flex flex-col rounded-xl overflow-hidden border bg-card shadow-sm',
         'hover:shadow-md transition-shadow duration-200',
         className
       )}
     >
+      {/* Full-card link overlay — behind action buttons (z-[1] < z-[2]) */}
+      <Link href={href} className="absolute inset-0 z-[1]">
+        <span className="sr-only">{property.title}</span>
+      </Link>
+
       {/* Image */}
       <div className="relative aspect-[4/3] bg-muted overflow-hidden">
         {primaryImage ? (
@@ -50,7 +54,7 @@ export function PropertyCard({ property, className }: PropertyCardProps) {
           </div>
         )}
 
-        {/* Overlays */}
+        {/* Listing type + featured badges */}
         <div className="absolute top-3 left-3 flex gap-1.5">
           <Badge className={cn('text-xs font-medium', LISTING_TYPE_COLORS[property.listing_type])}>
             {LISTING_TYPE_LABELS[property.listing_type]}
@@ -59,11 +63,12 @@ export function PropertyCard({ property, className }: PropertyCardProps) {
             <Badge className="bg-amber-400 text-amber-900 text-xs font-medium">Featured</Badge>
           )}
         </div>
+      </div>
 
-        <div className="absolute top-3 right-3 flex gap-1.5">
-          <FavoriteButton propertyId={property.id} size="sm" />
-          <ShareButton title={property.title} size="sm" />
-        </div>
+      {/* Action buttons — siblings of the Link, not descendants; above the link overlay */}
+      <div className="absolute top-3 right-3 flex gap-1.5 z-[2]">
+        <FavoriteButton propertyId={property.id} size="sm" />
+        <ShareButton title={property.title} />
       </div>
 
       {/* Content */}
@@ -117,6 +122,6 @@ export function PropertyCard({ property, className }: PropertyCardProps) {
           short
         />
       </div>
-    </Link>
+    </div>
   )
 }

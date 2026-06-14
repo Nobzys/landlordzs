@@ -50,12 +50,12 @@ export function ForgotPasswordForm() {
           <span className="font-medium text-foreground">{sentEmail}</span>, we&apos;ve
           sent password reset instructions.
         </p>
-        <Link href="/login">
-          <Button variant="outline" className="mt-2 w-full">
+        <Button asChild variant="outline" className="mt-2 w-full">
+          <Link href="/login">
             <ArrowLeft size={16} className="mr-2" />
             Back to Sign In
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
     )
   }
@@ -108,12 +108,12 @@ export function ForgotPasswordForm() {
           )}
         </Button>
 
-        <Link href="/login">
-          <Button variant="ghost" className="w-full">
+        <Button asChild variant="ghost" className="w-full">
+          <Link href="/login">
             <ArrowLeft size={16} className="mr-2" />
             Back to Sign In
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </form>
     </Form>
   )

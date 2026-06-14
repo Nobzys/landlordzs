@@ -1,7 +1,7 @@
 'use client'
 
 import { notFound } from 'next/navigation'
-import { Shield, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { Shield, AlertTriangle, CheckCircle2, Wallet } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -10,12 +10,13 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { EscrowTimeline } from '@/components/payments/EscrowTimeline'
 import { MilestoneList } from '@/components/payments/MilestoneList'
-import { WalletTopUpForm } from '@/components/payments/WalletTopUpForm'
 import { useEscrow } from '@/hooks/payments/useEscrow'
-import { useReleaseEscrow, useDisputeEscrow } from '@/hooks/payments/usePaymentMutations'
+import { useWallet } from '@/hooks/payments/useWallet'
+import { useReleaseEscrow, useDisputeEscrow, useFundEscrow } from '@/hooks/payments/usePaymentMutations'
 import { useAuthStore } from '@/stores/authStore'
 import { formatXAF, formatDate } from '@/lib/utils/format'
 import { useState, use } from 'react'
+import Link from 'next/link'
 
 const STATUS_LABEL: Record<string, string> = {
   pending:   'Awaiting Payment',
@@ -29,9 +30,11 @@ const STATUS_LABEL: Record<string, string> = {
 export default function EscrowDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const { data: escrow, isLoading } = useEscrow(id)
+  const { data: wallet }  = useWallet()
   const user    = useAuthStore(s => s.user)
   const release = useReleaseEscrow()
   const dispute = useDisputeEscrow()
+  const fund    = useFundEscrow()
   const [disputeOpen, setDisputeOpen] = useState(false)
   const [disputeReason, setDisputeReason] = useState('')
   const [fundOpen, setFundOpen] = useState(false)
@@ -151,14 +154,57 @@ export default function EscrowDetailPage({ params }: { params: Promise<{ id: str
         </div>
       )}
 
-      {/* Fund escrow sheet */}
+      {/* Fund escrow dialog */}
       <Dialog open={fundOpen} onOpenChange={setFundOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Fund Escrow</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground mb-4">
-            Pay {formatXAF(escrow.amount)} to secure these funds in escrow.
-          </p>
-          <WalletTopUpForm onSuccess={() => setFundOpen(false)} />
+          <div className="space-y-4">
+            <div className="rounded-lg bg-muted p-4 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Required</span>
+                <span className="font-semibold">{formatXAF(escrow.amount)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <Wallet className="h-3.5 w-3.5" />Wallet balance
+                </span>
+                <span className={`font-semibold ${(wallet?.balance ?? 0) >= escrow.amount ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatXAF(wallet?.balance ?? 0)}
+                </span>
+              </div>
+            </div>
+
+            {(wallet?.balance ?? 0) >= escrow.amount ? (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  {formatXAF(escrow.amount)} will be debited from your wallet and held securely until you release or a dispute is resolved.
+                </p>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setFundOpen(false)}>Cancel</Button>
+                  <Button
+                    onClick={() => { fund.mutate(escrow.id); setFundOpen(false) }}
+                    disabled={fund.isPending}
+                    className="gap-2"
+                  >
+                    <Shield className="h-4 w-4" />
+                    Confirm &amp; Fund
+                  </Button>
+                </DialogFooter>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-destructive">
+                  Insufficient balance. You need {formatXAF(escrow.amount - (wallet?.balance ?? 0))} more.
+                </p>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setFundOpen(false)}>Close</Button>
+                  <Button asChild>
+                    <Link href="/account/wallet">Top Up Wallet</Link>
+                  </Button>
+                </DialogFooter>
+              </>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 

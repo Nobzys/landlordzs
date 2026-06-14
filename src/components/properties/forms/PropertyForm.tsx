@@ -50,7 +50,7 @@ export function PropertyForm({ mode, propertyId, userId, defaultValues }: Proper
   const router                  = useRouter()
 
   const form = useForm<PropertyCreateInput>({
-    resolver: zodResolver(propertyCreateSchema),
+    resolver: zodResolver(propertyCreateSchema) as any,
     defaultValues: {
       listing_type:  'sale',
       property_type: 'apartment',
@@ -205,7 +205,7 @@ export function PropertyForm({ mode, propertyId, userId, defaultValues }: Proper
                 <Switch
                   id="is_negotiable"
                   checked={watch('is_negotiable')}
-                  onCheckedChange={v => setValue('is_negotiable', v)}
+                  onChange={e => setValue('is_negotiable', (e.target as HTMLInputElement).checked)}
                 />
                 <Label htmlFor="is_negotiable" className="font-normal cursor-pointer">Negotiable</Label>
               </div>
@@ -264,7 +264,7 @@ export function PropertyForm({ mode, propertyId, userId, defaultValues }: Proper
               <Switch
                 id="is_furnished"
                 checked={watch('is_furnished')}
-                onCheckedChange={v => setValue('is_furnished', v)}
+                onChange={e => setValue('is_furnished', (e.target as HTMLInputElement).checked)}
               />
               <Label htmlFor="is_furnished" className="font-normal cursor-pointer">Furnished</Label>
             </div>
@@ -276,7 +276,7 @@ export function PropertyForm({ mode, propertyId, userId, defaultValues }: Proper
                   <Switch
                     id={f}
                     checked={watch(f)}
-                    onCheckedChange={v => setValue(f, v)}
+                    onChange={e => setValue(f, (e.target as HTMLInputElement).checked)}
                   />
                   <Label htmlFor={f} className="font-normal cursor-pointer capitalize">
                     {f.replace('has_', '').replace('_', ' ')}

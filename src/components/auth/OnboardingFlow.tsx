@@ -4,28 +4,32 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, Circle } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
-import { ROLE_LABELS, TOTAL_ONBOARDING_STEPS } from '@/lib/utils/constants'
+import { ROLE_LABELS, PROFESSIONAL_ROLES } from '@/lib/utils/constants'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { BasicProfileStep } from './onboarding/BasicProfileStep'
 import { RoleProfileStep } from './onboarding/RoleProfileStep'
+import { KycUploadStep } from './onboarding/KycUploadStep'
 import type { Profile, UserRole } from '@/types/auth'
 
 interface OnboardingFlowProps {
   profile: Profile | null
 }
 
-const STEP_TITLES = ['Basic Profile', 'Account Setup']
+const STEP_TITLES = ['Basic Profile', 'Account Setup', 'Identity Verification']
 const STEP_DESCRIPTIONS = [
   'Tell us who you are so clients and buyers can find you.',
   'Set up your role-specific profile to start using the platform.',
+  'Upload your ID and professional credentials for verification.',
 ]
 
 export function OnboardingFlow({ profile }: OnboardingFlowProps) {
-  const router       = useRouter()
-  const [step,       setStep]       = useState(1)
-  const [error,      setError]      = useState<string | null>(null)
+  const router  = useRouter()
+  const [step,  setStep]  = useState(1)
+  const [error, setError] = useState<string | null>(null)
 
   const role = profile?.role as UserRole | undefined
+  const isProfessional = role ? PROFESSIONAL_ROLES.includes(role as typeof PROFESSIONAL_ROLES[number]) : false
+  const totalSteps = isProfessional ? 3 : 2
 
   const handleNext = () => {
     setError(null)
@@ -53,13 +57,12 @@ export function OnboardingFlow({ profile }: OnboardingFlowProps) {
 
       {/* Step indicators */}
       <div className="flex items-center justify-center gap-0">
-        {Array.from({ length: TOTAL_ONBOARDING_STEPS }).map((_, i) => {
+        {Array.from({ length: totalSteps }).map((_, i) => {
           const stepNum = i + 1
           const done    = step > stepNum
           const active  = step === stepNum
           return (
             <div key={stepNum} className="flex items-center">
-              {/* Circle */}
               <div
                 className={cn(
                   'flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors',
@@ -70,8 +73,7 @@ export function OnboardingFlow({ profile }: OnboardingFlowProps) {
               >
                 {done ? <CheckCircle2 size={18} /> : stepNum}
               </div>
-              {/* Connector */}
-              {stepNum < TOTAL_ONBOARDING_STEPS && (
+              {stepNum < totalSteps && (
                 <div
                   className={cn(
                     'h-0.5 w-16 transition-colors sm:w-24',
@@ -84,11 +86,11 @@ export function OnboardingFlow({ profile }: OnboardingFlowProps) {
         })}
       </div>
 
-      {/* Step title */}
+      {/* Step card */}
       <div className="rounded-xl border bg-card p-6 shadow-sm">
         <div className="mb-6 space-y-1">
           <h2 className="text-lg font-semibold">
-            Step {step} of {TOTAL_ONBOARDING_STEPS}: {STEP_TITLES[step - 1]}
+            Step {step} of {totalSteps}: {STEP_TITLES[step - 1]}
           </h2>
           <p className="text-sm text-muted-foreground">{STEP_DESCRIPTIONS[step - 1]}</p>
         </div>
@@ -99,7 +101,6 @@ export function OnboardingFlow({ profile }: OnboardingFlowProps) {
           </Alert>
         )}
 
-        {/* Step content */}
         {step === 1 && (
           <BasicProfileStep
             profile={profile}
@@ -111,6 +112,16 @@ export function OnboardingFlow({ profile }: OnboardingFlowProps) {
         {step === 2 && role && (
           <RoleProfileStep
             role={role}
+            isProfessional={isProfessional}
+            onNext={handleNext}
+            onFinish={handleFinish}
+            onError={setError}
+          />
+        )}
+
+        {step === 3 && isProfessional && profile && (
+          <KycUploadStep
+            profile={profile}
             onFinish={handleFinish}
             onError={setError}
           />
@@ -119,7 +130,7 @@ export function OnboardingFlow({ profile }: OnboardingFlowProps) {
 
       {/* Step dots */}
       <div className="flex justify-center gap-2">
-        {Array.from({ length: TOTAL_ONBOARDING_STEPS }).map((_, i) => (
+        {Array.from({ length: totalSteps }).map((_, i) => (
           <Circle
             key={i}
             size={8}

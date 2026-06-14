@@ -1,5 +1,6 @@
-'use server'
+﻿'use server'
 
+import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -16,7 +17,7 @@ import {
   vendorProfileSchema,
   professionalProfileSchema,
 } from '@/lib/validations/auth'
-import { ROLE_DASHBOARDS, APP_URL } from '@/lib/utils/constants'
+import { ROLE_DASHBOARDS, APP_URL, PROFESSIONAL_ROLES } from '@/lib/utils/constants'
 import type { ActionResult } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
 import type {
@@ -32,14 +33,14 @@ import type {
   ProfessionalProfileInput,
 } from '@/lib/validations/auth'
 
-// ─── Sign In ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Sign In â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function signIn(
   data: LoginInput
 ): Promise<ActionResult<{ redirectTo: string }>> {
   const parsed = loginSchema.safeParse(data)
   if (!parsed.success) {
-    return { error: parsed.error.errors[0].message }
+    return { error: parsed.error.issues[0].message }
   }
 
   const supabase = await createClient()
@@ -49,11 +50,18 @@ export async function signIn(
   })
 
   if (error) {
-    if (error.message.toLowerCase().includes('email not confirmed')) {
+    const msg = error.message.toLowerCase()
+    // Supabase returns "invalid login credentials" for BOTH bad password AND
+    // unconfirmed email â€” there is no way to distinguish them from the error
+    // alone, so we give a neutral message and surface the verification hint.
+    if (msg.includes('email not confirmed')) {
       return { error: 'Please verify your email address before signing in.' }
     }
-    if (error.message.toLowerCase().includes('invalid login credentials')) {
-      return { error: 'Invalid email or password.' }
+    if (msg.includes('invalid login credentials')) {
+      return {
+        error:
+          'Invalid email or password. If you just registered, check your inbox for a verification link first.',
+      }
     }
     return { error: error.message }
   }
@@ -61,11 +69,12 @@ export async function signIn(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Sign in failed. Please try again.' }
 
-  const { data: profile } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: profile } = await (supabase as any)
     .from('profiles')
     .select('role, onboarding_completed, account_status')
     .eq('id', user.id)
-    .single()
+    .single() as { data: { role: string; onboarding_completed: boolean; account_status: string } | null }
 
   if (profile?.account_status === 'suspended' || profile?.account_status === 'banned') {
     await supabase.auth.signOut()
@@ -76,33 +85,80 @@ export async function signIn(
 
   const redirectTo = !profile?.onboarding_completed
     ? '/onboarding'
-    : (ROLE_DASHBOARDS[profile.role as UserRole] ?? '/account')
+    : (ROLE_DASHBOARDS[(profile?.role ?? 'buyer') as UserRole] ?? '/account')
 
   return { success: true, data: { redirectTo } }
 }
 
-// ─── Sign Up ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Sign Up â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+// Returns skipVerification:true when the admin path is used (no email needed).
 export async function signUp(
   data: RegisterInput
-): Promise<ActionResult<{ email: string }>> {
+): Promise<ActionResult<{ email: string; skipVerification?: boolean }>> {
   const parsed = registerSchema.safeParse(data)
   if (!parsed.success) {
-    return { error: parsed.error.errors[0].message }
+    return { error: parsed.error.issues[0].message }
   }
 
   const { full_name, email, password, role } = parsed.data
+
+  // â”€â”€ Path A: admin creates user pre-confirmed (SUPABASE_SERVICE_ROLE_KEY set) â”€
+  // No verification email is sent. User can sign in immediately after.
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const admin = createAdminClient()
+    const { data: created, error: adminErr } = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name, role },
+    })
+
+    if (adminErr) {
+      if (
+        adminErr.message.toLowerCase().includes('already registered') ||
+        adminErr.message.toLowerCase().includes('already been registered') ||
+        adminErr.status === 422
+      ) {
+        return { error: 'An account with this email already exists.' }
+      }
+      return { error: adminErr.message }
+    }
+
+    const isProfessional = PROFESSIONAL_ROLES.includes(role as typeof PROFESSIONAL_ROLES[number])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (admin as any).from('profiles').upsert(
+      {
+        id:             created.user.id,
+        email,
+        full_name,
+        role,
+        account_status: isProfessional ? 'pending_verification' : 'active',
+      },
+      { onConflict: 'id' }
+    )
+
+    return { success: true, data: { email, skipVerification: true } }
+  }
+
+  // â”€â”€ Path B: standard signup â€” Supabase sends a verification email â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Use the request Host header so the link in the email always points to the
+  // actual server, not the APP_URL constant (which defaults to localhost:3000).
+  const headersList = await headers()
+  const host =
+    headersList.get('x-forwarded-host') ??
+    headersList.get('host') ??
+    'localhost:3000'
+  const proto = host.startsWith('localhost') || /^127\.|^\[?::1]/.test(host) ? 'http' : 'https'
+  const siteOrigin = `${proto}://${host}`
 
   const supabase = await createClient()
   const { data: authData, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${APP_URL}/api/auth/callback?next=/onboarding`,
-      data: {
-        full_name,
-        role,
-      },
+      emailRedirectTo: `${siteOrigin}/api/auth/callback?next=/onboarding`,
+      data: { full_name, role },
     },
   })
 
@@ -117,30 +173,13 @@ export async function signUp(
     return { error: 'Registration failed. Please try again.' }
   }
 
-  // Create the profile row immediately using the service role so it exists
-  // before the user clicks the verification link — regardless of whether
-  // email confirmation is required (authData.session may be null).
-  try {
-    const admin = createAdminClient()
-    await admin.from('profiles').upsert(
-      {
-        id:        authData.user.id,
-        email:     authData.user.email ?? email,
-        full_name,
-        role,
-      },
-      { onConflict: 'id' }
-    )
-  } catch {
-    // Service role key not configured or table not yet created.
-    // getServerProfile() will synthesise a provisional profile from
-    // user_metadata so onboarding can still render.
-  }
-
+  // Best-effort profile upsert â€” the DB trigger also creates this row,
+  // but doing it here ensures it exists before the verification email arrives.
+  // Silently skipped when service role key is absent (covered by DB trigger).
   return { success: true, data: { email } }
 }
 
-// ─── Sign Out ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Sign Out â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function signOut(): Promise<void> {
   const supabase = await createClient()
@@ -149,14 +188,14 @@ export async function signOut(): Promise<void> {
   redirect('/login')
 }
 
-// ─── Forgot Password ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Forgot Password â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function forgotPassword(
   data: ForgotPasswordInput
 ): Promise<ActionResult> {
   const parsed = forgotPasswordSchema.safeParse(data)
   if (!parsed.success) {
-    return { error: parsed.error.errors[0].message }
+    return { error: parsed.error.issues[0].message }
   }
 
   const supabase = await createClient()
@@ -170,14 +209,14 @@ export async function forgotPassword(
   return { success: true }
 }
 
-// ─── Reset Password ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Reset Password â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function resetPassword(
   data: ResetPasswordInput
 ): Promise<ActionResult<{ redirectTo: string }>> {
   const parsed = resetPasswordSchema.safeParse(data)
   if (!parsed.success) {
-    return { error: parsed.error.errors[0].message }
+    return { error: parsed.error.issues[0].message }
   }
 
   const supabase = await createClient()
@@ -193,29 +232,30 @@ export async function resetPassword(
   }
 
   const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: profile } = await (supabase as any)
     .from('profiles')
     .select('role, onboarding_completed')
     .eq('id', user!.id)
-    .single()
+    .single() as { data: { role: string; onboarding_completed: boolean } | null }
 
   revalidatePath('/', 'layout')
   return {
     success: true,
     data: {
       redirectTo: profile?.onboarding_completed
-        ? (ROLE_DASHBOARDS[profile.role as UserRole] ?? '/account')
+        ? (ROLE_DASHBOARDS[(profile?.role ?? 'buyer') as UserRole] ?? '/account')
         : '/onboarding',
     },
   }
 }
 
-// ─── Send Phone OTP ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Send Phone OTP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function sendPhoneOtp(data: PhoneInput): Promise<ActionResult> {
   const parsed = phoneSchema.safeParse(data)
   if (!parsed.success) {
-    return { error: parsed.error.errors[0].message }
+    return { error: parsed.error.issues[0].message }
   }
 
   const supabase = await createClient()
@@ -227,12 +267,12 @@ export async function sendPhoneOtp(data: PhoneInput): Promise<ActionResult> {
   return { success: true }
 }
 
-// ─── Verify Phone OTP ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Verify Phone OTP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function verifyPhoneOtp(data: PhoneOtpInput): Promise<ActionResult> {
   const parsed = phoneOtpSchema.safeParse(data)
   if (!parsed.success) {
-    return { error: parsed.error.errors[0].message }
+    return { error: parsed.error.issues[0].message }
   }
 
   const supabase = await createClient()
@@ -252,7 +292,8 @@ export async function verifyPhoneOtp(data: PhoneOtpInput): Promise<ActionResult>
   // Mark phone as verified on profile
   const { data: { user } } = await supabase.auth.getUser()
   if (user) {
-    await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
       .from('profiles')
       .update({ phone: parsed.data.phone, phone_verified: true })
       .eq('id', user.id)
@@ -262,7 +303,7 @@ export async function verifyPhoneOtp(data: PhoneOtpInput): Promise<ActionResult>
   return { success: true }
 }
 
-// ─── Resend Verification Email ────────────────────────────────────────────────
+// â”€â”€â”€ Resend Verification Email â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function resendVerificationEmail(email: string): Promise<ActionResult> {
   if (!email || !email.includes('@')) {
@@ -282,14 +323,14 @@ export async function resendVerificationEmail(email: string): Promise<ActionResu
   return { success: true }
 }
 
-// ─── Update Basic Profile (Onboarding Step 1) ────────────────────────────────
+// â”€â”€â”€ Update Basic Profile (Onboarding Step 1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function updateBasicProfile(
   data: BasicProfileInput
 ): Promise<ActionResult> {
   const parsed = basicProfileSchema.safeParse(data)
   if (!parsed.success) {
-    return { error: parsed.error.errors[0].message }
+    return { error: parsed.error.issues[0].message }
   }
 
   const supabase = await createClient()
@@ -304,7 +345,8 @@ export async function updateBasicProfile(
     ...(parsed.data.phone ? { phone: parsed.data.phone } : {}),
   }
 
-  const { error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
     .from('profiles')
     .update(update)
     .eq('id', user.id)
@@ -315,40 +357,51 @@ export async function updateBasicProfile(
   return { success: true }
 }
 
-// ─── Complete Agent Profile (Onboarding Step 2) ───────────────────────────────
+// â”€â”€â”€ Complete Agent Profile (Onboarding Step 2) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function completeAgentProfile(
   data: AgentProfileInput
 ): Promise<ActionResult> {
   const parsed = agentProfileSchema.safeParse(data)
-  if (!parsed.success) return { error: parsed.error.errors[0].message }
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated.' }
 
-  const { error } = await supabase.from('agent_profiles').upsert(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from('agent_profiles').upsert(
     {
       id:               user.id,
       experience_years: parsed.data.experience_years,
       specializations:  parsed.data.specializations,
       commission_rate:  parsed.data.commission_rate ?? 3.0,
-      bio:              '', // already saved in profiles.bio
+      license_number:   parsed.data.license_number ?? null,
+      service_areas:    parsed.data.service_areas ?? [],
+      bio:              '',
     },
     { onConflict: 'id' }
   )
 
   if (error) return { error: error.message }
+
+  // Mark account as pending verification — lifted to active on admin approval
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any)
+    .from('profiles')
+    .update({ account_status: 'pending_verification' })
+    .eq('id', user.id)
+
   return { success: true }
 }
 
-// ─── Complete Vendor Profile (Onboarding Step 2) ──────────────────────────────
+// â”€â”€â”€ Complete Vendor Profile (Onboarding Step 2) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function completeVendorProfile(
   data: VendorProfileInput
 ): Promise<ActionResult> {
   const parsed = vendorProfileSchema.safeParse(data)
-  if (!parsed.success) return { error: parsed.error.errors[0].message }
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -359,7 +412,8 @@ export async function completeVendorProfile(
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
 
-  const { error } = await supabase.from('vendor_profiles').upsert(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from('vendor_profiles').upsert(
     {
       id:                user.id,
       store_name:        parsed.data.store_name,
@@ -373,7 +427,7 @@ export async function completeVendorProfile(
   return { success: true }
 }
 
-// ─── Complete Professional Profile (Onboarding Step 2) ────────────────────────
+// â”€â”€â”€ Complete Professional Profile (Onboarding Step 2) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Used by contractor | engineer | architect | lawyer
 
 export async function completeProfessionalProfile(
@@ -381,13 +435,14 @@ export async function completeProfessionalProfile(
   professionType: 'contractor' | 'engineer' | 'architect' | 'lawyer'
 ): Promise<ActionResult> {
   const parsed = professionalProfileSchema.safeParse(data)
-  if (!parsed.success) return { error: parsed.error.errors[0].message }
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated.' }
 
-  const { error } = await supabase.from('professional_profiles').upsert(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from('professional_profiles').upsert(
     {
       id:               user.id,
       profession_type:  professionType,
@@ -395,16 +450,26 @@ export async function completeProfessionalProfile(
       specializations:  parsed.data.specializations,
       experience_years: parsed.data.experience_years,
       day_rate:         parsed.data.day_rate ?? null,
+      license_number:   parsed.data.license_number ?? null,
+      service_areas:    parsed.data.service_areas ?? [],
       is_available:     true,
     },
     { onConflict: 'id' }
   )
 
   if (error) return { error: error.message }
+
+  // Mark account as pending verification — lifted to active on admin approval
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any)
+    .from('profiles')
+    .update({ account_status: 'pending_verification' })
+    .eq('id', user.id)
+
   return { success: true }
 }
 
-// ─── Complete Onboarding ──────────────────────────────────────────────────────
+// â”€â”€â”€ Complete Onboarding â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Called after all onboarding steps are done. Sets flag and redirects.
 
 export async function completeOnboarding(): Promise<ActionResult<{ redirectTo: string }>> {
@@ -412,29 +477,31 @@ export async function completeOnboarding(): Promise<ActionResult<{ redirectTo: s
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated.' }
 
-  const { error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
     .from('profiles')
     .update({ onboarding_completed: true })
     .eq('id', user.id)
 
   if (error) return { error: error.message }
 
-  const { data: profile } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: profile } = await (supabase as any)
     .from('profiles')
     .select('role')
     .eq('id', user.id)
-    .single()
+    .single() as { data: { role: string } | null }
 
   revalidatePath('/', 'layout')
   return {
     success: true,
     data: {
-      redirectTo: ROLE_DASHBOARDS[profile?.role as UserRole] ?? '/account',
+      redirectTo: ROLE_DASHBOARDS[(profile?.role ?? 'buyer') as UserRole] ?? '/account',
     },
   }
 }
 
-// ─── Update Password (from Account settings) ─────────────────────────────────
+// â”€â”€â”€ Update Password (from Account settings) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function updatePassword(data: {
   current_password: string
@@ -458,7 +525,7 @@ export async function updatePassword(data: {
   return { success: true }
 }
 
-// ─── Admin: Assign Role ───────────────────────────────────────────────────────
+// â”€â”€â”€ Admin: Assign Role â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function adminAssignRole(
   targetUserId: string,
@@ -469,18 +536,20 @@ export async function adminAssignRole(
   if (!user) return { error: 'Not authenticated.' }
 
   // Verify caller is admin
-  const { data: callerProfile } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: callerProfile } = await (supabase as any)
     .from('profiles')
     .select('role')
     .eq('id', user.id)
-    .single()
+    .single() as { data: { role: string } | null }
 
   if (callerProfile?.role !== 'admin') {
     return { error: 'Insufficient permissions.' }
   }
 
   const adminClient = createAdminClient()
-  const { error } = await adminClient
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (adminClient as any)
     .from('profiles')
     .update({ role: newRole })
     .eq('id', targetUserId)
@@ -491,7 +560,7 @@ export async function adminAssignRole(
   return { success: true }
 }
 
-// ─── Admin: Suspend Account ───────────────────────────────────────────────────
+// â”€â”€â”€ Admin: Suspend Account â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function adminSuspendAccount(
   targetUserId: string,
@@ -501,18 +570,20 @@ export async function adminSuspendAccount(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated.' }
 
-  const { data: callerProfile } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: callerProfile } = await (supabase as any)
     .from('profiles')
     .select('role')
     .eq('id', user.id)
-    .single()
+    .single() as { data: { role: string } | null }
 
   if (callerProfile?.role !== 'admin') {
     return { error: 'Insufficient permissions.' }
   }
 
   const adminClient = createAdminClient()
-  const { error } = await adminClient
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (adminClient as any)
     .from('profiles')
     .update({ account_status: 'suspended' })
     .eq('id', targetUserId)
@@ -520,7 +591,8 @@ export async function adminSuspendAccount(
   if (error) return { error: error.message }
 
   // Log admin action
-  await supabase.from('admin_logs').insert({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from('admin_logs').insert({
     actor_id:    user.id,
     action:      'suspend_account',
     target_type: 'profile',
@@ -529,5 +601,189 @@ export async function adminSuspendAccount(
   })
 
   revalidatePath('/admin/users')
+  return { success: true }
+}
+
+// â”€â”€â”€ Admin: Activate Account â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+export async function adminActivateAccount(
+  targetUserId: string
+): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: callerProfile } = await (supabase as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single() as { data: { role: string } | null }
+
+  if (callerProfile?.role !== 'admin') {
+    return { error: 'Insufficient permissions.' }
+  }
+
+  const adminClient = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (adminClient as any)
+    .from('profiles')
+    .update({ account_status: 'active' })
+    .eq('id', targetUserId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin/users')
+  return { success: true }
+}
+
+// ─── Submit KYC Documents (called after client-side storage upload) ───────────
+
+export async function submitKycDocuments(data: {
+  national_id_front: string
+  national_id_back: string
+  professional_cert: string | null
+}): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from('kyc_records').insert({
+    user_id:           user.id,
+    level:             'basic',
+    status:            'pending',
+    national_id_front: data.national_id_front,
+    national_id_back:  data.national_id_back,
+    business_reg:      data.professional_cert ?? null,
+    submitted_at:      new Date().toISOString(),
+  })
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+// ─── Admin: Approve Professional ──────────────────────────────────────────────
+
+export async function adminApproveProfessional(
+  targetUserId: string
+): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: callerProfile } = await (supabase as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single() as { data: { role: string } | null }
+
+  if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions.' }
+
+  const adminClient = createAdminClient()
+
+  // Get target role to update the right table
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: target } = await (adminClient as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', targetUserId)
+    .single() as { data: { role: string } | null }
+
+  const now = new Date().toISOString()
+
+  // Activate account
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (adminClient as any)
+    .from('profiles')
+    .update({ account_status: 'active' })
+    .eq('id', targetUserId)
+
+  // Set verified flag on role-specific table
+  if (target?.role === 'agent') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (adminClient as any)
+      .from('agent_profiles')
+      .update({ license_verified: true })
+      .eq('id', targetUserId)
+  } else if (['contractor', 'engineer', 'architect', 'lawyer'].includes(target?.role ?? '')) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (adminClient as any)
+      .from('professional_profiles')
+      .update({ is_verified: true, license_verified: true })
+      .eq('id', targetUserId)
+  }
+
+  // Mark latest pending KYC record as approved
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: kyc } = await (adminClient as any)
+    .from('kyc_records')
+    .select('id')
+    .eq('user_id', targetUserId)
+    .eq('status', 'pending')
+    .order('submitted_at', { ascending: false })
+    .limit(1)
+    .single() as { data: { id: string } | null }
+
+  if (kyc) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (adminClient as any)
+      .from('kyc_records')
+      .update({ status: 'approved', reviewed_by: user.id, reviewed_at: now })
+      .eq('id', kyc.id)
+  }
+
+  revalidatePath('/admin/professionals')
+  return { success: true }
+}
+
+// ─── Admin: Reject Professional ───────────────────────────────────────────────
+
+export async function adminRejectProfessional(
+  targetUserId: string,
+  reason: string
+): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: callerProfile } = await (supabase as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single() as { data: { role: string } | null }
+
+  if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions.' }
+
+  const adminClient = createAdminClient()
+  const now = new Date().toISOString()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: kyc } = await (adminClient as any)
+    .from('kyc_records')
+    .select('id')
+    .eq('user_id', targetUserId)
+    .eq('status', 'pending')
+    .order('submitted_at', { ascending: false })
+    .limit(1)
+    .single() as { data: { id: string } | null }
+
+  if (kyc) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (adminClient as any)
+      .from('kyc_records')
+      .update({
+        status:      'rejected',
+        review_notes: reason || 'Documents did not meet requirements.',
+        reviewed_by:  user.id,
+        reviewed_at:  now,
+      })
+      .eq('id', kyc.id)
+  }
+
+  // account_status stays pending_verification so they can resubmit
+  revalidatePath('/admin/professionals')
   return { success: true }
 }

@@ -8,18 +8,12 @@ import type { PropertyWithDetails } from '@/types/property'
 
 async function fetchProperty(id: string): Promise<PropertyWithDetails | null> {
   const supabase = createClient()
-  const { data, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .from('properties')
-    .select(`
-      *,
-      property_images(*),
-      property_videos(*),
-      property_amenities(*),
-      owner:profiles!properties_owner_id_fkey(id, full_name, display_name, avatar_url, phone, is_verified),
-      agent:profiles!properties_agent_id_fkey(id, full_name, display_name, avatar_url, phone, is_verified)
-    `)
+    .select(`*, property_images(*), property_videos(*), property_amenities(*), owner:profiles!properties_owner_id_fkey(id, full_name, display_name, avatar_url, phone, is_verified), agent:profiles!properties_agent_id_fkey(id, full_name, display_name, avatar_url, phone, is_verified)`)
     .eq('id', id)
-    .single()
+    .single() as { data: any; error: any }
 
   if (error) {
     if (error.code === 'PGRST116') return null
@@ -40,7 +34,8 @@ export function useProperty(id: string) {
     if (!id || !query.data) return
 
     const supabase = createClient()
-    supabase.rpc('increment_property_views', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(supabase as any).rpc('increment_property_views', {
       p_property_id: id,
       p_viewer_id:   null,
       p_ip:          null,

@@ -14,6 +14,7 @@ interface PaymentMethodSelectorProps {
   onChange: (p: SelectableProvider) => void
   amount?: number
   disabled?: boolean
+  exclude?: SelectableProvider[]
 }
 
 const METHODS: { id: SelectableProvider; label: string; sub: string }[] = [
@@ -22,13 +23,14 @@ const METHODS: { id: SelectableProvider; label: string; sub: string }[] = [
   { id: 'wallet',        label: 'LANDLORDZS Wallet', sub: 'Instant, no fees' },
 ]
 
-export function PaymentMethodSelector({ value, onChange, amount, disabled }: PaymentMethodSelectorProps) {
+export function PaymentMethodSelector({ value, onChange, amount, disabled, exclude }: PaymentMethodSelectorProps) {
   const { data: wallet } = useWallet()
   const walletBalance = (wallet?.balance ?? 0) - (wallet?.locked ?? 0)
+  const visibleMethods = exclude ? METHODS.filter(m => !exclude.includes(m.id)) : METHODS
 
   return (
     <div className="space-y-2">
-      {METHODS.map(m => {
+      {visibleMethods.map(m => {
         const isWallet  = m.id === 'wallet'
         const insufficient = isWallet && amount !== undefined && walletBalance < amount
         const isDisabled = disabled || (isWallet && insufficient)

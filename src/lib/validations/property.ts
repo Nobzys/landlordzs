@@ -1,4 +1,4 @@
-import { z } from 'zod'
+﻿import { z } from 'zod'
 
 const LISTING_TYPES  = ['sale', 'rent', 'shortlet'] as const
 const PROPERTY_TYPES = ['villa','apartment','studio','duplex','penthouse','house','commercial_space','office','warehouse','shop','land','farm','hotel'] as const
@@ -13,7 +13,7 @@ export const propertyBasicSchema = z.object({
   city:         z.enum(CITIES),
   neighborhood: z.string().max(100).optional(),
   address:      z.string().max(200).optional(),
-  price:        z.number({ required_error: 'Price is required' }).positive('Price must be positive').int(),
+  price:        z.number({ error: 'Price is required' }).positive('Price must be positive').int(),
   is_negotiable:z.boolean().default(false),
   description:  z.string().max(3000).optional(),
 })

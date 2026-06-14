@@ -4,9 +4,25 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { queryKeys } from '@/lib/query/keys'
 import { topUpWallet, requestPayout } from '@/lib/actions/payments'
-import { releaseEscrow, disputeEscrow, completeMilestone, approveMilestone } from '@/lib/actions/escrow'
+import { releaseEscrow, disputeEscrow, completeMilestone, approveMilestone, fundEscrow } from '@/lib/actions/escrow'
 import type { RequestPayoutInput } from '@/types/payment'
 import type { DisputeEscrowInput, CompleteMilestoneInput } from '@/lib/validations/payment'
+
+export function useFundEscrow() {
+  const qc = useQueryClient()
+
+  return useMutation({
+    mutationFn: (escrowId: string) => fundEscrow(escrowId),
+    onSuccess: (result, escrowId) => {
+      if (result.error) { toast.error(result.error); return }
+      qc.invalidateQueries({ queryKey: queryKeys.escrow.detail(escrowId) })
+      qc.invalidateQueries({ queryKey: queryKeys.escrow.list() })
+      qc.invalidateQueries({ queryKey: queryKeys.wallet.balance() })
+      toast.success('Escrow funded. Funds are now secured.')
+    },
+    onError: () => toast.error('Failed to fund escrow'),
+  })
+}
 
 export function useTopUpWallet() {
   const qc = useQueryClient()

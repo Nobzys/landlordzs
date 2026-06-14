@@ -1,8 +1,8 @@
-import { z } from 'zod'
+﻿import { z } from 'zod'
 
 const CAMEROON_PHONE_RE = /^\+237[6-9][0-9]{8}$/
 
-// ─── Login ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Login â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const loginSchema = z.object({
   email:    z.string().email('Please enter a valid email address'),
@@ -11,7 +11,7 @@ export const loginSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>
 
-// ─── Register ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Register â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const registerSchema = z
   .object({
@@ -28,8 +28,8 @@ export const registerSchema = z
       .regex(/[0-9]/, 'Must contain at least one number'),
     confirm_password: z.string(),
     role: z.enum(
-      ['buyer', 'seller', 'agent', 'vendor', 'contractor', 'engineer', 'architect', 'lawyer'],
-      { required_error: 'Please select your account type' }
+      ['buyer', 'seller', 'agent', 'vendor', 'contractor', 'engineer', 'architect', 'lawyer'] as const,
+      { error: 'Please select your account type' }
     ),
   })
   .refine((d) => d.password === d.confirm_password, {
@@ -39,7 +39,7 @@ export const registerSchema = z
 
 export type RegisterInput = z.infer<typeof registerSchema>
 
-// ─── Forgot password ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Forgot password â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const forgotPasswordSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -47,7 +47,7 @@ export const forgotPasswordSchema = z.object({
 
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
 
-// ─── Reset password ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Reset password â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const resetPasswordSchema = z
   .object({
@@ -66,7 +66,7 @@ export const resetPasswordSchema = z
 
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
 
-// ─── Phone ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Phone â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const phoneSchema = z.object({
   phone: z
@@ -89,7 +89,7 @@ export const phoneOtpSchema = z.object({
 
 export type PhoneOtpInput = z.infer<typeof phoneOtpSchema>
 
-// ─── Basic profile (onboarding step 1) ───────────────────────────────────────
+// â”€â”€â”€ Basic profile (onboarding step 1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const basicProfileSchema = z.object({
   full_name: z
@@ -109,21 +109,28 @@ export const basicProfileSchema = z.object({
     .or(z.literal('')),
   city: z.enum(
     ['yaounde', 'douala', 'buea', 'bamenda', 'limbe', 'kribi',
-     'bafoussam', 'ngaoundere', 'maroua', 'bertoua', 'ebolowa', 'kumba'],
-    { required_error: 'Please select your city' }
+     'bafoussam', 'ngaoundere', 'maroua', 'bertoua', 'ebolowa', 'kumba'] as const,
+    { error: 'Please select your city' }
   ),
   bio: z.string().max(500, 'Bio cannot exceed 500 characters').optional().or(z.literal('')),
 })
 
 export type BasicProfileInput = z.infer<typeof basicProfileSchema>
 
-// ─── Role-specific profiles (onboarding step 2) ───────────────────────────────
+// â”€â”€â”€ Role-specific profiles (onboarding step 2) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+const CAMEROON_CITIES = [
+  'yaounde', 'douala', 'buea', 'bamenda', 'limbe', 'kribi',
+  'bafoussam', 'ngaoundere', 'maroua', 'bertoua', 'ebolowa', 'kumba',
+] as const
 
 export const agentProfileSchema = z.object({
-  agency_name:       z.string().max(100).optional().or(z.literal('')),
-  specializations:   z.array(z.string()).min(1, 'Select at least one specialization'),
-  experience_years:  z.coerce.number().min(0).max(50),
-  commission_rate:   z.coerce.number().min(0).max(20).optional(),
+  agency_name:      z.string().max(100).optional().or(z.literal('')),
+  license_number:   z.string().max(100).optional().or(z.literal('')),
+  specializations:  z.array(z.string()).min(1, 'Select at least one specialization'),
+  service_areas:    z.array(z.enum(CAMEROON_CITIES)).optional().default([]),
+  experience_years: z.coerce.number().min(0).max(50),
+  commission_rate:  z.coerce.number().min(0).max(20).optional(),
 })
 
 export type AgentProfileInput = z.infer<typeof agentProfileSchema>
@@ -137,7 +144,9 @@ export type VendorProfileInput = z.infer<typeof vendorProfileSchema>
 
 export const professionalProfileSchema = z.object({
   company_name:     z.string().max(100).optional().or(z.literal('')),
+  license_number:   z.string().max(100).optional().or(z.literal('')),
   specializations:  z.array(z.string()).min(1, 'Select at least one specialization'),
+  service_areas:    z.array(z.enum(CAMEROON_CITIES)).optional().default([]),
   experience_years: z.coerce.number().min(0).max(50),
   day_rate:         z.coerce.number().min(0).optional(),
 })

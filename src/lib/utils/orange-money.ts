@@ -1,14 +1,16 @@
 // Orange Money Cameroon Merchant API client
-// Docs: https://developer.orange.com/apis/om-webpay-cm
+// Portal: https://developer.orange.com/apis/om-webpay-cm
 // Flow: server initiates → user confirms on phone (USSD push) or web redirect
 
-const BASE_URL      = process.env.ORANGE_MONEY_BASE_URL ?? 'https://api.orange.com'
-const CLIENT_ID     = process.env.ORANGE_MONEY_CLIENT_ID ?? ''
-const CLIENT_SECRET = process.env.ORANGE_MONEY_CLIENT_SECRET ?? ''
-const MERCHANT_KEY  = process.env.ORANGE_MONEY_MERCHANT_KEY ?? ''
-const RETURN_URL    = process.env.ORANGE_MONEY_RETURN_URL ?? ''
-const CANCEL_URL    = process.env.ORANGE_MONEY_CANCEL_URL ?? ''
-const NOTIF_URL     = process.env.ORANGE_MONEY_NOTIF_URL ?? ''
+import {
+  OM_BASE_URL,
+  OM_CLIENT_ID,
+  OM_CLIENT_SECRET,
+  OM_MERCHANT_KEY,
+  OM_RETURN_URL,
+  OM_CANCEL_URL,
+  OM_NOTIF_URL,
+} from '@/lib/config/env'
 
 interface OrangeToken {
   access_token: string
@@ -23,13 +25,13 @@ async function getToken(): Promise<string> {
     return tokenCache.access_token
   }
 
-  const res = await fetch(`${BASE_URL}/oauth/v3/token`, {
+  const res = await fetch(`${OM_BASE_URL}/oauth/v3/token`, {
     method:  'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body:    new URLSearchParams({
       grant_type:    'client_credentials',
-      client_id:     CLIENT_ID,
-      client_secret: CLIENT_SECRET,
+      client_id:     OM_CLIENT_ID,
+      client_secret: OM_CLIENT_SECRET,
     }),
   })
 
@@ -58,43 +60,43 @@ export interface OrangePaymentRequest {
 }
 
 export interface OrangePaymentResponse {
-  status:     string
-  message:    string
+  status:  string
+  message: string
   data?: {
-    payment_url:  string
-    pay_token:    string
-    notif_token:  string
-    order_id:     string
+    payment_url: string
+    pay_token:   string
+    notif_token: string
+    order_id:    string
   }
 }
 
 export type OrangePaymentStatus = 'SUCCESS' | 'FAILED' | 'PENDING' | 'INITIATED' | 'CANCELLED'
 
 export interface OrangeStatusResult {
-  status:      OrangePaymentStatus
-  txnid?:      string
-  amount?:     number
-  subscriberMsisdn?: string
+  status:             OrangePaymentStatus
+  txnid?:             string
+  amount?:            number
+  subscriberMsisdn?:  string
 }
 
 export async function orangeInitiatePayment(req: OrangePaymentRequest): Promise<OrangePaymentResponse> {
   const token = await getToken()
 
-  const res = await fetch(`${BASE_URL}/orange-money-webpay/cm/v1/webpayment`, {
+  const res = await fetch(`${OM_BASE_URL}/orange-money-webpay/cm/v1/webpayment`, {
     method:  'POST',
     headers: {
       Authorization:  `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      merchant_key: MERCHANT_KEY,
-      currency:     req.currency ?? 'XAF',
+      merchant_key: OM_MERCHANT_KEY,
+      currency:     req.currency  ?? 'XAF',
       order_id:     req.orderId,
       amount:       req.amount,
-      return_url:   req.returnUrl ?? RETURN_URL,
-      cancel_url:   req.cancelUrl ?? CANCEL_URL,
-      notif_url:    req.notifUrl  ?? NOTIF_URL,
-      lang:         req.lang ?? 'fr',
+      return_url:   req.returnUrl ?? OM_RETURN_URL,
+      cancel_url:   req.cancelUrl ?? OM_CANCEL_URL,
+      notif_url:    req.notifUrl  ?? OM_NOTIF_URL,
+      lang:         req.lang      ?? 'fr',
     }),
   })
 
@@ -109,14 +111,14 @@ export async function orangeInitiatePayment(req: OrangePaymentRequest): Promise<
 export async function orangeGetPaymentStatus(orderId: string, payToken: string): Promise<OrangeStatusResult> {
   const token = await getToken()
 
-  const res = await fetch(`${BASE_URL}/orange-money-webpay/cm/v1/orderstatus`, {
+  const res = await fetch(`${OM_BASE_URL}/orange-money-webpay/cm/v1/orderstatus`, {
     method:  'POST',
     headers: {
       Authorization:  `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      merchant_key: MERCHANT_KEY,
+      merchant_key: OM_MERCHANT_KEY,
       order_id:     orderId,
       pay_token:    payToken,
     }),

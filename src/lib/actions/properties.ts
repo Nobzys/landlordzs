@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
@@ -9,14 +9,14 @@ import { STORAGE_BUCKETS } from '@/lib/utils/constants'
 import type { ActionResult } from '@/types/auth'
 import type { PropertyCreateInput, InquiryInput } from '@/lib/validations/property'
 
-// ─── Create ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Create â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function createProperty(
   data: PropertyCreateInput
 ): Promise<ActionResult<{ id: string; slug: string }>> {
   const parsed = propertyCreateSchema.safeParse(data)
   if (!parsed.success) {
-    return { error: parsed.error.errors[0].message }
+    return { error: parsed.error.issues[0].message }
   }
 
   const supabase = await createClient()
@@ -26,7 +26,7 @@ export async function createProperty(
   const { amenities, has_security, has_generator, has_borehole, ...fields } = parsed.data
   const slug = `${slugify(fields.title)}-${Date.now()}`
 
-  const { data: property, error } = await supabase
+  const { data: property, error } = await (supabase as any)
     .from('properties')
     .insert({
       ...fields,
@@ -43,7 +43,7 @@ export async function createProperty(
   if (error || !property) return { error: error?.message ?? 'Failed to create property' }
 
   if (amenities.length > 0) {
-    await supabase.from('property_amenities').insert(
+    await (supabase as any).from('property_amenities').insert(
       amenities.map(a => ({ ...a, property_id: property.id }))
     )
   }
@@ -52,7 +52,7 @@ export async function createProperty(
   return { success: true, data: { id: property.id, slug: property.slug } }
 }
 
-// ─── Update ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Update â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function updateProperty(
   propertyId: string,
@@ -64,7 +64,7 @@ export async function updateProperty(
 
   const { amenities, ...fields } = data
 
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('properties')
     .update(fields)
     .eq('id', propertyId)
@@ -73,9 +73,9 @@ export async function updateProperty(
   if (error) return { error: error.message }
 
   if (amenities !== undefined) {
-    await supabase.from('property_amenities').delete().eq('property_id', propertyId)
+    await (supabase as any).from('property_amenities').delete().eq('property_id', propertyId)
     if (amenities.length > 0) {
-      await supabase.from('property_amenities').insert(
+      await (supabase as any).from('property_amenities').insert(
         amenities.map(a => ({ ...a, property_id: propertyId }))
       )
     }
@@ -86,14 +86,14 @@ export async function updateProperty(
   return { success: true }
 }
 
-// ─── Delete ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Delete â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function deleteProperty(propertyId: string): Promise<ActionResult> {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('properties')
     .delete()
     .eq('id', propertyId)
@@ -105,7 +105,7 @@ export async function deleteProperty(propertyId: string): Promise<ActionResult> 
   return { success: true }
 }
 
-// ─── Publish / Unpublish ──────────────────────────────────────────────────────
+// â”€â”€â”€ Publish / Unpublish â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function publishProperty(
   propertyId: string,
@@ -115,7 +115,7 @@ export async function publishProperty(
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('properties')
     .update({
       status:       publish ? 'active' : 'inactive',
@@ -131,7 +131,7 @@ export async function publishProperty(
   return { success: true }
 }
 
-// ─── Images ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Images â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function addPropertyImage(
   propertyId: string,
@@ -143,7 +143,7 @@ export async function addPropertyImage(
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
-  const { data: existing } = await supabase
+  const { data: existing } = await (supabase as any)
     .from('property_images')
     .select('id')
     .eq('property_id', propertyId)
@@ -153,13 +153,13 @@ export async function addPropertyImage(
   const nextOrder = existing && existing.length > 0 ? 1 : 0
 
   if (isPrimary) {
-    await supabase
+    await (supabase as any)
       .from('property_images')
       .update({ is_primary: false })
       .eq('property_id', propertyId)
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('property_images')
     .insert({
       property_id: propertyId,
@@ -184,7 +184,7 @@ export async function removePropertyImage(
 
   await supabase.storage.from(STORAGE_BUCKETS.PROPERTY_IMAGES).remove([storagePath])
 
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('property_images')
     .delete()
     .eq('id', imageId)
@@ -193,7 +193,7 @@ export async function removePropertyImage(
   return { success: true }
 }
 
-// ─── Videos ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Videos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function addPropertyVideo(
   propertyId: string,
@@ -204,7 +204,7 @@ export async function addPropertyVideo(
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('property_videos')
     .insert({ property_id: propertyId, url, title: title ?? null, is_primary: false })
     .select('id')
@@ -214,14 +214,14 @@ export async function addPropertyVideo(
   return { success: true, data: { id: data.id } }
 }
 
-// ─── Favorites ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Favorites â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function toggleFavorite(propertyId: string): Promise<ActionResult<{ favorited: boolean }>> {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Sign in to save properties' }
 
-  const { data: existing } = await supabase
+  const { data: existing } = await (supabase as any)
     .from('property_favorites')
     .select('id')
     .eq('user_id', user.id)
@@ -229,27 +229,27 @@ export async function toggleFavorite(propertyId: string): Promise<ActionResult<{
     .maybeSingle()
 
   if (existing) {
-    await supabase.from('property_favorites').delete().eq('id', existing.id)
+    await (supabase as any).from('property_favorites').delete().eq('id', existing.id)
     return { success: true, data: { favorited: false } }
   }
 
-  await supabase.from('property_favorites').insert({ user_id: user.id, property_id: propertyId })
+  await (supabase as any).from('property_favorites').insert({ user_id: user.id, property_id: propertyId })
   return { success: true, data: { favorited: true } }
 }
 
-// ─── Inquiry ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Inquiry â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function submitInquiry(
   propertyId: string,
   data: InquiryInput
 ): Promise<ActionResult> {
   const parsed = inquirySchema.safeParse(data)
-  if (!parsed.success) return { error: parsed.error.errors[0].message }
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { error } = await supabase.from('property_inquiries').insert({
+  const { error } = await (supabase as any).from('property_inquiries').insert({
     property_id: propertyId,
     sender_id:   user?.id ?? null,
     ...parsed.data,
@@ -259,14 +259,14 @@ export async function submitInquiry(
   return { success: true }
 }
 
-// ─── Verification ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Verification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function requestVerification(propertyId: string): Promise<ActionResult> {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
-  const { data: existing } = await supabase
+  const { data: existing } = await (supabase as any)
     .from('property_verifications')
     .select('id, status')
     .eq('property_id', propertyId)
@@ -275,7 +275,7 @@ export async function requestVerification(propertyId: string): Promise<ActionRes
   if (existing?.status === 'pending') return { error: 'Verification already pending' }
   if (existing?.status === 'approved') return { error: 'Property is already verified' }
 
-  const { error } = await supabase.from('property_verifications').insert({
+  const { error } = await (supabase as any).from('property_verifications').insert({
     property_id:  propertyId,
     requested_by: user.id,
     status:       'pending',
@@ -283,7 +283,7 @@ export async function requestVerification(propertyId: string): Promise<ActionRes
 
   if (error) return { error: error.message }
 
-  await supabase
+  await (supabase as any)
     .from('properties')
     .update({ status: 'pending_verification' })
     .eq('id', propertyId)
@@ -293,7 +293,7 @@ export async function requestVerification(propertyId: string): Promise<ActionRes
   return { success: true }
 }
 
-// ─── Admin: approve/reject verification ──────────────────────────────────────
+// â”€â”€â”€ Admin: approve/reject verification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function reviewVerification(
   verificationId: string,
@@ -304,7 +304,7 @@ export async function reviewVerification(
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
-  const { data: callerProfile } = await supabase
+  const { data: callerProfile } = await (supabase as any)
     .from('profiles')
     .select('role')
     .eq('id', user.id)
@@ -313,7 +313,7 @@ export async function reviewVerification(
 
   const adminClient = createAdminClient()
 
-  const { data: verification, error: fetchError } = await adminClient
+  const { data: verification, error: fetchError } = await (adminClient as any)
     .from('property_verifications')
     .update({ status: action, reviewed_by: user.id, notes: notes ?? null, reviewed_at: new Date().toISOString() })
     .eq('id', verificationId)
@@ -323,12 +323,12 @@ export async function reviewVerification(
   if (fetchError || !verification) return { error: fetchError?.message ?? 'Not found' }
 
   if (action === 'approved') {
-    await adminClient
+    await (adminClient as any)
       .from('properties')
       .update({ is_verified: true, status: 'active' })
       .eq('id', verification.property_id)
   } else {
-    await adminClient
+    await (adminClient as any)
       .from('properties')
       .update({ status: 'inactive' })
       .eq('id', verification.property_id)

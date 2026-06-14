@@ -24,7 +24,8 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export function WalletTopUpForm({ onSuccess }: { onSuccess?: () => void }) {
-  const [txnId, setTxnId] = useState<string | null>(null)
+  const [txnId, setTxnId]           = useState<string | null>(null)
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null)
   const topUp = useTopUpWallet()
 
   const { isPolling, isSuccessful, isFailed } = usePaymentStatus(txnId, {
@@ -46,7 +47,13 @@ export function WalletTopUpForm({ onSuccess }: { onSuccess?: () => void }) {
   const onSubmit = async (data: FormValues) => {
     const result = await topUp.mutateAsync({ amount: data.amount, provider: data.provider, phone: data.phone })
     if (result.error) return
-    if (result.data?.transaction_id) setTxnId(result.data.transaction_id)
+    if (result.data?.transaction_id) {
+      setTxnId(result.data.transaction_id)
+      if (result.data.payment_url) {
+        setPaymentUrl(result.data.payment_url)
+        window.open(result.data.payment_url, '_blank', 'noopener,noreferrer')
+      }
+    }
   }
 
   if (isSuccessful) {
@@ -70,7 +77,7 @@ export function WalletTopUpForm({ onSuccess }: { onSuccess?: () => void }) {
           <p className="font-semibold text-lg">Payment Failed</p>
           <p className="text-sm text-muted-foreground">Please check your phone and try again.</p>
         </div>
-        <Button variant="outline" onClick={() => setTxnId(null)}>Try Again</Button>
+        <Button variant="outline" onClick={() => { setTxnId(null); setPaymentUrl(null) }}>Try Again</Button>
       </div>
     )
   }
@@ -81,11 +88,26 @@ export function WalletTopUpForm({ onSuccess }: { onSuccess?: () => void }) {
         <Loader2 className="h-16 w-16 animate-spin text-blue-600" />
         <div>
           <p className="font-semibold text-lg">Awaiting Payment</p>
-          <p className="text-sm text-muted-foreground">
-            Check your phone for the {provider === 'mtn_momo' ? 'MTN MoMo' : 'Orange Money'} prompt.
-          </p>
+          {paymentUrl ? (
+            <p className="text-sm text-muted-foreground">
+              Complete your payment in the tab that just opened, then wait here.
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Check your phone for the MTN MoMo prompt.
+            </p>
+          )}
           {amount && <p className="text-blue-700 font-semibold mt-1">{formatXAF(amount)}</p>}
         </div>
+        {paymentUrl && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(paymentUrl, '_blank', 'noopener,noreferrer')}
+          >
+            Reopen payment page
+          </Button>
+        )}
         <p className="text-xs text-muted-foreground">Do not close this page</p>
       </div>
     )
@@ -123,6 +145,7 @@ export function WalletTopUpForm({ onSuccess }: { onSuccess?: () => void }) {
           value={provider}
           onChange={v => setValue('provider', v as any)}
           amount={amount}
+          exclude={['wallet']}
         />
         {errors.provider && <p className="text-xs text-destructive">{errors.provider.message}</p>}
       </div>

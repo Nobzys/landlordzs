@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
-import { Eye, EyeOff, UserPlus } from 'lucide-react'
+import { Eye, EyeOff, UserPlus, CheckCircle2 } from 'lucide-react'
 import { signUp } from '@/lib/actions/auth'
 import { registerSchema, type RegisterInput } from '@/lib/validations/auth'
 import { RoleSelector } from './RoleSelector'
@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/form'
 import type { RegisterableRole } from '@/types/auth'
 
-type VerifyState = { email: string } | null
+type VerifyState = { email: string; skipVerification?: boolean } | null
 
 export function RegisterForm() {
   const [serverError,  setServerError]  = useState<string | null>(null)
@@ -38,9 +38,32 @@ export function RegisterForm() {
         return
       }
       if (result?.data?.email) {
-        setVerifyState({ email: result.data.email })
+        setVerifyState({
+          email: result.data.email,
+          skipVerification: result.data.skipVerification,
+        })
       }
     })
+  }
+
+  // ── Success: account created without email verification ──────────────────
+  if (verifyState?.skipVerification) {
+    return (
+      <div className="space-y-4 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+          <CheckCircle2 className="text-green-600" size={32} />
+        </div>
+        <h2 className="text-xl font-semibold">Account created!</h2>
+        <p className="text-sm text-muted-foreground">
+          Your account for{' '}
+          <span className="font-medium text-foreground">{verifyState.email}</span>{' '}
+          is ready. Sign in to finish setting up your profile.
+        </p>
+        <Button asChild className="w-full">
+          <Link href="/login">Sign In</Link>
+        </Button>
+      </div>
+    )
   }
 
   // ── Success: ask user to verify email ────────────────────────────────────

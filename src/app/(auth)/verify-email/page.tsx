@@ -28,9 +28,9 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
             Your email has been confirmed. Let&apos;s set up your profile.
           </p>
         </div>
-        <Link href="/onboarding">
-          <Button className="w-full">Continue to Setup</Button>
-        </Link>
+        <Button asChild className="w-full">
+          <Link href="/onboarding">Continue to Setup</Link>
+        </Button>
       </div>
     )
   }
@@ -48,12 +48,12 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
           </p>
         </div>
         <div className="space-y-2">
-          <Link href="/register">
-            <Button className="w-full">Create a new account</Button>
-          </Link>
-          <Link href="/login">
-            <Button variant="outline" className="w-full">Back to Sign In</Button>
-          </Link>
+          <Button asChild className="w-full">
+            <Link href="/register">Create a new account</Link>
+          </Button>
+          <Button asChild variant="outline" className="w-full">
+            <Link href="/login">Back to Sign In</Link>
+          </Button>
         </div>
       </div>
     )

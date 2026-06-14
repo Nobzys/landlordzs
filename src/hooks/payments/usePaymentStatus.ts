@@ -4,19 +4,15 @@ import { useQuery } from '@tanstack/react-query'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
 import { queryKeys } from '@/lib/query/keys'
 
 type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'refunded'
 
 async function fetchTransactionStatus(id: string): Promise<PaymentStatus> {
-  const supabase = createClient()
-  const { data } = await (supabase as any)
-    .from('transactions')
-    .select('status')
-    .eq('id', id)
-    .single()
-  return (data?.status ?? 'pending') as PaymentStatus
+  const res = await fetch(`/api/payments/status/${id}`, { cache: 'no-store' })
+  if (!res.ok) return 'processing'
+  const json = await res.json()
+  return (json.status ?? 'processing') as PaymentStatus
 }
 
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled', 'refunded'])

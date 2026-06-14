@@ -1,10 +1,14 @@
 'use client'
 
-import { Clock, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { useState } from 'react'
+import { Clock, CheckCircle2, AlertCircle, RefreshCw, X } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
 import { formatXAF, formatRelative } from '@/lib/utils/format'
 import { usePayouts } from '@/hooks/payments/usePayouts'
+import { cancelPayout } from '@/lib/actions/payments'
+import { useQueryClient } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/query/keys'
 import { cn } from '@/lib/utils/cn'
 
 const PROVIDER_LABELS: Record<string, string> = {
@@ -22,6 +26,18 @@ const STATUS_CONFIG = {
 
 export function PayoutsList() {
   const { data: payouts, isLoading } = usePayouts()
+  const queryClient = useQueryClient()
+  const [cancelling, setCancelling] = useState<string | null>(null)
+
+  async function handleCancel(payoutId: string) {
+    setCancelling(payoutId)
+    try {
+      await cancelPayout(payoutId)
+      queryClient.invalidateQueries({ queryKey: queryKeys.payouts.list() })
+    } finally {
+      setCancelling(null)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -50,10 +66,10 @@ export function PayoutsList() {
           const Icon   = config.icon
 
           return (
-            <div key={p.id} className="flex items-center justify-between px-4 py-3">
-              <div>
+            <div key={p.id} className="flex items-center justify-between px-4 py-3 gap-3">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 text-sm font-medium">
-                  <Icon className={cn('h-4 w-4', config.color)} />
+                  <Icon className={cn('h-4 w-4 shrink-0', config.color)} />
                   {PROVIDER_LABELS[p.provider] ?? p.provider}
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -63,11 +79,25 @@ export function PayoutsList() {
                   <p className="text-xs text-destructive mt-0.5">{p.failure_reason}</p>
                 )}
               </div>
-              <div className="text-right">
-                <p className="text-sm font-semibold">{formatXAF(p.net_amount)}</p>
-                <p className="text-xs text-muted-foreground">
-                  -{formatXAF(p.fee)} fee
-                </p>
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="text-right">
+                  <p className="text-sm font-semibold">{formatXAF(p.net_amount)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    -{formatXAF(p.fee)} fee
+                  </p>
+                </div>
+                {p.status === 'pending' && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                    disabled={cancelling === p.id}
+                    onClick={() => handleCancel(p.id)}
+                    title="Cancel payout"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                )}
               </div>
             </div>
           )

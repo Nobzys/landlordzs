@@ -18,7 +18,7 @@ import {
   type VendorProfileInput,
   type ProfessionalProfileInput,
 } from '@/lib/validations/auth'
-import { ROLE_SPECIALIZATIONS, ROLE_LABELS } from '@/lib/utils/constants'
+import { ROLE_SPECIALIZATIONS, ROLE_LABELS, CAMEROON_CITIES } from '@/lib/utils/constants'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -28,22 +28,24 @@ import {
 import type { UserRole } from '@/types/auth'
 
 interface RoleProfileStepProps {
-  role:      UserRole
-  onFinish:  (redirectTo: string) => void
-  onError:   (msg: string) => void
+  role:           UserRole
+  isProfessional: boolean
+  onNext:         () => void
+  onFinish:       (redirectTo: string) => void
+  onError:        (msg: string) => void
 }
 
-export function RoleProfileStep({ role, onFinish, onError }: RoleProfileStepProps) {
+export function RoleProfileStep({ role, isProfessional, onNext, onFinish, onError }: RoleProfileStepProps) {
   switch (role) {
     case 'agent':
-      return <AgentStep onFinish={onFinish} onError={onError} />
+      return <AgentStep onNext={onNext} onFinish={onFinish} onError={onError} isProfessional={isProfessional} />
     case 'vendor':
       return <VendorStep onFinish={onFinish} onError={onError} />
     case 'contractor':
     case 'engineer':
     case 'architect':
     case 'lawyer':
-      return <ProfessionalStep role={role} onFinish={onFinish} onError={onError} />
+      return <ProfessionalStep role={role} onNext={onNext} onError={onError} />
     default:
       return <SkipStep onFinish={onFinish} onError={onError} />
   }
@@ -51,22 +53,28 @@ export function RoleProfileStep({ role, onFinish, onError }: RoleProfileStepProp
 
 // ─── Agent ────────────────────────────────────────────────────────────────────
 
-function AgentStep({ onFinish, onError }: Omit<RoleProfileStepProps, 'role'>) {
+function AgentStep({
+  isProfessional, onNext, onFinish, onError,
+}: { isProfessional: boolean; onNext: () => void; onFinish: (r: string) => void; onError: (m: string) => void }) {
   const [isPending, startTransition] = useTransition()
   const specializations = ROLE_SPECIALIZATIONS['agent']
 
   const form = useForm<AgentProfileInput>({
-    resolver:      zodResolver(agentProfileSchema),
-    defaultValues: { agency_name: '', specializations: [], experience_years: 0, commission_rate: 3 },
+    resolver:      zodResolver(agentProfileSchema) as any,
+    defaultValues: { agency_name: '', license_number: '', specializations: [], service_areas: [], experience_years: 0, commission_rate: 3 },
   })
 
   const onSubmit = (data: AgentProfileInput) => {
     startTransition(async () => {
       const r1 = await completeAgentProfile(data)
       if (r1?.error) { onError(r1.error); return }
-      const r2 = await completeOnboarding()
-      if (r2?.error) { onError(r2.error); return }
-      onFinish(r2.data?.redirectTo ?? '/agent')
+      if (isProfessional) {
+        onNext()
+      } else {
+        const r2 = await completeOnboarding()
+        if (r2?.error) { onError(r2.error); return }
+        onFinish(r2.data?.redirectTo ?? '/agent')
+      }
     })
   }
 
@@ -92,23 +100,43 @@ function AgentStep({ onFinish, onError }: Omit<RoleProfileStepProps, 'role'>) {
           )} />
         </div>
 
-        <FormField control={form.control} name="commission_rate" render={({ field }) => (
-          <FormItem>
-            <FormLabel>Default commission rate (%)</FormLabel>
-            <FormControl><Input type="number" min={0} max={20} step={0.5} disabled={isPending} {...field} /></FormControl>
-            <FormDescription>Platform default is 3%. You can update this per listing.</FormDescription>
-            <FormMessage />
-          </FormItem>
-        )} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField control={form.control} name="license_number" render={({ field }) => (
+            <FormItem>
+              <FormLabel>License number</FormLabel>
+              <FormControl><Input placeholder="e.g. AGT-2024-001" disabled={isPending} {...field} /></FormControl>
+              <FormDescription>Your official real estate license ID</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )} />
+
+          <FormField control={form.control} name="commission_rate" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Default commission rate (%)</FormLabel>
+              <FormControl><Input type="number" min={0} max={20} step={0.5} disabled={isPending} {...field} /></FormControl>
+              <FormDescription>Platform default is 3%.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
 
         <SpecializationCheckboxes
-          control={form.control}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          control={form.control as any}
           name="specializations"
+          label="Specializations"
           options={specializations}
           disabled={isPending}
         />
 
-        <SubmitButton isPending={isPending} label="Finish Setup" />
+        <CityCheckboxes
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          control={form.control as any}
+          name="service_areas"
+          disabled={isPending}
+        />
+
+        <SubmitButton isPending={isPending} label={isProfessional ? 'Continue' : 'Finish Setup'} />
       </form>
     </Form>
   )
@@ -116,7 +144,7 @@ function AgentStep({ onFinish, onError }: Omit<RoleProfileStepProps, 'role'>) {
 
 // ─── Vendor ───────────────────────────────────────────────────────────────────
 
-function VendorStep({ onFinish, onError }: Omit<RoleProfileStepProps, 'role'>) {
+function VendorStep({ onFinish, onError }: { onFinish: (r: string) => void; onError: (m: string) => void }) {
   const [isPending, startTransition] = useTransition()
 
   const form = useForm<VendorProfileInput>({
@@ -164,24 +192,29 @@ function VendorStep({ onFinish, onError }: Omit<RoleProfileStepProps, 'role'>) {
 
 // ─── Professional (contractor / engineer / architect / lawyer) ────────────────
 
+const LICENSE_LABEL: Record<string, string> = {
+  contractor: 'Registration number',
+  engineer:   'Professional registration number',
+  architect:  'Order of Architects number',
+  lawyer:     'Bar association number',
+}
+
 function ProfessionalStep({
-  role, onFinish, onError,
-}: { role: 'contractor' | 'engineer' | 'architect' | 'lawyer' } & Omit<RoleProfileStepProps, 'role'>) {
+  role, onNext, onError,
+}: { role: 'contractor' | 'engineer' | 'architect' | 'lawyer'; onNext: () => void; onError: (m: string) => void }) {
   const [isPending, startTransition] = useTransition()
   const specializations = ROLE_SPECIALIZATIONS[role] ?? []
 
   const form = useForm<ProfessionalProfileInput>({
-    resolver:      zodResolver(professionalProfileSchema),
-    defaultValues: { company_name: '', specializations: [], experience_years: 0, day_rate: undefined },
+    resolver:      zodResolver(professionalProfileSchema) as any,
+    defaultValues: { company_name: '', license_number: '', specializations: [], service_areas: [], experience_years: 0, day_rate: undefined },
   })
 
   const onSubmit = (data: ProfessionalProfileInput) => {
     startTransition(async () => {
       const r1 = await completeProfessionalProfile(data, role)
       if (r1?.error) { onError(r1.error); return }
-      const r2 = await completeOnboarding()
-      if (r2?.error) { onError(r2.error); return }
-      onFinish(r2.data?.redirectTo ?? `/${role}`)
+      onNext()
     })
   }
 
@@ -191,7 +224,7 @@ function ProfessionalStep({
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField control={form.control} name="company_name" render={({ field }) => (
             <FormItem>
-              <FormLabel>Company name</FormLabel>
+              <FormLabel>Company / Firm name</FormLabel>
               <FormControl><Input placeholder="Your firm name (optional)" disabled={isPending} {...field} /></FormControl>
               <FormMessage />
             </FormItem>
@@ -206,25 +239,44 @@ function ProfessionalStep({
           )} />
         </div>
 
-        <FormField control={form.control} name="day_rate" render={({ field }) => (
-          <FormItem>
-            <FormLabel>Daily rate (XAF)</FormLabel>
-            <FormControl><Input type="number" min={0} placeholder="e.g. 100000" disabled={isPending} {...field} /></FormControl>
-            <FormDescription>Optional. Helps clients estimate costs.</FormDescription>
-            <FormMessage />
-          </FormItem>
-        )} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField control={form.control} name="license_number" render={({ field }) => (
+            <FormItem>
+              <FormLabel>{LICENSE_LABEL[role] ?? 'Registration number'}</FormLabel>
+              <FormControl><Input placeholder="e.g. OA-2024-0042" disabled={isPending} {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+
+          <FormField control={form.control} name="day_rate" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Daily rate (XAF)</FormLabel>
+              <FormControl><Input type="number" min={0} placeholder="e.g. 100000" disabled={isPending} {...field} /></FormControl>
+              <FormDescription>Helps clients estimate costs.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
 
         {specializations.length > 0 && (
           <SpecializationCheckboxes
-            control={form.control}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            control={form.control as any}
             name="specializations"
+            label="Specializations"
             options={specializations}
             disabled={isPending}
           />
         )}
 
-        <SubmitButton isPending={isPending} label="Finish Setup" />
+        <CityCheckboxes
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          control={form.control as any}
+          name="service_areas"
+          disabled={isPending}
+        />
+
+        <SubmitButton isPending={isPending} label="Continue" />
       </form>
     </Form>
   )
@@ -232,7 +284,7 @@ function ProfessionalStep({
 
 // ─── Skip (buyer / seller — no extra profile data needed) ────────────────────
 
-function SkipStep({ onFinish, onError }: Omit<RoleProfileStepProps, 'role'>) {
+function SkipStep({ onFinish, onError }: { onFinish: (r: string) => void; onError: (m: string) => void }) {
   const [isPending, startTransition] = useTransition()
 
   const handleFinish = () => {
@@ -268,10 +320,11 @@ function SkipStep({ onFinish, onError }: Omit<RoleProfileStepProps, 'role'>) {
 // ─── Shared sub-components ────────────────────────────────────────────────────
 
 function SpecializationCheckboxes({
-  control, name, options, disabled,
+  control, name, label, options, disabled,
 }: {
   control: ReturnType<typeof useForm>['control']
-  name: string
+  name:    string
+  label:   string
   options: { value: string; label: string }[]
   disabled: boolean
 }) {
@@ -282,14 +335,11 @@ function SpecializationCheckboxes({
       render={({ field, fieldState }) => (
         <div className="space-y-2">
           <p className="text-sm font-medium leading-none">
-            Specializations <span className="text-destructive">*</span>
+            {label} <span className="text-destructive">*</span>
           </p>
           <div className="grid grid-cols-2 gap-2 rounded-lg border p-3 sm:grid-cols-3">
             {options.map((opt) => (
-              <label
-                key={opt.value}
-                className="flex cursor-pointer items-center gap-2 text-sm"
-              >
+              <label key={opt.value} className="flex cursor-pointer items-center gap-2 text-sm">
                 <Checkbox
                   checked={(field.value as string[]).includes(opt.value)}
                   onCheckedChange={(checked) => {
@@ -303,6 +353,49 @@ function SpecializationCheckboxes({
                   disabled={disabled}
                 />
                 {opt.label}
+              </label>
+            ))}
+          </div>
+          {fieldState.error && (
+            <p className="text-sm text-destructive">{fieldState.error.message}</p>
+          )}
+        </div>
+      )}
+    />
+  )
+}
+
+function CityCheckboxes({
+  control, name, disabled,
+}: {
+  control: ReturnType<typeof useForm>['control']
+  name:    string
+  disabled: boolean
+}) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <div className="space-y-2">
+          <p className="text-sm font-medium leading-none">Service areas</p>
+          <p className="text-xs text-muted-foreground">Select cities where you operate</p>
+          <div className="grid grid-cols-2 gap-2 rounded-lg border p-3 sm:grid-cols-3">
+            {CAMEROON_CITIES.map((city) => (
+              <label key={city.value} className="flex cursor-pointer items-center gap-2 text-sm">
+                <Checkbox
+                  checked={(field.value as string[]).includes(city.value)}
+                  onCheckedChange={(checked) => {
+                    const current = field.value as string[]
+                    field.onChange(
+                      checked
+                        ? [...current, city.value]
+                        : current.filter((v: string) => v !== city.value)
+                    )
+                  }}
+                  disabled={disabled}
+                />
+                {city.label}
               </label>
             ))}
           </div>

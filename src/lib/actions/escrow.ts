@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
@@ -6,16 +6,17 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createEscrowSchema, disputeEscrowSchema, completeMilestoneSchema } from '@/lib/validations/payment'
 import type { ActionResult } from '@/types/auth'
 import type { CreateEscrowInput, DisputeEscrowInput, CompleteMilestoneInput } from '@/lib/validations/payment'
+import { lookupPropertyAgent, creditAgentCommission } from '@/lib/utils/commission-helpers'
 
 const PLATFORM_FEE_PCT = 2.5
 
-// ─── Create escrow ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Create escrow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function createEscrow(
   data: CreateEscrowInput
 ): Promise<ActionResult<{ id: string }>> {
   const parsed = createEscrowSchema.safeParse(data)
-  if (!parsed.success) return { error: parsed.error.errors[0].message }
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
 
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -80,22 +81,45 @@ export async function createEscrow(
   return { success: true, data: { id: escrow.id } }
 }
 
-// ─── Fund escrow (called after payment webhook confirms) ─────────────────────
+// â”€â”€â”€ Fund escrow (called after payment webhook confirms) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-export async function fundEscrow(escrowId: string, transactionId: string): Promise<ActionResult> {
+export async function fundEscrow(escrowId: string): Promise<ActionResult> {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
   const { data: escrow } = await (supabase as any)
     .from('escrow_accounts')
-    .select('id, payer_id, status')
+    .select('id, payer_id, amount, status')
     .eq('id', escrowId)
     .single()
 
   if (!escrow) return { error: 'Escrow not found' }
   if (escrow.payer_id !== user.id) return { error: 'Unauthorized' }
   if (escrow.status !== 'pending') return { error: `Escrow is already ${escrow.status}` }
+
+  // Check wallet balance before debiting
+  const { data: wallet } = await (supabase as any)
+    .from('wallets')
+    .select('balance')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!wallet || wallet.balance < escrow.amount) {
+    return { error: 'Insufficient wallet balance. Please top up first.' }
+  }
+
+  // Debit payer's wallet (debit-only: funds held by platform until release)
+  const { error: rpcError } = await (supabase as any).rpc('wallet_transfer', {
+    p_from_id:  user.id,
+    p_to_id:    null,
+    p_amount:   escrow.amount,
+    p_ref_type: 'escrow',
+    p_ref_id:   escrowId,
+    p_desc:     'Escrow funded',
+  })
+
+  if (rpcError) return { error: rpcError.message }
 
   const { error } = await (supabase as any)
     .from('escrow_accounts')
@@ -109,14 +133,15 @@ export async function fundEscrow(escrowId: string, transactionId: string): Promi
     actor_id:    user.id,
     event_type:  'funded',
     description: 'Escrow funded by payer',
-    metadata:    { transaction_id: transactionId },
+    metadata:    { amount: escrow.amount },
   })
 
   revalidatePath(`/account/escrow/${escrowId}`)
+  revalidatePath('/account/wallet')
   return { success: true }
 }
 
-// ─── Release escrow (payer approves) ─────────────────────────────────────────
+// â”€â”€â”€ Release escrow (payer approves) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function releaseEscrow(escrowId: string): Promise<ActionResult> {
   const supabase = await createClient()
@@ -125,7 +150,7 @@ export async function releaseEscrow(escrowId: string): Promise<ActionResult> {
 
   const { data: escrow } = await (supabase as any)
     .from('escrow_accounts')
-    .select('id, payer_id, status')
+    .select('id, payer_id, status, reference_type, reference_id, amount')
     .eq('id', escrowId)
     .single()
 
@@ -144,19 +169,33 @@ export async function releaseEscrow(escrowId: string): Promise<ActionResult> {
     metadata:    {},
   })
 
+  // Auto-record and auto-pay agent commission if a property agent is attached
+  const agent = await lookupPropertyAgent(escrow.reference_type, escrow.reference_id)
+  if (agent) {
+    await creditAgentCommission({
+      agentId:        agent.agentId,
+      saleAmount:     escrow.amount,
+      commissionRate: agent.commissionRate,
+      referenceType:  escrow.reference_type,
+      referenceId:    escrow.reference_id,
+    })
+  }
+
   revalidatePath(`/account/escrow/${escrowId}`)
   revalidatePath('/account/escrow')
+  revalidatePath('/agent/commissions')
+  revalidatePath('/admin/commissions')
   return { success: true }
 }
 
-// ─── Dispute escrow ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Dispute escrow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function disputeEscrow(
   escrowId: string,
   data: DisputeEscrowInput
 ): Promise<ActionResult> {
   const parsed = disputeEscrowSchema.safeParse(data)
-  if (!parsed.success) return { error: parsed.error.errors[0].message }
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
 
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -191,11 +230,11 @@ export async function disputeEscrow(
   return { success: true }
 }
 
-// ─── Milestone: mark complete (payee) ────────────────────────────────────────
+// â”€â”€â”€ Milestone: mark complete (payee) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function completeMilestone(data: CompleteMilestoneInput): Promise<ActionResult> {
   const parsed = completeMilestoneSchema.safeParse(data)
-  if (!parsed.success) return { error: parsed.error.errors[0].message }
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
 
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -237,7 +276,7 @@ export async function completeMilestone(data: CompleteMilestoneInput): Promise<A
   return { success: true }
 }
 
-// ─── Milestone: approve (payer) ───────────────────────────────────────────────
+// â”€â”€â”€ Milestone: approve (payer) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function approveMilestone(milestoneId: string): Promise<ActionResult> {
   const supabase = await createClient()
@@ -246,7 +285,7 @@ export async function approveMilestone(milestoneId: string): Promise<ActionResul
 
   const { data: milestone } = await (supabase as any)
     .from('escrow_milestones')
-    .select('id, escrow_id, amount, status, escrow_accounts(payer_id, payee_id)')
+    .select('id, escrow_id, amount, status, escrow_accounts(payer_id, payee_id, reference_type, reference_id)')
     .eq('id', milestoneId)
     .single()
 
@@ -262,7 +301,8 @@ export async function approveMilestone(milestoneId: string): Promise<ActionResul
   if (error) return { error: error.message }
 
   // Partial release: credit payee wallet for this milestone amount
-  const payeeId = (milestone.escrow_accounts as any)?.payee_id
+  const escrowMeta = milestone.escrow_accounts as any
+  const payeeId    = escrowMeta?.payee_id
   await (supabase as any).rpc('wallet_transfer', {
     p_from_id:  null,
     p_to_id:    payeeId,
@@ -271,6 +311,18 @@ export async function approveMilestone(milestoneId: string): Promise<ActionResul
     p_ref_id:   milestoneId,
     p_desc:     'Milestone payment released',
   })
+
+  // Auto-record and auto-pay agent commission if this is a property-linked escrow
+  const agent = await lookupPropertyAgent(escrowMeta?.reference_type, escrowMeta?.reference_id)
+  if (agent) {
+    await creditAgentCommission({
+      agentId:        agent.agentId,
+      saleAmount:     milestone.amount,
+      commissionRate: agent.commissionRate,
+      referenceType:  escrowMeta.reference_type,
+      referenceId:    escrowMeta.reference_id,
+    })
+  }
 
   await (supabase as any).from('escrow_events').insert({
     escrow_id:   milestone.escrow_id,
@@ -281,10 +333,12 @@ export async function approveMilestone(milestoneId: string): Promise<ActionResul
   })
 
   revalidatePath(`/account/escrow/${milestone.escrow_id}`)
+  revalidatePath('/agent/commissions')
+  revalidatePath('/admin/commissions')
   return { success: true }
 }
 
-// ─── Admin: resolve dispute ───────────────────────────────────────────────────
+// â”€â”€â”€ Admin: resolve dispute â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function resolveDisputeAdmin(
   escrowId: string,
@@ -295,7 +349,7 @@ export async function resolveDisputeAdmin(
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
-  const { data: caller } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: caller } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single()
   if (caller?.role !== 'admin') return { error: 'Insufficient permissions' }
 
   const adminClient = createAdminClient()

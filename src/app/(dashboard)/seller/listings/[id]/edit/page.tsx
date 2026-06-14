@@ -18,7 +18,8 @@ export default async function EditListingPage({ params }: EditListingPageProps) 
   }
 
   const supabase = await createClient()
-  const { data: property } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: property } = await (supabase as any)
     .from('properties')
     .select('*, property_images(*), property_videos(*), property_amenities(*)')
     .eq('id', id)
