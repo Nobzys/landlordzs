@@ -101,9 +101,12 @@ export interface PropertyVideoRow {
   id: string
   property_id: string
   url: string
-  thumbnail_url: string | null
+  thumbnail: string | null
   title: string | null
-  is_primary: boolean
+  duration_sec: number | null
+  is_virtual_tour: boolean
+  sort_order: number
+  created_at: string
 }
 
 export interface PropertyAmenityRow {

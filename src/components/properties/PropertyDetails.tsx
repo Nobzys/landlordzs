@@ -106,6 +106,31 @@ export function PropertyDetails({ property }: PropertyDetailsProps) {
         </div>
       )}
 
+      {/* Videos */}
+      {property.property_videos.length > 0 && (
+        <div>
+          <h2 className="font-semibold mb-3">Videos</h2>
+          <div className="space-y-4">
+            {[...property.property_videos]
+              .sort((a, b) => a.sort_order - b.sort_order)
+              .map(video => (
+                <div key={video.id}>
+                  {video.title && (
+                    <p className="text-sm font-medium mb-1.5">{video.title}</p>
+                  )}
+                  <video
+                    src={video.url}
+                    controls
+                    preload="metadata"
+                    playsInline
+                    className="w-full aspect-video rounded-xl bg-black"
+                  />
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
       {/* Contact */}
       <Separator />
       <div>
