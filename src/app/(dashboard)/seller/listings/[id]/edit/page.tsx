@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
+import { requireActiveProfile } from '@/lib/utils/account-status'
 import { PropertyForm } from '@/components/properties/forms/PropertyForm'
 import type { PropertyCreateInput } from '@/lib/validations/property'
 
@@ -16,6 +17,7 @@ export default async function EditListingPage({ params }: EditListingPageProps) 
   if (!profile || !['seller', 'agent', 'admin'].includes(profile.role)) {
     redirect('/login')
   }
+  requireActiveProfile(profile)
 
   const supabase = await createClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

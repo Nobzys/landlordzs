@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { getServerProfile } from '@/lib/supabase/server'
+import { requireActiveProfile } from '@/lib/utils/account-status'
 import { PropertyForm } from '@/components/properties/forms/PropertyForm'
 
 export const metadata: Metadata = { title: 'New Listing' }
@@ -10,6 +11,7 @@ export default async function NewListingPage() {
   if (!profile || !['seller', 'agent', 'admin'].includes(profile.role)) {
     redirect('/login')
   }
+  requireActiveProfile(profile)
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">

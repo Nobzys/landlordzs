@@ -17,7 +17,7 @@ import {
   vendorProfileSchema,
   professionalProfileSchema,
 } from '@/lib/validations/auth'
-import { ROLE_DASHBOARDS, APP_URL, PROFESSIONAL_ROLES } from '@/lib/utils/constants'
+import { ROLE_DASHBOARDS, APP_URL, APPROVAL_REQUIRED_ROLES } from '@/lib/utils/constants'
 import type { ActionResult } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
 import type {
@@ -125,7 +125,7 @@ export async function signUp(
       return { error: adminErr.message }
     }
 
-    const isProfessional = PROFESSIONAL_ROLES.includes(role as typeof PROFESSIONAL_ROLES[number])
+    const requiresApproval = (APPROVAL_REQUIRED_ROLES as readonly string[]).includes(role)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (admin as any).from('profiles').upsert(
       {
@@ -133,7 +133,7 @@ export async function signUp(
         email,
         full_name,
         role,
-        account_status: isProfessional ? 'pending_verification' : 'active',
+        account_status: requiresApproval ? 'pending_verification' : 'active',
       },
       { onConflict: 'id' }
     )
@@ -600,6 +600,15 @@ export async function adminSuspendAccount(
     new_data:    { reason },
   })
 
+  // Store user-visible suspension reason
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (adminClient as any).from('account_notices').insert({
+    user_id:    targetUserId,
+    type:       'suspension',
+    reason,
+    created_by: user.id,
+  })
+
   revalidatePath('/admin/users')
   return { success: true }
 }
@@ -770,20 +779,54 @@ export async function adminRejectProfessional(
     .limit(1)
     .single() as { data: { id: string } | null }
 
+  const effectiveReason = reason || 'Documents did not meet requirements.'
+
   if (kyc) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (adminClient as any)
       .from('kyc_records')
       .update({
-        status:      'rejected',
-        review_notes: reason || 'Documents did not meet requirements.',
+        status:       'rejected',
+        review_notes: effectiveReason,
         reviewed_by:  user.id,
         reviewed_at:  now,
       })
       .eq('id', kyc.id)
   }
 
+  // Store user-visible rejection reason
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (adminClient as any).from('account_notices').insert({
+    user_id:    targetUserId,
+    type:       'rejection',
+    reason:     effectiveReason,
+    created_by: user.id,
+  })
+
   // account_status stays pending_verification so they can resubmit
   revalidatePath('/admin/professionals')
+  return { success: true }
+}
+
+// ─── Submit Correction Request / Appeal ───────────────────────────────────────
+
+export async function submitAppeal(
+  message: string,
+  noticeId: string | null,
+): Promise<ActionResult> {
+  if (!message?.trim()) return { error: 'Message is required.' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from('account_appeals').insert({
+    user_id:   user.id,
+    notice_id: noticeId,
+    message:   message.trim(),
+  })
+
+  if (error) return { error: error.message }
   return { success: true }
 }

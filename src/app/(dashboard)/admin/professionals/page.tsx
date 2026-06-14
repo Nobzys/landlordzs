@@ -8,14 +8,14 @@ import {
 } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { adminApproveProfessional, adminRejectProfessional } from '@/lib/actions/auth'
+import { adminApproveProfessional, adminRejectProfessional, adminSuspendAccount } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatRelative } from '@/lib/utils/format'
 import { ROLE_LABELS } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
 
-export const metadata: Metadata = { title: 'Professional Verification — Admin' }
+export const metadata: Metadata = { title: 'Account Verification — Admin' }
 
 const STATUS_TABS = ['pending', 'active', 'suspended'] as const
 type AccountStatus = (typeof STATUS_TABS)[number]
@@ -89,7 +89,7 @@ export default async function AdminProfessionalsPage({
       professional_profiles ( profession_type, company_name, is_verified ),
       agent_profiles ( license_verified )
     `)
-    .in('role', ['agent', 'contractor', 'engineer', 'architect', 'lawyer'])
+    .in('role', ['seller', 'vendor', 'agent', 'contractor', 'engineer', 'architect', 'lawyer'])
     .eq('account_status', statusFilter)
     .eq('onboarding_completed', true)
     .order('created_at', { ascending: tab === 'pending' })
@@ -133,12 +133,29 @@ export default async function AdminProfessionalsPage({
       }))
     : professionals.map((p) => ({ ...p, signedUrls: { front: null, back: null, cert: null } }))
 
+  // Pending appeals for displayed professionals
+  type AppealData = { id: string; user_id: string; message: string; created_at: string }
+  const appealsMap = new Map<string, AppealData>()
+  if (professionals.length > 0) {
+    const profIds = professionals.map((p) => p.id)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: appealRows } = await (adminClient as any)
+      .from('account_appeals')
+      .select('id, user_id, message, created_at')
+      .in('user_id', profIds)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false }) as { data: AppealData[] | null }
+    for (const a of (appealRows ?? [])) {
+      if (!appealsMap.has(a.user_id)) appealsMap.set(a.user_id, a)
+    }
+  }
+
   // Counts for tab badges
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { count: pendingCount } = await (adminClient as any)
     .from('profiles')
     .select('*', { count: 'exact', head: true })
-    .in('role', ['agent', 'contractor', 'engineer', 'architect', 'lawyer'])
+    .in('role', ['seller', 'vendor', 'agent', 'contractor', 'engineer', 'architect', 'lawyer'])
     .eq('account_status', 'pending_verification')
     .eq('onboarding_completed', true)
 
@@ -154,7 +171,7 @@ export default async function AdminProfessionalsPage({
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Professional Verification</h1>
+            <h1 className="text-2xl font-bold">Account Verification</h1>
             <p className="text-sm text-muted-foreground">
               {professionals.length} {tab} professional{professionals.length !== 1 ? 's' : ''}
             </p>
@@ -199,6 +216,8 @@ export default async function AdminProfessionalsPage({
             const displayName  = p.full_name ?? p.display_name ?? p.email
             const profType     = p.professional_profiles?.profession_type ?? p.role
             const userId       = p.id
+            const appeal       = appealsMap.get(p.id) ?? null
+            const appealId     = appeal?.id ?? ''
 
             return (
               <div key={p.id} className="rounded-xl border bg-card p-4 space-y-3">

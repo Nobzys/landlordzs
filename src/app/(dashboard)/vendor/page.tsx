@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Store, Edit, Wallet, Package } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
+import { requireActiveProfile } from '@/lib/utils/account-status'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -19,6 +20,7 @@ type VendorProfile = {
 export default async function VendorPage() {
   const profile = await getServerProfile()
   if (!profile || profile.role !== 'vendor') redirect('/login')
+  requireActiveProfile(profile)
 
   const supabase = await createClient()
 

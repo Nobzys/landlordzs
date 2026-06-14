@@ -23,6 +23,12 @@ export async function createProperty(
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
+  const { data: actor } = await (supabase as any)
+    .from('profiles').select('account_status').eq('id', user.id).single()
+  if (actor?.account_status !== 'active') {
+    return { error: 'Your account must be approved before creating listings.' }
+  }
+
   const { amenities, has_security, has_generator, has_borehole, is_negotiable, land_area_sqm, ...fields } = parsed.data
   const slug = `${slugify(fields.title)}-${Date.now()}`
 
@@ -63,6 +69,12 @@ export async function updateProperty(
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
+
+  const { data: actor } = await (supabase as any)
+    .from('profiles').select('account_status').eq('id', user.id).single()
+  if (actor?.account_status !== 'active') {
+    return { error: 'Your account must be approved before editing listings.' }
+  }
 
   const { amenities, is_negotiable, land_area_sqm, ...fields } = data
 
@@ -120,6 +132,14 @@ export async function publishProperty(
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
+
+  if (publish) {
+    const { data: actor } = await (supabase as any)
+      .from('profiles').select('account_status').eq('id', user.id).single()
+    if (actor?.account_status !== 'active') {
+      return { error: 'Your account must be approved before publishing listings.' }
+    }
+  }
 
   const { error } = await (supabase as any)
     .from('properties')

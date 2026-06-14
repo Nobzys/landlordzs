@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
+import { requireActiveProfile } from '@/lib/utils/account-status'
 import { ProfessionalDashboard, type KycRecord } from '@/components/dashboard/ProfessionalDashboard'
 
 export const metadata: Metadata = { title: 'Engineer Dashboard' }
@@ -8,6 +9,7 @@ export const metadata: Metadata = { title: 'Engineer Dashboard' }
 export default async function EngineerPage() {
   const profile = await getServerProfile()
   if (!profile || profile.role !== 'engineer') redirect('/login')
+  requireActiveProfile(profile)
 
   const supabase = await createClient()
 

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { deleteProperty, publishProperty } from '@/lib/actions/properties'
+import { requireActiveProfile } from '@/lib/utils/account-status'
 import { formatXAFShort, formatDate } from '@/lib/utils/format'
 import type { PropertyRow } from '@/types/database'
 
@@ -40,6 +41,7 @@ export default async function SellerListingsPage() {
   if (!profile || !['seller', 'agent', 'admin'].includes(profile.role)) {
     redirect('/login')
   }
+  requireActiveProfile(profile)
 
   const listings = await getMyListings()
 

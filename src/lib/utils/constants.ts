@@ -80,6 +80,13 @@ export const PROFESSIONAL_ROLES = [
 ] as const
 export type ProfessionalRole = (typeof PROFESSIONAL_ROLES)[number]
 
+// All roles that require admin approval before posting. Includes sellers and
+// vendors in addition to the five professional roles that carry credentials.
+export const APPROVAL_REQUIRED_ROLES = [
+  'seller', 'vendor', 'agent', 'contractor', 'engineer', 'architect', 'lawyer',
+] as const
+export type ApprovalRequiredRole = (typeof APPROVAL_REQUIRED_ROLES)[number]
+
 // ─── Onboarding ───────────────────────────────────────────────────────────────
 
 export const ONBOARDING_STEPS = {
