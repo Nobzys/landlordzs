@@ -10,9 +10,11 @@ interface Props {
 }
 
 const KYC_STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  pending:  { label: 'Under Review', className: 'bg-blue-100 text-blue-700' },
-  approved: { label: 'Approved',     className: 'bg-emerald-100 text-emerald-700' },
-  rejected: { label: 'Rejected',     className: 'bg-red-100 text-red-700' },
+  under_review: { label: 'Under Review', className: 'bg-blue-100 text-blue-700' },
+  submitted:    { label: 'Submitted',    className: 'bg-blue-100 text-blue-700' },
+  approved:     { label: 'Approved',     className: 'bg-emerald-100 text-emerald-700' },
+  rejected:     { label: 'Rejected',     className: 'bg-red-100 text-red-700' },
+  expired:      { label: 'Expired',      className: 'bg-gray-100 text-gray-700' },
 }
 
 function DocRow({ label, uploaded }: { label: string; uploaded: boolean }) {
@@ -84,12 +86,12 @@ export function KycVerificationSection({ profile, kyc }: Props) {
           </div>
 
           <div className="space-y-1.5">
-            <DocRow label="National ID — Front"        uploaded={!!kyc.national_id_front} />
-            <DocRow label="National ID — Back"         uploaded={!!kyc.national_id_back}  />
-            <DocRow label="Professional Certificate"   uploaded={!!kyc.business_reg}      />
+            <DocRow label="National ID — Front"        uploaded={kyc.has_id_front}          />
+            <DocRow label="National ID — Back"         uploaded={kyc.has_id_back}           />
+            <DocRow label="Professional Certificate"   uploaded={kyc.has_professional_cert} />
           </div>
 
-          {kycStatus === 'pending' && (
+          {kycStatus === 'under_review' && (
             <div className="flex items-center gap-2 border-t pt-2">
               <Clock className="h-4 w-4 text-blue-500 shrink-0" />
               <p className="text-xs text-blue-700">
@@ -98,10 +100,10 @@ export function KycVerificationSection({ profile, kyc }: Props) {
             </div>
           )}
 
-          {kycStatus === 'rejected' && kyc.review_notes && (
+          {kycStatus === 'rejected' && kyc.notes && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 border-t pt-2">
               <span className="font-semibold">Rejection reason: </span>
-              {kyc.review_notes}
+              {kyc.notes}
             </div>
           )}
 

@@ -44,16 +44,28 @@ export default async function ProfilePage() {
 
     needsVerification
       ? (sb
-          .from('kyc_records')
-          .select('status, review_notes, national_id_front, national_id_back, business_reg, submitted_at')
+          .from('verification_requests')
+          .select('id, status, notes, submitted_at, verification_documents(document_type)')
           .eq('user_id', profile.id)
+          .eq('verification_type', 'identity')
           .order('submitted_at', { ascending: false })
           .limit(1)
-          .maybeSingle() as Promise<{ data: KycRecord | null }>)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .maybeSingle() as Promise<{ data: any }>)
       : Promise.resolve({ data: null }),
   ])
 
-  const kyc = kycRes.data as KycRecord | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const vr = kycRes.data as any
+  const kyc: KycRecord | null = vr ? {
+    id:                    vr.id,
+    status:                vr.status,
+    notes:                 vr.notes ?? null,
+    submitted_at:          vr.submitted_at ?? null,
+    has_id_front:          (vr.verification_documents ?? []).some((d: any) => d.document_type === 'id_front'),
+    has_id_back:           (vr.verification_documents ?? []).some((d: any) => d.document_type === 'id_back'),
+    has_professional_cert: (vr.verification_documents ?? []).some((d: any) => d.document_type === 'professional_cert'),
+  } : null
 
   const showPendingBanner =
     needsVerification && profile.account_status === 'pending_verification'

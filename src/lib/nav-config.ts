@@ -57,6 +57,7 @@ export const ROLE_NAV: Record<UserRole, NavItem[]> = {
     { label: 'Users',          href: '/admin/users',            icon: 'Users' },
     { label: 'Properties',     href: '/admin/properties',       icon: 'Building2' },
     { label: 'Professionals',  href: '/admin/professionals',    icon: 'ShieldCheck' },
+    { label: 'Verifications', href: '/admin/verifications',    icon: 'ClipboardList' },
     { label: 'Escrow',         href: '/admin/escrow',           icon: 'Scale' },
     { label: 'Commissions',    href: '/admin/commissions',      icon: 'TrendingUp' },
     { label: 'Reports',        href: '/admin/reports',          icon: 'Flag' },

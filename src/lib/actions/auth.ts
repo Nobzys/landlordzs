@@ -657,18 +657,58 @@ export async function submitKycDocuments(data: {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated.' }
 
+  const now = new Date().toISOString()
+
+  // Keep kyc_records insert for backward compatibility (admin review queue reads this table)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).from('kyc_records').insert({
+  const { error: kycError } = await (supabase as any).from('kyc_records').insert({
     user_id:           user.id,
     level:             'basic',
     status:            'pending',
     national_id_front: data.national_id_front,
     national_id_back:  data.national_id_back,
     business_reg:      data.professional_cert ?? null,
-    submitted_at:      new Date().toISOString(),
+    submitted_at:      now,
   })
+  if (kycError) {
+    console.error('[submitKycDocuments] kyc_records insert failed:', kycError)
+    return { error: kycError.message }
+  }
 
-  if (error) return { error: error.message }
+  // verification_requests insert — mandatory; drives UI status (req #9)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: vreq, error: vreqError } = await (supabase as any)
+    .from('verification_requests')
+    .insert({
+      user_id:           user.id,
+      verification_type: 'identity',
+      status:            'under_review',
+      submitted_at:      now,
+    })
+    .select('id')
+    .single()
+  if (vreqError || !vreq) {
+    console.error('[submitKycDocuments] verification_requests insert failed:', vreqError)
+    return { error: vreqError?.message ?? 'Failed to create verification request. Please try again.' }
+  }
+
+  // verification_documents insert — mandatory; links storage paths to the request
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const docs: Array<{ request_id: string; user_id: string; document_type: string; storage_path: string }> = [
+    { request_id: vreq.id, user_id: user.id, document_type: 'id_front', storage_path: data.national_id_front },
+    { request_id: vreq.id, user_id: user.id, document_type: 'id_back',  storage_path: data.national_id_back  },
+  ]
+  if (data.professional_cert) {
+    docs.push({ request_id: vreq.id, user_id: user.id, document_type: 'professional_cert', storage_path: data.professional_cert })
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: docsError } = await (supabase as any).from('verification_documents').insert(docs)
+  if (docsError) {
+    console.error('[submitKycDocuments] verification_documents insert failed:', docsError)
+    return { error: docsError.message }
+  }
+
   return { success: true }
 }
 
@@ -743,6 +783,27 @@ export async function adminApproveProfessional(
       .eq('id', kyc.id)
   }
 
+  // Update verification_requests — single source of truth for UI status (req #9)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: vreq } = await (adminClient as any)
+    .from('verification_requests')
+    .select('id')
+    .eq('user_id', targetUserId)
+    .eq('verification_type', 'identity')
+    .in('status', ['under_review', 'submitted', 'pending'])
+    .order('submitted_at', { ascending: false })
+    .limit(1)
+    .maybeSingle() as { data: { id: string } | null }
+
+  if (vreq) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: vreqError } = await (adminClient as any)
+      .from('verification_requests')
+      .update({ status: 'approved', reviewer_id: user.id, reviewed_at: now })
+      .eq('id', vreq.id)
+    if (vreqError) console.error('[adminApproveProfessional] verification_requests update failed:', vreqError)
+  }
+
   revalidatePath('/admin/professionals')
   return { success: true }
 }
@@ -794,6 +855,27 @@ export async function adminRejectProfessional(
       .eq('id', kyc.id)
   }
 
+  // Update verification_requests — single source of truth for UI status (req #9)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: vreq } = await (adminClient as any)
+    .from('verification_requests')
+    .select('id')
+    .eq('user_id', targetUserId)
+    .eq('verification_type', 'identity')
+    .in('status', ['under_review', 'submitted', 'pending'])
+    .order('submitted_at', { ascending: false })
+    .limit(1)
+    .maybeSingle() as { data: { id: string } | null }
+
+  if (vreq) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: vreqError } = await (adminClient as any)
+      .from('verification_requests')
+      .update({ status: 'rejected', notes: effectiveReason, reviewer_id: user.id, reviewed_at: now })
+      .eq('id', vreq.id)
+    if (vreqError) console.error('[adminRejectProfessional] verification_requests update failed:', vreqError)
+  }
+
   // Store user-visible rejection reason
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (adminClient as any).from('account_notices').insert({
@@ -805,6 +887,35 @@ export async function adminRejectProfessional(
 
   // account_status stays pending_verification so they can resubmit
   revalidatePath('/admin/professionals')
+  return { success: true }
+}
+
+// ─── Admin: Add Verification Note ─────────────────────────────────────────────
+
+export async function adminAddVerificationNote(
+  requestId: string,
+  notes: string,
+): Promise<ActionResult> {
+  if (!notes?.trim()) return { error: 'Notes cannot be empty.' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  const adminClient = createAdminClient()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (adminClient as any)
+    .from('verification_requests')
+    .update({ notes: notes.trim() })
+    .eq('id', requestId)
+
+  if (error) {
+    console.error('[adminAddVerificationNote] failed:', error)
+    return { error: error.message }
+  }
+
+  revalidatePath('/admin/verifications')
   return { success: true }
 }
 

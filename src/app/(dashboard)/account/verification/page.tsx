@@ -23,17 +23,28 @@ export default async function VerificationPage() {
   }
 
   const supabase = await createClient()
-  const { data: rawKyc } = await (supabase as any)
-    .from('kyc_records')
-    .select('status, review_notes, national_id_front, national_id_back, business_reg, submitted_at')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: vr } = await (supabase as any)
+    .from('verification_requests')
+    .select('id, status, notes, submitted_at, verification_documents(document_type)')
     .eq('user_id', profile.id)
+    .eq('verification_type', 'identity')
     .order('submitted_at', { ascending: false })
     .limit(1)
     .maybeSingle()
 
-  const kyc = rawKyc as KycRecord | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const kyc: KycRecord | null = vr ? {
+    id:                    vr.id,
+    status:                vr.status,
+    notes:                 vr.notes ?? null,
+    submitted_at:          vr.submitted_at ?? null,
+    has_id_front:          (vr.verification_documents ?? []).some((d: any) => d.document_type === 'id_front'),
+    has_id_back:           (vr.verification_documents ?? []).some((d: any) => d.document_type === 'id_back'),
+    has_professional_cert: (vr.verification_documents ?? []).some((d: any) => d.document_type === 'professional_cert'),
+  } : null
 
-  if (kyc?.status === 'pending') {
+  if (kyc?.status === 'under_review') {
     return (
       <div className="max-w-xl mx-auto px-4 py-8 space-y-6">
         <div className="flex items-center gap-3">
@@ -72,10 +83,10 @@ export default async function VerificationPage() {
         </div>
       </div>
 
-      {kyc?.status === 'rejected' && kyc.review_notes && (
+      {kyc?.status === 'rejected' && kyc.notes && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
           <p className="text-sm font-semibold text-red-800">Rejection reason</p>
-          <p className="text-xs text-red-700 mt-0.5">{kyc.review_notes}</p>
+          <p className="text-xs text-red-700 mt-0.5">{kyc.notes}</p>
         </div>
       )}
 
