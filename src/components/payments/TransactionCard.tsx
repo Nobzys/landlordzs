@@ -1,6 +1,9 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import { ArrowDownLeft, ArrowUpRight, RefreshCw, AlertCircle, CheckCircle2, Clock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { formatXAF, formatRelative } from '@/lib/utils/format'
+import { formatXAF, formatDate, formatRelative } from '@/lib/utils/format'
 import { cn } from '@/lib/utils/cn'
 import type { TransactionWithParties } from '@/types/payment'
 
@@ -40,6 +43,9 @@ const PROVIDER_LABELS: Record<string, string> = {
 }
 
 export function TransactionCard({ transaction: t, userId }: TransactionCardProps) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
   const isCredit  = t.payee_id === userId
   const config    = STATUS_CONFIG[t.status] ?? STATUS_CONFIG.pending
   const StatusIcon = config.icon
@@ -67,7 +73,7 @@ export function TransactionCard({ transaction: t, userId }: TransactionCardProps
         <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
           {t.provider && <span>{PROVIDER_LABELS[t.provider] ?? t.provider}</span>}
           <span>·</span>
-          <span>{formatRelative(t.created_at)}</span>
+          <span>{mounted ? formatRelative(t.created_at) : formatDate(t.created_at)}</span>
         </div>
       </div>
 

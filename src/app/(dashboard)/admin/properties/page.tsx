@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { Building2, ChevronLeft, CheckCircle2, XCircle, ExternalLink } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { reviewVerification } from '@/lib/actions/properties'
 import { Button } from '@/components/ui/button'
+import { LinkButton } from '@/components/ui/link-button'
 import { Badge } from '@/components/ui/badge'
 import { formatXAF, formatRelative } from '@/lib/utils/format'
 
@@ -27,11 +27,11 @@ type VerificationRow = {
     listing_type: string
     property_type: string
     price: number
-  } | null
-  requester: {
-    full_name: string | null
-    display_name: string | null
-    email: string
+    owner: {
+      full_name: string | null
+      display_name: string | null
+      email: string
+    } | null
   } | null
 }
 
@@ -45,8 +45,10 @@ export default async function AdminPropertiesPage() {
     .from('property_verifications')
     .select(`
       id, property_id, created_at,
-      property:properties ( id, title, city, listing_type, property_type, price ),
-      requester:profiles!property_verifications_requested_by_fkey ( full_name, display_name, email )
+      property:properties (
+        id, title, city, listing_type, property_type, price,
+        owner:profiles!properties_owner_id_fkey ( full_name, display_name, email )
+      )
     `)
     .eq('status', 'pending')
     .order('created_at', { ascending: true })
@@ -58,9 +60,9 @@ export default async function AdminPropertiesPage() {
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Button asChild variant="ghost" size="icon" className="-ml-2">
-          <Link href="/admin"><ChevronLeft className="h-4 w-4" /></Link>
-        </Button>
+        <LinkButton variant="ghost" size="icon" className="-ml-2" href="/admin">
+          <ChevronLeft className="h-4 w-4" />
+        </LinkButton>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
             <Building2 className="h-5 w-5" />
@@ -85,9 +87,9 @@ export default async function AdminPropertiesPage() {
         <div className="space-y-3">
           {verifications.map((v) => {
             const sellerName =
-              v.requester?.full_name ??
-              v.requester?.display_name ??
-              v.requester?.email ??
+              v.property?.owner?.full_name ??
+              v.property?.owner?.display_name ??
+              v.property?.owner?.email ??
               'Unknown'
 
             return (
@@ -110,19 +112,17 @@ export default async function AdminPropertiesPage() {
                     <p className="text-xs text-muted-foreground">
                       Submitted by{' '}
                       <span className="font-medium text-foreground">{sellerName}</span>
-                      {v.requester?.email && <> · {v.requester.email}</>}
+                      {v.property?.owner?.email && <> · {v.property.owner.email}</>}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
                     <p className="text-xs text-muted-foreground">{formatRelative(v.created_at)}</p>
                     {v.property?.id && (
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/properties/${v.property.id}`} target="_blank">
-                          <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                          View
-                        </Link>
-                      </Button>
+                      <LinkButton variant="outline" size="sm" href={`/admin/properties/${v.property.id}`} target="_blank">
+                        <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                        View
+                      </LinkButton>
                     )}
                   </div>
                 </div>

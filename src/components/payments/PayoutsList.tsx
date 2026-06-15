@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Clock, CheckCircle2, AlertCircle, RefreshCw, X } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { formatXAF, formatRelative } from '@/lib/utils/format'
+import { formatXAF, formatDate, formatRelative } from '@/lib/utils/format'
 import { usePayouts } from '@/hooks/payments/usePayouts'
 import { cancelPayout } from '@/lib/actions/payments'
 import { useQueryClient } from '@tanstack/react-query'
@@ -28,6 +28,8 @@ export function PayoutsList() {
   const { data: payouts, isLoading } = usePayouts()
   const queryClient = useQueryClient()
   const [cancelling, setCancelling] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
 
   async function handleCancel(payoutId: string) {
     setCancelling(payoutId)
@@ -73,7 +75,7 @@ export function PayoutsList() {
                   {PROVIDER_LABELS[p.provider] ?? p.provider}
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {p.account_details?.phone} · {formatRelative(p.created_at)}
+                  {p.account_details?.phone} · {mounted ? formatRelative(p.created_at) : formatDate(p.created_at)}
                 </p>
                 {p.failure_reason && (
                   <p className="text-xs text-destructive mt-0.5">{p.failure_reason}</p>

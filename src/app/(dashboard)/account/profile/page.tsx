@@ -1,9 +1,12 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { UserCircle } from 'lucide-react'
+import { UserCircle, ShieldAlert } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { ProfileForm } from '@/components/auth/ProfileForm'
-import { ROLE_LABELS } from '@/types/auth'
+import { KycVerificationSection } from '@/components/auth/KycVerificationSection'
+import { Button } from '@/components/ui/button'
+import { ROLE_LABELS, APPROVAL_REQUIRED_ROLES } from '@/lib/utils/constants'
+import type { KycRecord } from '@/components/dashboard/VerificationBanner'
 
 export const metadata: Metadata = { title: 'My Profile' }
 
@@ -12,12 +15,12 @@ export default async function ProfilePage() {
   if (!profile) redirect('/login')
 
   const supabase = await createClient()
-
-  // Fetch role-specific data in parallel
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = supabase as any
 
-  const [agentRes, vendorRes, profRes] = await Promise.all([
+  const needsVerification = (APPROVAL_REQUIRED_ROLES as readonly string[]).includes(profile.role)
+
+  const [agentRes, vendorRes, profRes, kycRes] = await Promise.all([
     profile.role === 'agent'
       ? sb.from('agent_profiles')
           .select('experience_years, specializations, commission_rate')
@@ -38,10 +41,45 @@ export default async function ProfilePage() {
           .eq('id', profile.id)
           .single()
       : Promise.resolve({ data: null }),
+
+    needsVerification
+      ? (sb
+          .from('kyc_records')
+          .select('status, review_notes, national_id_front, national_id_back, business_reg, submitted_at')
+          .eq('user_id', profile.id)
+          .order('submitted_at', { ascending: false })
+          .limit(1)
+          .maybeSingle() as Promise<{ data: KycRecord | null }>)
+      : Promise.resolve({ data: null }),
   ])
+
+  const kyc = kycRes.data as KycRecord | null
+
+  const showPendingBanner =
+    needsVerification && profile.account_status === 'pending_verification'
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+      {/* Pending verification banner */}
+      {showPendingBanner && (
+        <div className="flex items-start justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4">
+          <div className="flex items-start gap-3 min-w-0">
+            <ShieldAlert className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-amber-800">
+                Your account is awaiting verification.
+              </p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                Upload your documents to complete the review process.
+              </p>
+            </div>
+          </div>
+          <Button asChild size="sm" className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white">
+            <a href="#identity-verification">Upload Documents</a>
+          </Button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center gap-4">
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -61,6 +99,11 @@ export default async function ProfilePage() {
         vendorProfile={vendorRes.data ?? null}
         professionalProfile={profRes.data ?? null}
       />
+
+      {/* Identity verification — only for roles that require approval */}
+      {needsVerification && (
+        <KycVerificationSection profile={profile} kyc={kyc} />
+      )}
     </div>
   )
 }

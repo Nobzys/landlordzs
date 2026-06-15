@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { adminApproveProfessional, adminRejectProfessional, adminSuspendAccount } from '@/lib/actions/auth'
+import { adminApproveProfessional, adminRejectProfessional } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatRelative } from '@/lib/utils/format'
@@ -119,7 +119,7 @@ export default async function AdminProfessionalsPage({
 
         const toUrl = async (path: string | null) => {
           if (!path) return null
-          const { data } = await supabaseStorage.from('verification-documents').createSignedUrl(path, 3600)
+          const { data } = await supabaseStorage.from('verification-documents-v2').createSignedUrl(path, 3600)
           return data?.signedUrl ?? null
         }
 
@@ -132,23 +132,6 @@ export default async function AdminProfessionalsPage({
         return { ...p, signedUrls: { front, back, cert } }
       }))
     : professionals.map((p) => ({ ...p, signedUrls: { front: null, back: null, cert: null } }))
-
-  // Pending appeals for displayed professionals
-  type AppealData = { id: string; user_id: string; message: string; created_at: string }
-  const appealsMap = new Map<string, AppealData>()
-  if (professionals.length > 0) {
-    const profIds = professionals.map((p) => p.id)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: appealRows } = await (adminClient as any)
-      .from('account_appeals')
-      .select('id, user_id, message, created_at')
-      .in('user_id', profIds)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false }) as { data: AppealData[] | null }
-    for (const a of (appealRows ?? [])) {
-      if (!appealsMap.has(a.user_id)) appealsMap.set(a.user_id, a)
-    }
-  }
 
   // Counts for tab badges
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -216,8 +199,6 @@ export default async function AdminProfessionalsPage({
             const displayName  = p.full_name ?? p.display_name ?? p.email
             const profType     = p.professional_profiles?.profession_type ?? p.role
             const userId       = p.id
-            const appeal       = appealsMap.get(p.id) ?? null
-            const appealId     = appeal?.id ?? ''
 
             return (
               <div key={p.id} className="rounded-xl border bg-card p-4 space-y-3">

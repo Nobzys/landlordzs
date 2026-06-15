@@ -1,4 +1,4 @@
-import { formatDistanceToNow, format } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 
 export function formatXAF(amount: number): string {
   return new Intl.NumberFormat('fr-CM', {
@@ -15,8 +15,12 @@ export function formatXAFShort(amount: number): string {
   return `${amount} XAF`
 }
 
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
 export function formatDate(dateStr: string): string {
-  return format(new Date(dateStr), 'dd MMM yyyy')
+  const d = new Date(dateStr)
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  return `${day} ${MONTHS_SHORT[d.getUTCMonth()]} ${d.getUTCFullYear()}`
 }
 
 export function formatRelative(dateStr: string): string {

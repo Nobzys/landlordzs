@@ -5,7 +5,7 @@ import { ChevronLeft, Clock } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { KycResubmitForm } from '@/components/auth/KycResubmitForm'
 import { Button } from '@/components/ui/button'
-import { PROFESSIONAL_ROLES } from '@/lib/utils/constants'
+import { APPROVAL_REQUIRED_ROLES } from '@/lib/utils/constants'
 import type { KycRecord } from '@/components/dashboard/VerificationBanner'
 
 export const metadata: Metadata = { title: 'Verify Your Account' }
@@ -14,7 +14,7 @@ export default async function VerificationPage() {
   const profile = await getServerProfile()
   if (!profile) redirect('/login')
 
-  if (!(PROFESSIONAL_ROLES as readonly string[]).includes(profile.role)) {
+  if (!(APPROVAL_REQUIRED_ROLES as readonly string[]).includes(profile.role)) {
     redirect('/account/profile')
   }
 

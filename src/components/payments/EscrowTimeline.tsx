@@ -1,5 +1,8 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import { Shield, CreditCard, CheckCircle2, AlertTriangle, Clock, User } from 'lucide-react'
-import { formatRelative } from '@/lib/utils/format'
+import { formatDate, formatRelative } from '@/lib/utils/format'
 import { cn } from '@/lib/utils/cn'
 import type { EscrowEventRow } from '@/types/payment'
 
@@ -30,6 +33,8 @@ const EVENT_COLORS: Record<string, string> = {
 }
 
 export function EscrowTimeline({ events }: EscrowTimelineProps) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
   const sorted = [...events].sort((a, b) =>
     new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
   )
@@ -59,7 +64,7 @@ export function EscrowTimeline({ events }: EscrowTimelineProps) {
               {event.description && (
                 <p className="text-xs text-muted-foreground mt-0.5">{event.description}</p>
               )}
-              <p className="text-xs text-muted-foreground mt-1">{formatRelative(event.created_at)}</p>
+              <p className="text-xs text-muted-foreground mt-1">{mounted ? formatRelative(event.created_at) : formatDate(event.created_at)}</p>
             </div>
           </div>
         )

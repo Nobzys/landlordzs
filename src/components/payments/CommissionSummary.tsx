@@ -1,13 +1,16 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { TrendingUp, Clock, CheckCircle2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatXAF, formatRelative } from '@/lib/utils/format'
+import { formatXAF, formatDate, formatRelative } from '@/lib/utils/format'
 import { useCommissions, useCommissionSummary } from '@/hooks/payments/useCommissions'
 
 export function CommissionSummary() {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
   const { data: summary, isLoading: summaryLoading } = useCommissionSummary()
   const { data: records, isLoading: recordsLoading } = useCommissions()
 
@@ -67,7 +70,7 @@ export function CommissionSummary() {
                     {r.commission_type} commission
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {r.rate_pct}% · {formatRelative(r.created_at)}
+                    {r.rate_pct}% · {mounted ? formatRelative(r.created_at) : formatDate(r.created_at)}
                   </p>
                 </div>
                 <div className="text-right">

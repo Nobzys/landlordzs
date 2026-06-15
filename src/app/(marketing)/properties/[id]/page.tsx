@@ -60,11 +60,29 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
 
 export default async function PropertyPage({ params }: PropertyPageProps) {
   const { id } = await params
-  const property = await getProperty(id)
 
-  const VIEWABLE_STATUSES = ['active', 'under_offer', 'pending_verification']
-  if (!property || !VIEWABLE_STATUSES.includes(property.status)) {
-    notFound()
+  const supabase = await createClient()
+  const [property, { data: { user } }] = await Promise.all([
+    getProperty(id),
+    supabase.auth.getUser(),
+  ])
+
+  if (!property) notFound()
+
+  const isOwnerOrAgent =
+    !!user && (user.id === property.owner_id || user.id === property.agent_id)
+
+  // active / under_offer  → publicly visible to everyone
+  // draft / pending_review → owner or assigned agent only
+  //   (RLS already enforces this at the DB layer; mirrored here for defence-in-depth)
+  // sold / rented / off_market / expired / rejected → 404
+  const PUBLIC_STATUSES = ['active', 'under_offer']
+  const OWNER_STATUSES  = ['draft', 'pending_review']
+
+  if (!PUBLIC_STATUSES.includes(property.status)) {
+    if (!OWNER_STATUSES.includes(property.status) || !isOwnerOrAgent) {
+      notFound()
+    }
   }
 
   return (

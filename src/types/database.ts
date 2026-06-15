@@ -12,11 +12,11 @@ export type DbUserRole    = 'admin'|'buyer'|'seller'|'agent'|'vendor'|'contracto
 export type DbAccountStatus = 'active'|'suspended'|'banned'|'pending_verification'
 export type DbPropertyType  = 'villa'|'apartment'|'studio'|'duplex'|'penthouse'|'house'|'commercial_space'|'office'|'warehouse'|'shop'|'land'|'farm'|'hotel'
 export type DbListingType   = 'sale'|'rent'|'shortlet'
-export type DbPropertyStatus = 'draft'|'active'|'pending_verification'|'under_offer'|'sold'|'rented'|'inactive'
+export type DbPropertyStatus = 'draft'|'pending_review'|'active'|'under_offer'|'sold'|'rented'|'off_market'|'expired'|'rejected'
 export type DbLandTitle     = 'titre_foncier'|'bail_emphyteotique'|'concession'|'none'
 export type DbCameroonCity  = 'yaounde'|'douala'|'buea'|'bamenda'|'limbe'|'kribi'|'bafoussam'|'ngaoundere'|'maroua'|'bertoua'|'ebolowa'|'kumba'
 export type DbCurrency      = 'XAF'|'USD'|'EUR'
-export type DbVerificationStatus = 'pending'|'approved'|'rejected'
+export type DbVerificationStatus = 'pending'|'submitted'|'under_review'|'approved'|'rejected'|'expired'
 export type DbBookingStatus = 'pending'|'confirmed'|'active'|'completed'|'cancelled'
 export type DbOrderStatus   = 'pending'|'confirmed'|'processing'|'shipped'|'delivered'|'cancelled'
 export type DbPaymentStatus = 'pending'|'processing'|'completed'|'failed'|'refunded'|'cancelled'
@@ -141,12 +141,16 @@ export interface PropertyInquiryRow {
 export interface PropertyVerificationRow {
   id: string
   property_id: string
-  requested_by: string
-  reviewed_by: string | null
+  verified_by: string | null
   status: DbVerificationStatus
+  title_document: string | null
+  survey_plan: string | null
+  other_docs: string[]
   notes: string | null
+  verified_at: string | null
+  expires_at: string | null
   created_at: string
-  reviewed_at: string | null
+  updated_at: string
 }
 
 export interface PropertyCategoryRow {

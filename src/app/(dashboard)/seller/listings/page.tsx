@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { Plus, Eye, Edit, Trash2, ToggleRight } from 'lucide-react'
+import { Plus, Eye, Edit, Trash2, ToggleRight, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { LinkButton } from '@/components/ui/link-button'
 import { Badge } from '@/components/ui/badge'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
-import { deleteProperty, publishProperty } from '@/lib/actions/properties'
+import { deleteProperty, publishProperty, requestVerification } from '@/lib/actions/properties'
 import { requireActiveProfile } from '@/lib/utils/account-status'
 import { formatXAFShort, formatDate } from '@/lib/utils/format'
 import type { PropertyRow } from '@/types/database'
@@ -27,13 +27,15 @@ async function getMyListings(): Promise<PropertyRow[]> {
 }
 
 const STATUS_BADGE: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  draft:                { label: 'Draft',        variant: 'secondary' },
-  active:               { label: 'Active',       variant: 'default' },
-  pending_verification: { label: 'Pending',      variant: 'outline' },
-  under_offer:          { label: 'Under Offer',  variant: 'outline' },
-  sold:                 { label: 'Sold',         variant: 'secondary' },
-  rented:               { label: 'Rented',       variant: 'secondary' },
-  inactive:             { label: 'Inactive',     variant: 'secondary' },
+  draft:          { label: 'Draft',        variant: 'secondary' },
+  pending_review: { label: 'Pending',      variant: 'outline' },
+  active:         { label: 'Active',       variant: 'default' },
+  under_offer:    { label: 'Under Offer',  variant: 'outline' },
+  sold:           { label: 'Sold',         variant: 'secondary' },
+  rented:         { label: 'Rented',       variant: 'secondary' },
+  off_market:     { label: 'Off Market',   variant: 'secondary' },
+  expired:        { label: 'Expired',      variant: 'secondary' },
+  rejected:       { label: 'Rejected',     variant: 'destructive' },
 }
 
 export default async function SellerListingsPage() {
@@ -52,21 +54,17 @@ export default async function SellerListingsPage() {
           <h1 className="text-2xl font-bold">My Listings</h1>
           <p className="text-sm text-muted-foreground">{listings.length} total</p>
         </div>
-        <Button asChild>
-          <Link href="/seller/listings/new">
-            <Plus className="h-4 w-4 mr-2" />
-            New Listing
-          </Link>
-        </Button>
+        <LinkButton href="/seller/listings/new">
+          <Plus className="h-4 w-4 mr-2" />
+          New Listing
+        </LinkButton>
       </div>
 
       {listings.length === 0 ? (
         <div className="text-center py-16 border rounded-xl text-muted-foreground">
           <p className="font-medium mb-1">No listings yet</p>
           <p className="text-sm mb-4">Create your first property listing to start selling or renting.</p>
-          <Button asChild>
-            <Link href="/seller/listings/new">Create Listing</Link>
-          </Button>
+          <LinkButton href="/seller/listings/new">Create Listing</LinkButton>
         </div>
       ) : (
         <div className="space-y-3">
@@ -89,12 +87,12 @@ export default async function SellerListingsPage() {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <Button asChild variant="ghost" size="icon" title="View">
-                    <Link href={`/properties/${p.id}`}><Eye className="h-4 w-4" /></Link>
-                  </Button>
-                  <Button asChild variant="ghost" size="icon" title="Edit">
-                    <Link href={`/seller/listings/${p.id}/edit`}><Edit className="h-4 w-4" /></Link>
-                  </Button>
+                  <LinkButton variant="ghost" size="icon" title="View" href={`/properties/${p.id}`}>
+                    <Eye className="h-4 w-4" />
+                  </LinkButton>
+                  <LinkButton variant="ghost" size="icon" title="Edit" href={`/seller/listings/${p.id}/edit`}>
+                    <Edit className="h-4 w-4" />
+                  </LinkButton>
 
                   <form action={async () => {
                     'use server'
@@ -104,6 +102,17 @@ export default async function SellerListingsPage() {
                       <ToggleRight className="h-4 w-4" />
                     </Button>
                   </form>
+
+                  {(p.status === 'draft' || p.status === 'rejected') && (
+                    <form action={async () => {
+                      'use server'
+                      await requestVerification(p.id)
+                    }}>
+                      <Button variant="ghost" size="icon" type="submit" title="Submit for verification" className="text-blue-600 hover:text-blue-700">
+                        <ShieldCheck className="h-4 w-4" />
+                      </Button>
+                    </form>
+                  )}
 
                   <form action={async () => {
                     'use server'

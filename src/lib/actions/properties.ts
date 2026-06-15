@@ -144,7 +144,7 @@ export async function publishProperty(
   const { error } = await (supabase as any)
     .from('properties')
     .update({
-      status:       publish ? 'active' : 'inactive',
+      status:       publish ? 'active' : 'off_market',
       published_at: publish ? new Date().toISOString() : null,
     })
     .eq('id', propertyId)
@@ -302,16 +302,15 @@ export async function requestVerification(propertyId: string): Promise<ActionRes
   if (existing?.status === 'approved') return { error: 'Property is already verified' }
 
   const { error } = await (supabase as any).from('property_verifications').insert({
-    property_id:  propertyId,
-    requested_by: user.id,
-    status:       'pending',
+    property_id: propertyId,
+    status:      'pending',
   })
 
   if (error) return { error: error.message }
 
   await (supabase as any)
     .from('properties')
-    .update({ status: 'pending_verification' })
+    .update({ status: 'pending_review' })
     .eq('id', propertyId)
     .eq('owner_id', user.id)
 
@@ -341,7 +340,7 @@ export async function reviewVerification(
 
   const { data: verification, error: fetchError } = await (adminClient as any)
     .from('property_verifications')
-    .update({ status: action, reviewed_by: user.id, notes: notes ?? null, reviewed_at: new Date().toISOString() })
+    .update({ status: action, verified_by: user.id, notes: notes ?? null, verified_at: new Date().toISOString() })
     .eq('id', verificationId)
     .select('property_id')
     .single()
@@ -356,10 +355,49 @@ export async function reviewVerification(
   } else {
     await (adminClient as any)
       .from('properties')
-      .update({ status: 'inactive' })
+      .update({ status: 'rejected' })
       .eq('id', verification.property_id)
   }
 
   revalidatePath(`/properties/${verification.property_id}`)
+  return { success: true }
+}
+
+// ─── Admin: assign agent to a property ─────────────────────────────────────
+
+export async function adminAssignAgent(
+  propertyId: string,
+  agentId: string | null
+): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  const { data: callerProfile } = await (supabase as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions' }
+
+  const adminClient = createAdminClient()
+
+  const { error: updateError } = await (adminClient as any)
+    .from('properties')
+    .update({ agent_id: agentId })
+    .eq('id', propertyId)
+
+  if (updateError) return { error: updateError.message }
+
+  await (adminClient as any).from('admin_logs').insert({
+    actor_id:    user.id,
+    action:      agentId ? 'assign_agent' : 'remove_agent',
+    target_type: 'property',
+    target_id:   propertyId,
+    new_data:    agentId ? { agent_id: agentId } : null,
+  })
+
+  revalidatePath(`/admin/properties/${propertyId}`)
+  revalidatePath(`/properties/${propertyId}`)
   return { success: true }
 }

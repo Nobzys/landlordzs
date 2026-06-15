@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Shield, Clock, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -23,6 +24,8 @@ const STATUS_CONFIG = {
 }
 
 export function EscrowCard({ escrow }: EscrowCardProps) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
   const user   = useAuthStore(s => s.user)
   const config = STATUS_CONFIG[escrow.status] ?? STATUS_CONFIG.pending
   const Icon   = config.icon
@@ -42,7 +45,7 @@ export function EscrowCard({ escrow }: EscrowCardProps) {
                 {escrow.reference_type.replace('_', ' ')} Escrow
               </p>
               <p className="text-xs text-muted-foreground">
-                {role} · {formatRelative(escrow.created_at)}
+                {role} · {mounted ? formatRelative(escrow.created_at) : formatDate(escrow.created_at)}
               </p>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { Clock, Mail, Send } from 'lucide-react'
+import { Clock, Mail, Send, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { submitAppeal } from '@/lib/actions/auth'
@@ -82,10 +82,21 @@ export default async function PendingPage({
           </div>
         )}
 
+        <Button asChild className="w-full gap-2">
+          <a href="/account/profile#identity-verification">
+            <Upload className="h-4 w-4" />
+            Upload Verification Documents
+          </a>
+        </Button>
+
         <div className="rounded-xl border bg-muted/40 p-4 text-left space-y-2 text-sm">
           <p className="font-medium">While you wait, you can:</p>
           <ul className="space-y-1 text-muted-foreground list-disc list-inside">
-            <li>Complete your profile information</li>
+            <li>
+              <a href="/account/profile#identity-verification" className="underline underline-offset-2">
+                Upload your verification documents
+              </a>
+            </li>
             <li>Browse available properties</li>
             <li>Contact support if you have questions</li>
           </ul>
