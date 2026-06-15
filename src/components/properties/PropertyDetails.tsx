@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Bed, Bath, Toilet, Maximize2, Calendar, MapPin, BadgeCheck, Tag } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -169,6 +170,8 @@ function FeatureBadge({ label }: { label: string }) {
   )
 }
 
+const PROFESSIONAL_ROLES = new Set(['agent', 'vendor', 'contractor', 'engineer', 'architect', 'lawyer'])
+
 function ContactCard({
   person,
   label,
@@ -176,16 +179,29 @@ function ContactCard({
   person: PropertyWithDetails['owner']
   label: string
 }) {
+  const name        = person.display_name ?? person.full_name ?? 'Unknown'
+  const profileHref =
+    person.role && PROFESSIONAL_ROLES.has(person.role) && person.slug
+      ? `/professionals/${person.role}/${person.slug}`
+      : null
+
   return (
     <div className="flex items-center gap-3 rounded-lg border p-4">
-      <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center font-semibold text-lg">
-        {(person.display_name ?? person.full_name ?? '?').charAt(0).toUpperCase()}
+      <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center font-semibold text-lg shrink-0">
+        {name.charAt(0).toUpperCase()}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <p className="font-medium text-sm truncate">
-            {person.display_name ?? person.full_name ?? 'Unknown'}
-          </p>
+          {profileHref ? (
+            <Link
+              href={profileHref}
+              className="font-medium text-sm truncate hover:underline"
+            >
+              {name}
+            </Link>
+          ) : (
+            <p className="font-medium text-sm truncate">{name}</p>
+          )}
           {person.is_verified && <BadgeCheck className="h-4 w-4 text-blue-600 shrink-0" />}
         </div>
         <p className="text-xs text-muted-foreground">{label}</p>

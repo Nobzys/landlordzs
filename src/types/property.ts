@@ -15,12 +15,17 @@ export interface PropertyWithImages extends PropertyRow {
   property_images: PropertyImageRow[]
 }
 
+type ContactPerson = Pick<ProfileRow, 'id' | 'full_name' | 'display_name' | 'avatar_url' | 'phone' | 'is_verified'> & {
+  slug?: string | null
+  role?: string | null
+}
+
 export interface PropertyWithDetails extends PropertyRow {
   property_images: PropertyImageRow[]
   property_videos: PropertyVideoRow[]
   property_amenities: PropertyAmenityRow[]
-  owner: Pick<ProfileRow, 'id' | 'full_name' | 'display_name' | 'avatar_url' | 'phone' | 'is_verified'>
-  agent: Pick<ProfileRow, 'id' | 'full_name' | 'display_name' | 'avatar_url' | 'phone' | 'is_verified'> | null
+  owner: ContactPerson
+  agent: ContactPerson | null
   is_favorited?: boolean
 }
 

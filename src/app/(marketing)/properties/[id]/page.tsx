@@ -11,7 +11,7 @@ interface PropertyPageProps {
   params: Promise<{ id: string }>
 }
 
-const PROFILE_COLS = 'id, full_name, display_name, avatar_url, phone, is_verified' as const
+const PROFILE_COLS = 'id, full_name, display_name, avatar_url, phone, is_verified, slug, role' as const
 
 async function getProperty(id: string): Promise<PropertyWithDetails | null> {
   const supabase = await createClient()
@@ -36,7 +36,7 @@ async function getProperty(id: string): Promise<PropertyWithDetails | null> {
 
   return {
     ...data,
-    owner: owner ?? { id: data.owner_id, full_name: null, display_name: null, avatar_url: null, phone: null, is_verified: false },
+    owner: owner ?? { id: data.owner_id, full_name: null, display_name: null, avatar_url: null, phone: null, is_verified: false, slug: null, role: null },
     agent: agent ?? null,
   } as unknown as PropertyWithDetails
 }
