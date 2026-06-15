@@ -4,9 +4,13 @@ import { MapPin, Globe, Building2, Calendar, Briefcase, Star } from 'lucide-reac
 import { VerificationBadge } from '@/components/trust/VerificationBadge'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { PublicPortfolio } from '@/components/portfolio/PublicPortfolio'
+import type { PublicProject } from '@/components/portfolio/PublicPortfolio'
 import { formatDate } from '@/lib/utils/format'
 import { ROLE_LABELS } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
+
+export type { PublicProject }
 
 export interface ProfessionalProfileData {
   id:               string
@@ -24,6 +28,7 @@ export interface ProfessionalProfileData {
   service_areas:    string[]
   website_url:      string | null
   badge_status:     string | null
+  projects:         PublicProject[]
 }
 
 interface ProfessionalProfileProps {
@@ -184,13 +189,8 @@ export function ProfessionalProfile({ profile: p }: ProfessionalProfileProps) {
 
       <Separator />
 
-      {/* Portfolio placeholder */}
-      <section className="rounded-xl border border-dashed p-10 text-center space-y-2">
-        <p className="text-sm font-medium text-muted-foreground">Portfolio coming soon</p>
-        <p className="text-xs text-muted-foreground/70">
-          Project photos and work samples will appear here
-        </p>
-      </section>
+      {/* Portfolio */}
+      <PublicPortfolio projects={p.projects} role={p.role} />
 
       {/* Reviews placeholder */}
       <section className="rounded-xl border border-dashed p-10 text-center space-y-2">

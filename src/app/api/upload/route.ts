@@ -9,6 +9,13 @@ const ALLOWED_BUCKETS = new Set([
   STORAGE_BUCKETS.PROPERTY_VIDEOS,
   STORAGE_BUCKETS.USER_AVATARS,
   STORAGE_BUCKETS.VERIFY_DOCS,
+  STORAGE_BUCKETS.PROJECT_IMAGES,
+])
+
+// Private buckets: uploads return a short-lived signed URL instead of a public URL.
+const PRIVATE_BUCKETS = new Set([
+  STORAGE_BUCKETS.VERIFY_DOCS,
+  STORAGE_BUCKETS.PROJECT_IMAGES,
 ])
 
 const SIZE_LIMITS: Record<string, number> = {
@@ -16,6 +23,7 @@ const SIZE_LIMITS: Record<string, number> = {
   [STORAGE_BUCKETS.PROPERTY_VIDEOS]: 100 * 1024 * 1024,
   [STORAGE_BUCKETS.USER_AVATARS]:      5 * 1024 * 1024,
   [STORAGE_BUCKETS.VERIFY_DOCS]:      10 * 1024 * 1024,
+  [STORAGE_BUCKETS.PROJECT_IMAGES]:   25 * 1024 * 1024,
 }
 
 export async function POST(request: Request) {
@@ -61,7 +69,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const { data: { publicUrl } } = admin.storage.from(bucket).getPublicUrl(path)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (PRIVATE_BUCKETS.has(bucket as any)) {
+    const { data: signed } = await admin.storage.from(bucket).createSignedUrl(path, 3600)
+    return NextResponse.json({ url: signed?.signedUrl ?? null, path })
+  }
 
+  const { data: { publicUrl } } = admin.storage.from(bucket).getPublicUrl(path)
   return NextResponse.json({ url: publicUrl, path })
 }
