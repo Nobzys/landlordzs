@@ -9,6 +9,7 @@ import { deleteProperty, publishProperty, requestVerification } from '@/lib/acti
 import { requireActiveProfile } from '@/lib/utils/account-status'
 import { formatXAFShort, formatDate } from '@/lib/utils/format'
 import type { PropertyRow } from '@/types/database'
+import { canCreateProperty, canManageAssignedProperties } from '@/lib/roles'
 
 export const metadata: Metadata = { title: 'My Listings' }
 
@@ -40,7 +41,7 @@ const STATUS_BADGE: Record<string, { label: string; variant: 'default' | 'second
 
 export default async function SellerListingsPage() {
   const profile = await getServerProfile()
-  if (!profile || !['seller', 'agent', 'admin'].includes(profile.role)) {
+  if (!profile || (!canCreateProperty(profile.role) && !canManageAssignedProperties(profile.role))) {
     redirect('/login')
   }
   requireActiveProfile(profile)

@@ -6,6 +6,7 @@ import { ProfileForm } from '@/components/auth/ProfileForm'
 import { KycVerificationSection } from '@/components/auth/KycVerificationSection'
 import { Button } from '@/components/ui/button'
 import { ROLE_LABELS, APPROVAL_REQUIRED_ROLES } from '@/lib/utils/constants'
+import { canManagePortfolio, canProvideLegalServices } from '@/lib/roles'
 import type { KycRecord } from '@/components/dashboard/VerificationBanner'
 
 export const metadata: Metadata = { title: 'My Profile' }
@@ -35,7 +36,7 @@ export default async function ProfilePage() {
           .single()
       : Promise.resolve({ data: null }),
 
-    ['contractor', 'engineer', 'architect', 'lawyer'].includes(profile.role)
+    canManagePortfolio(profile.role) || canProvideLegalServices(profile.role)
       ? sb.from('professional_profiles')
           .select('company_name, specializations, experience_years, day_rate')
           .eq('id', profile.id)

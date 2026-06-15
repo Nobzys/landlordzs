@@ -3,6 +3,7 @@
 import { useAuthStore } from '@/stores/authStore'
 import { ROLE_DASHBOARDS } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
+import { canAccessAdmin } from '@/lib/roles'
 
 // Primary auth hook — exposes the most commonly needed auth state.
 export function useAuth() {
@@ -24,7 +25,7 @@ export function useAuth() {
     role:                 role(),
     isAuthenticated:      isAuthenticated(),
     isOnboardingComplete: isOnboardingComplete(),
-    isAdmin:              profile?.role === 'admin',
+    isAdmin:              canAccessAdmin(profile?.role ?? ''),
     isVerified:           profile?.is_verified ?? false,
     dashboardPath:        profile?.role
                             ? (ROLE_DASHBOARDS[profile.role as UserRole] ?? '/account')

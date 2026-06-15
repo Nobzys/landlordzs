@@ -5,10 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { ProfessionalProfile } from '@/components/professionals/ProfessionalProfile'
 import type { ProfessionalProfileData, PublicProject } from '@/components/professionals/ProfessionalProfile'
 import { STORAGE_BUCKETS } from '@/lib/utils/constants'
-
-const PROFESSIONAL_ROLES = [
-  'agent', 'vendor', 'contractor', 'engineer', 'architect', 'lawyer',
-] as const
+import { PUBLIC_PROFESSIONAL_ROLES } from '@/lib/roles'
 
 // Public-safe columns only. Never includes: email, phone, address,
 // kyc_level, account_status, expo_push_token, or any verification document data.
@@ -49,7 +46,7 @@ export default async function ProfessionalProfilePage({
 }) {
   const { role, slug } = await params
 
-  if (!(PROFESSIONAL_ROLES as readonly string[]).includes(role)) notFound()
+  if (!(PUBLIC_PROFESSIONAL_ROLES as readonly string[]).includes(role)) notFound()
 
   const supabase = await createClient()
 

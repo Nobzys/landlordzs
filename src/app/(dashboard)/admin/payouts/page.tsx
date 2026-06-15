@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Wallet, ChevronLeft, CheckCircle2, XCircle, Clock } from 'lucide-react'
@@ -8,6 +8,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { processPayoutAdmin, retryPayoutAdmin } from '@/lib/actions/payments'
 import { Button } from '@/components/ui/button'
 import { formatXAF, formatRelative } from '@/lib/utils/format'
+import { canAccessAdmin } from '@/lib/roles'
 
 export const metadata: Metadata = { title: 'Payout Management — Admin' }
 
@@ -55,7 +56,7 @@ export default async function AdminPayoutsPage({
   searchParams: Promise<SearchParams>
 }) {
   const profile = await getServerProfile()
-  if (!profile || profile.role !== 'admin') redirect('/login')
+  if (!profile || !canAccessAdmin(profile.role)) redirect('/login')
 
   const params = await searchParams
   const statusFilter: PayoutStatus =

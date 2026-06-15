@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import {
@@ -13,6 +13,7 @@ import { formatRelative } from '@/lib/utils/format'
 import { ROLE_LABELS } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
 import type { ProfileRow } from '@/types/database'
+import { canAccessAdmin } from '@/lib/roles'
 
 export const metadata: Metadata = { title: 'Admin Dashboard' }
 
@@ -69,7 +70,7 @@ const ACTIVITY_CONFIG: Record<string, { label: string; Icon: typeof UserPlus; co
 
 export default async function AdminPage() {
   const profile = await getServerProfile()
-  if (!profile || profile.role !== 'admin') redirect('/login')
+  if (!profile || !canAccessAdmin(profile.role)) redirect('/login')
 
   const supabase = await createClient()
 

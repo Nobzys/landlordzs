@@ -20,6 +20,7 @@ import {
 import { ROLE_DASHBOARDS, APP_URL, APPROVAL_REQUIRED_ROLES } from '@/lib/utils/constants'
 import type { ActionResult } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
+import { canAccessAdmin } from '@/lib/roles'
 import type {
   LoginInput,
   RegisterInput,
@@ -543,7 +544,7 @@ export async function adminAssignRole(
     .eq('id', user.id)
     .single() as { data: { role: string } | null }
 
-  if (callerProfile?.role !== 'admin') {
+  if (!canAccessAdmin(callerProfile?.role ?? '')) {
     return { error: 'Insufficient permissions.' }
   }
 
@@ -577,7 +578,7 @@ export async function adminSuspendAccount(
     .eq('id', user.id)
     .single() as { data: { role: string } | null }
 
-  if (callerProfile?.role !== 'admin') {
+  if (!canAccessAdmin(callerProfile?.role ?? '')) {
     return { error: 'Insufficient permissions.' }
   }
 
@@ -629,7 +630,7 @@ export async function adminActivateAccount(
     .eq('id', user.id)
     .single() as { data: { role: string } | null }
 
-  if (callerProfile?.role !== 'admin') {
+  if (!canAccessAdmin(callerProfile?.role ?? '')) {
     return { error: 'Insufficient permissions.' }
   }
 
@@ -728,7 +729,7 @@ export async function adminApproveProfessional(
     .eq('id', user.id)
     .single() as { data: { role: string } | null }
 
-  if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions.' }
+  if (!canAccessAdmin(callerProfile?.role ?? '')) return { error: 'Insufficient permissions.' }
 
   const adminClient = createAdminClient()
 
@@ -825,7 +826,7 @@ export async function adminRejectProfessional(
     .eq('id', user.id)
     .single() as { data: { role: string } | null }
 
-  if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions.' }
+  if (!canAccessAdmin(callerProfile?.role ?? '')) return { error: 'Insufficient permissions.' }
 
   const adminClient = createAdminClient()
   const now = new Date().toISOString()

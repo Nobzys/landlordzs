@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
@@ -8,6 +8,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatRelative } from '@/lib/utils/format'
+import { canAccessAdmin } from '@/lib/roles'
 
 export const metadata: Metadata = { title: 'Moderation Reports — Admin' }
 
@@ -61,7 +62,7 @@ export default async function AdminReportsPage({
   searchParams: Promise<SearchParams>
 }) {
   const profile = await getServerProfile()
-  if (!profile || profile.role !== 'admin') redirect('/login')
+  if (!profile || !canAccessAdmin(profile.role)) redirect('/login')
 
   const params = await searchParams
   const tab: ReportStatus =

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { ActionResult } from '@/types/auth'
+import { canAccessAdmin } from '@/lib/roles'
 
 // â”€â”€â”€ Record commission â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Called internally when a property sale/rent transaction completes.
@@ -47,7 +48,7 @@ export async function payCommission(commissionId: string): Promise<ActionResult>
   if (authError || !user) return { error: 'Unauthorized' }
 
   const { data: caller } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single() as { data: { role: string } | null }
-  if (caller?.role !== 'admin') return { error: 'Insufficient permissions' }
+  if (!canAccessAdmin(caller?.role ?? '')) return { error: 'Insufficient permissions' }
 
   const adminClient = createAdminClient()
   const { data: commission } = await (adminClient as any)
@@ -89,7 +90,7 @@ export async function cancelCommission(commissionId: string): Promise<ActionResu
   if (authError || !user) return { error: 'Unauthorized' }
 
   const { data: caller } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single() as { data: { role: string } | null }
-  if (caller?.role !== 'admin') return { error: 'Insufficient permissions' }
+  if (!canAccessAdmin(caller?.role ?? '')) return { error: 'Insufficient permissions' }
 
   const adminClient = createAdminClient()
   const { error } = await (adminClient as any)
@@ -114,7 +115,7 @@ export async function getCommissionSummary(agentId: string): Promise<
 
   if (user.id !== agentId) {
     const { data: caller } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single() as { data: { role: string } | null }
-    if (caller?.role !== 'admin') return { error: 'Insufficient permissions' }
+    if (!canAccessAdmin(caller?.role ?? '')) return { error: 'Insufficient permissions' }
   }
 
   const { data, error } = await (supabase as any)

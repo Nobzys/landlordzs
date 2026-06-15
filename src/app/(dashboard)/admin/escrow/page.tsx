@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Scale, ChevronLeft, CheckCircle2, AlertCircle } from 'lucide-react'
@@ -7,6 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { resolveDisputeAdmin } from '@/lib/actions/escrow'
 import { Button } from '@/components/ui/button'
 import { formatRelative } from '@/lib/utils/format'
+import { canAccessAdmin } from '@/lib/roles'
 
 export const metadata: Metadata = { title: 'Escrow Management — Admin' }
 
@@ -53,7 +54,7 @@ export default async function AdminEscrowPage({
   searchParams: Promise<SearchParams>
 }) {
   const profile = await getServerProfile()
-  if (!profile || profile.role !== 'admin') redirect('/login')
+  if (!profile || !canAccessAdmin(profile.role)) redirect('/login')
 
   const params = await searchParams
   const tab: EscrowTab =

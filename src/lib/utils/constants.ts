@@ -1,4 +1,5 @@
 import type { UserRole, CameroonCity } from '@/types/auth'
+import { PORTFOLIO_ROLES, ACTIVATION_REQUIRED_ROLES } from '@/lib/roles'
 
 export { ROLE_DASHBOARDS, ROLE_LABELS, ROLE_DESCRIPTIONS, REGISTERABLE_ROLES } from '@/types/auth'
 
@@ -32,15 +33,20 @@ export const AUTH_ROUTES = [
 ]
 
 export const ROLE_PROTECTED_PREFIXES: Record<string, UserRole> = {
-  '/buyer':      'buyer',
-  '/seller':     'seller',
-  '/agent':      'agent',
-  '/vendor':     'vendor',
-  '/contractor': 'contractor',
-  '/engineer':   'engineer',
-  '/architect':  'architect',
-  '/lawyer':     'lawyer',
-  '/admin':      'admin',
+  '/buyer':       'buyer',
+  '/seller':      'seller',
+  '/agent':       'agent',
+  '/vendor':      'vendor',
+  '/contractor':  'contractor',
+  '/engineer':    'engineer',
+  '/architect':   'architect',
+  '/lawyer':      'lawyer',
+  '/admin':       'admin',
+  '/tenant':      'tenant',
+  '/developer':   'developer',
+  '/manager':     'property_manager',
+  '/surveyor':    'surveyor',
+  '/maintenance': 'maintenance',
 }
 
 // ─── Cameroon data ────────────────────────────────────────────────────────────
@@ -76,16 +82,12 @@ export const STORAGE_BUCKETS = {
   CHAT_ATTACHMENTS:  'chat-attachments',
 } as const
 
-export const PROFESSIONAL_ROLES = [
-  'agent', 'contractor', 'engineer', 'architect', 'lawyer',
-] as const
+// Derived from ROLE_CAPABILITIES in src/lib/roles.ts — do not hardcode here.
+export const PROFESSIONAL_ROLES = PORTFOLIO_ROLES
 export type ProfessionalRole = (typeof PROFESSIONAL_ROLES)[number]
 
-// All roles that require admin approval before posting. Includes sellers and
-// vendors in addition to the five professional roles that carry credentials.
-export const APPROVAL_REQUIRED_ROLES = [
-  'seller', 'vendor', 'agent', 'contractor', 'engineer', 'architect', 'lawyer',
-] as const
+// All roles that require admin activation before posting content.
+export const APPROVAL_REQUIRED_ROLES = ACTIVATION_REQUIRED_ROLES
 export type ApprovalRequiredRole = (typeof APPROVAL_REQUIRED_ROLES)[number]
 
 // ─── Onboarding ───────────────────────────────────────────────────────────────

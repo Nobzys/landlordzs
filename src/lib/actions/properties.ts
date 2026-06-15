@@ -8,6 +8,7 @@ import { slugify } from '@/lib/utils/format'
 import { STORAGE_BUCKETS } from '@/lib/utils/constants'
 import type { ActionResult } from '@/types/auth'
 import type { PropertyCreateInput, InquiryInput } from '@/lib/validations/property'
+import { canAccessAdmin } from '@/lib/roles'
 
 // â”€â”€â”€ Create â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -334,7 +335,7 @@ export async function reviewVerification(
     .select('role')
     .eq('id', user.id)
     .single()
-  if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions' }
+  if (!canAccessAdmin(callerProfile?.role ?? '')) return { error: 'Insufficient permissions' }
 
   const adminClient = createAdminClient()
 
@@ -378,7 +379,7 @@ export async function adminAssignAgent(
     .select('role')
     .eq('id', user.id)
     .single()
-  if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions' }
+  if (!canAccessAdmin(callerProfile?.role ?? '')) return { error: 'Insufficient permissions' }
 
   const adminClient = createAdminClient()
 

@@ -7,6 +7,7 @@ import { FavoriteButton } from './FavoriteButton'
 import { ShareButton } from './ShareButton'
 import { formatArea, formatDate } from '@/lib/utils/format'
 import type { PropertyWithDetails } from '@/types/property'
+import { PUBLIC_PROFESSIONAL_ROLES } from '@/lib/roles'
 
 const LAND_TITLE_LABELS: Record<string, string> = {
   titre_foncier:     'Titre Foncier',
@@ -170,7 +171,7 @@ function FeatureBadge({ label }: { label: string }) {
   )
 }
 
-const PROFESSIONAL_ROLES = new Set(['agent', 'vendor', 'contractor', 'engineer', 'architect', 'lawyer'])
+const PROFESSIONAL_ROLES_SET = new Set(PUBLIC_PROFESSIONAL_ROLES)
 
 function ContactCard({
   person,
@@ -181,7 +182,7 @@ function ContactCard({
 }) {
   const name        = person.display_name ?? person.full_name ?? 'Unknown'
   const profileHref =
-    person.role && PROFESSIONAL_ROLES.has(person.role) && person.slug
+    person.role && PROFESSIONAL_ROLES_SET.has(person.role as any) && person.slug
       ? `/professionals/${person.role}/${person.slug}`
       : null
 

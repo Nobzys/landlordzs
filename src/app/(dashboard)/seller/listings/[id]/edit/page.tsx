@@ -4,6 +4,7 @@ import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { requireActiveProfile } from '@/lib/utils/account-status'
 import { PropertyForm } from '@/components/properties/forms/PropertyForm'
 import type { PropertyCreateInput } from '@/lib/validations/property'
+import { canCreateProperty, canManageAssignedProperties } from '@/lib/roles'
 
 interface EditListingPageProps {
   params: Promise<{ id: string }>
@@ -14,7 +15,7 @@ export const metadata: Metadata = { title: 'Edit Listing' }
 export default async function EditListingPage({ params }: EditListingPageProps) {
   const { id } = await params
   const profile = await getServerProfile()
-  if (!profile || !['seller', 'agent', 'admin'].includes(profile.role)) {
+  if (!profile || (!canCreateProperty(profile.role) && !canManageAssignedProperties(profile.role))) {
     redirect('/login')
   }
   requireActiveProfile(profile)

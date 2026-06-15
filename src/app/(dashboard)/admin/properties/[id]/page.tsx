@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { ChevronLeft, UserCheck } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { adminAssignAgent } from '@/lib/actions/properties'
+import { canAccessAdmin } from '@/lib/roles'
 import { PropertyGallery } from '@/components/properties/PropertyGallery'
 import { PropertyDetails } from '@/components/properties/PropertyDetails'
 import { PropertyAmenities } from '@/components/properties/PropertyAmenities'
@@ -75,7 +76,7 @@ export default async function AdminPropertyPreviewPage({ params }: AdminProperty
   const { id } = await params
 
   const profile = await getServerProfile()
-  if (!profile || profile.role !== 'admin') redirect('/login')
+  if (!profile || !canAccessAdmin(profile.role)) redirect('/login')
 
   const supabase = await createClient()
 

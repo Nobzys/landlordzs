@@ -4,17 +4,15 @@ import { ProfessionalCard } from '@/components/professionals/ProfessionalCard'
 import type { ProfessionalCardData } from '@/components/professionals/ProfessionalCard'
 import { ROLE_LABELS } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
+import { PUBLIC_PROFESSIONAL_ROLES } from '@/lib/roles'
 
 export const metadata: Metadata = {
   title: 'Find Professionals',
   description:
-    'Browse verified real estate agents, contractors, architects, engineers, lawyers, and material vendors across Cameroon.',
+    'Browse verified real estate agents, contractors, architects, engineers, surveyors, lawyers, and more across Cameroon.',
 }
 
-const PROFESSIONAL_ROLES = [
-  'agent', 'vendor', 'contractor', 'engineer', 'architect', 'lawyer',
-] as const
-type ProfRole = (typeof PROFESSIONAL_ROLES)[number]
+type ProfRole = (typeof PUBLIC_PROFESSIONAL_ROLES)[number]
 
 const PUBLIC_COLS =
   'id, full_name, display_name, avatar_url, city, role, is_premium, company_name, years_experience, specialties, slug, created_at'
@@ -28,7 +26,7 @@ export default async function ProfessionalsPage({
 }) {
   const params      = await searchParams
   const selectedRole =
-    PROFESSIONAL_ROLES.includes(params.role as ProfRole)
+    (PUBLIC_PROFESSIONAL_ROLES as readonly string[]).includes(params.role ?? '')
       ? (params.role as ProfRole)
       : null
 
@@ -38,7 +36,7 @@ export default async function ProfessionalsPage({
   const { data: raw } = await (supabase as any)
     .from('profiles')
     .select(PUBLIC_COLS)
-    .in('role', selectedRole ? [selectedRole] : [...PROFESSIONAL_ROLES])
+    .in('role', selectedRole ? [selectedRole] : [...PUBLIC_PROFESSIONAL_ROLES])
     .eq('account_status', 'active')
     .not('slug', 'is', null)
     .order('created_at', { ascending: false })
@@ -103,7 +101,7 @@ export default async function ProfessionalsPage({
           >
             All
           </a>
-          {PROFESSIONAL_ROLES.map((r) => (
+          {PUBLIC_PROFESSIONAL_ROLES.map((r) => (
             <a
               key={r}
               href={`/professionals?role=${r}`}

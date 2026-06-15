@@ -8,6 +8,7 @@ import { mtnRequestToPay, mtnGetPaymentStatus, mtnTransfer } from '@/lib/utils/m
 import { orangeInitiatePayment, orangeGetPaymentStatus } from '@/lib/utils/orange-money'
 import type { ActionResult } from '@/types/auth'
 import type { InitiatePaymentInput, RequestPayoutInput, PaymentInitiationResult } from '@/types/payment'
+import { canAccessAdmin } from '@/lib/roles'
 import { v4 as uuidv4 } from 'uuid'
 
 const PLATFORM_FEE_PCT = 2.5  // 2.5% platform fee on transactions
@@ -281,7 +282,7 @@ export async function processPayoutAdmin(payoutId: string): Promise<ActionResult
   if (authError || !user) return { error: 'Unauthorized' }
 
   const { data: caller } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single()
-  if (caller?.role !== 'admin') return { error: 'Insufficient permissions' }
+  if (!canAccessAdmin(caller?.role ?? '')) return { error: 'Insufficient permissions' }
 
   const adminClient = createAdminClient()
   const { data: payout } = await (adminClient as any)
@@ -364,7 +365,7 @@ export async function retryPayoutAdmin(payoutId: string): Promise<ActionResult> 
   if (authError || !user) return { error: 'Unauthorized' }
 
   const { data: caller } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single()
-  if (caller?.role !== 'admin') return { error: 'Insufficient permissions' }
+  if (!canAccessAdmin(caller?.role ?? '')) return { error: 'Insufficient permissions' }
 
   const adminClient = createAdminClient()
   const { data: payout } = await (adminClient as any)

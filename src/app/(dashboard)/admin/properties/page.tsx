@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { Building2, ChevronLeft, CheckCircle2, XCircle, ExternalLink } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { LinkButton } from '@/components/ui/link-button'
 import { Badge } from '@/components/ui/badge'
 import { formatXAF, formatRelative } from '@/lib/utils/format'
+import { canAccessAdmin } from '@/lib/roles'
 
 export const metadata: Metadata = { title: 'Property Verification — Admin' }
 
@@ -37,7 +38,7 @@ type VerificationRow = {
 
 export default async function AdminPropertiesPage() {
   const profile = await getServerProfile()
-  if (!profile || profile.role !== 'admin') redirect('/login')
+  if (!profile || !canAccessAdmin(profile.role)) redirect('/login')
 
   const supabase = await createClient()
 

@@ -5,8 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { STORAGE_BUCKETS } from '@/lib/utils/constants'
 import type { ActionResult } from '@/types/auth'
-
-const PROFESSIONAL_ROLES = new Set(['agent', 'vendor', 'contractor', 'engineer', 'architect', 'lawyer'])
+import { canManagePortfolio } from '@/lib/roles'
 const BUCKET = STORAGE_BUCKETS.PROJECT_IMAGES
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -46,8 +45,8 @@ export async function createProject(
     .eq('id', user.id)
     .single() as { data: { role: string } | null }
 
-  if (!profile || !PROFESSIONAL_ROLES.has(profile.role)) {
-    return { error: 'Only professionals can manage portfolio projects.' }
+  if (!profile || !canManagePortfolio(profile.role)) {
+    return { error: 'Only portfolio professionals can manage projects.' }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

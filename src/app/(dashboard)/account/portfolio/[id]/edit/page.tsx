@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { redirect, notFound } from 'next/navigation'
+import { redirect, notFound, forbidden } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
@@ -12,10 +12,9 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { STORAGE_BUCKETS } from '@/lib/utils/constants'
 import type { ProjectInput } from '@/lib/actions/portfolio'
+import { canManagePortfolio } from '@/lib/roles'
 
 export const metadata: Metadata = { title: 'Edit Project' }
-
-const PROFESSIONAL_ROLES = new Set(['agent', 'vendor', 'contractor', 'engineer', 'architect', 'lawyer'])
 
 interface Params { id: string }
 
@@ -24,7 +23,7 @@ export default async function EditProjectPage({ params }: { params: Promise<Para
 
   const profile = await getServerProfile()
   if (!profile) redirect('/login')
-  if (!PROFESSIONAL_ROLES.has(profile.role)) redirect('/account/profile')
+  if (!canManagePortfolio(profile.role)) forbidden()
   requireActiveProfile(profile)
 
   const supabase    = await createClient()

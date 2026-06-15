@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { formatRelative } from '@/lib/utils/format'
 import { ROLE_LABELS } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
+import { canAccessAdmin, ACTIVATION_REQUIRED_ROLES } from '@/lib/roles'
 
 export const metadata: Metadata = { title: 'Account Verification — Admin' }
 
@@ -64,7 +65,7 @@ export default async function AdminProfessionalsPage({
   searchParams: Promise<SearchParams>
 }) {
   const profile = await getServerProfile()
-  if (!profile || profile.role !== 'admin') redirect('/login')
+  if (!profile || !canAccessAdmin(profile.role)) redirect('/login')
 
   const params = await searchParams
   const tab: AccountStatus =
@@ -89,7 +90,7 @@ export default async function AdminProfessionalsPage({
       professional_profiles ( profession_type, company_name, is_verified ),
       agent_profiles ( license_verified )
     `)
-    .in('role', ['seller', 'vendor', 'agent', 'contractor', 'engineer', 'architect', 'lawyer'])
+    .in('role', ACTIVATION_REQUIRED_ROLES)
     .eq('account_status', statusFilter)
     .eq('onboarding_completed', true)
     .order('created_at', { ascending: tab === 'pending' })
@@ -138,7 +139,7 @@ export default async function AdminProfessionalsPage({
   const { count: pendingCount } = await (adminClient as any)
     .from('profiles')
     .select('*', { count: 'exact', head: true })
-    .in('role', ['seller', 'vendor', 'agent', 'contractor', 'engineer', 'architect', 'lawyer'])
+    .in('role', ACTIVATION_REQUIRED_ROLES)
     .eq('account_status', 'pending_verification')
     .eq('onboarding_completed', true)
 

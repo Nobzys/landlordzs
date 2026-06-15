@@ -7,6 +7,7 @@ import { createEscrowSchema, disputeEscrowSchema, completeMilestoneSchema } from
 import type { ActionResult } from '@/types/auth'
 import type { CreateEscrowInput, DisputeEscrowInput, CompleteMilestoneInput } from '@/lib/validations/payment'
 import { lookupPropertyAgent, creditAgentCommission } from '@/lib/utils/commission-helpers'
+import { canAccessAdmin } from '@/lib/roles'
 
 const PLATFORM_FEE_PCT = 2.5
 
@@ -350,7 +351,7 @@ export async function resolveDisputeAdmin(
   if (authError || !user) return { error: 'Unauthorized' }
 
   const { data: caller } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single()
-  if (caller?.role !== 'admin') return { error: 'Insufficient permissions' }
+  if (!canAccessAdmin(caller?.role ?? '')) return { error: 'Insufficient permissions' }
 
   const adminClient = createAdminClient()
   const { data: escrow } = await (adminClient as any)

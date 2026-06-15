@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Users, ChevronLeft } from 'lucide-react'
@@ -10,6 +10,7 @@ import { ROLE_LABELS } from '@/types/auth'
 import { formatRelative } from '@/lib/utils/format'
 import type { UserRole } from '@/types/auth'
 import type { ProfileRow } from '@/types/database'
+import { canAccessAdmin } from '@/lib/roles'
 
 export const metadata: Metadata = { title: 'User Management' }
 
@@ -37,7 +38,7 @@ export default async function AdminUsersPage({
   searchParams: Promise<SearchParams>
 }) {
   const profile = await getServerProfile()
-  if (!profile || profile.role !== 'admin') redirect('/login')
+  if (!profile || !canAccessAdmin(profile.role)) redirect('/login')
 
   const params = await searchParams
   const roleFilter   = ALL_ROLES.includes(params.role as UserRole) ? params.role : undefined

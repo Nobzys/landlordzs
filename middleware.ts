@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { createMiddlewareClient } from '@/lib/supabase/middleware'
 import { ROLE_DASHBOARDS, PUBLIC_ROUTES, AUTH_ROUTES, ROLE_PROTECTED_PREFIXES } from '@/lib/utils/constants'
 import type { UserRole } from '@/types/auth'
+import { canAccessAdmin } from '@/lib/roles'
 
 export async function middleware(request: NextRequest) {
   const { supabase, response } = await createMiddlewareClient(request)
@@ -101,8 +102,8 @@ export async function middleware(request: NextRequest) {
     const requiredRole = ROLE_PROTECTED_PREFIXES[matchedPrefix] as UserRole
     const userRole = profile.role as UserRole
 
-    // Admin can access all dashboards
-    if (userRole === 'admin') return response
+    // Admin (and any future admin-capable role) can access all dashboards
+    if (canAccessAdmin(userRole)) return response
 
     // User accessing their own dashboard — allowed
     if (userRole === requiredRole) return response

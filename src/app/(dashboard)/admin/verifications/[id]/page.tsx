@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getServerProfile } from '@/lib/supabase/server'
+import { canAccessAdmin } from '@/lib/roles'
 import {
   adminApproveProfessional,
   adminRejectProfessional,
@@ -81,7 +82,7 @@ export default async function VerificationReviewPage({
   const { id } = await params
 
   const profile = await getServerProfile()
-  if (!profile || profile.role !== 'admin') redirect('/login')
+  if (!profile || !canAccessAdmin(profile.role)) redirect('/login')
 
   const adminClient = createAdminClient()
 

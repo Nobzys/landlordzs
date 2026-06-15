@@ -3,12 +3,14 @@ import Image from 'next/image'
 import { MapPin, Globe, Building2, Calendar, Briefcase, Star } from 'lucide-react'
 import { VerificationBadge } from '@/components/trust/VerificationBadge'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { PublicPortfolio } from '@/components/portfolio/PublicPortfolio'
 import type { PublicProject } from '@/components/portfolio/PublicPortfolio'
 import { formatDate } from '@/lib/utils/format'
 import { ROLE_LABELS } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
+import { CTA_LABEL_BY_ROLE } from '@/types/service-request'
 
 export type { PublicProject }
 
@@ -78,20 +80,28 @@ export function ProfessionalProfile({ profile: p }: ProfessionalProfileProps) {
 
           {/* Name + role + badges */}
           <div className="flex-1 space-y-3">
-            <div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-2xl font-bold">{name}</h1>
-                {p.is_premium && (
-                  <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-700">
-                    <Star className="h-3 w-3" />
-                    Premium
-                  </span>
-                )}
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h1 className="text-2xl font-bold">{name}</h1>
+                  {p.is_premium && (
+                    <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-700">
+                      <Star className="h-3 w-3" />
+                      Premium
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 flex-wrap mt-2">
+                  <Badge variant="secondary" className="capitalize">{roleLabel}</Badge>
+                  <VerificationBadge status={p.badge_status} />
+                </div>
               </div>
-              <div className="flex items-center gap-2 flex-wrap mt-2">
-                <Badge variant="secondary" className="capitalize">{roleLabel}</Badge>
-                <VerificationBadge status={p.badge_status} />
-              </div>
+              {/* CTA — links to the new request form */}
+              <Link href={`/requests/new?providerId=${p.id}&role=${p.role}`}>
+                <Button size="sm" className="shrink-0">
+                  {CTA_LABEL_BY_ROLE[p.role] ?? 'Request Service'}
+                </Button>
+              </Link>
             </div>
 
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { redirect } from 'next/navigation'
+import { redirect, forbidden } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, Pencil, Trash2, Eye, EyeOff } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
@@ -10,10 +10,9 @@ import { Button } from '@/components/ui/button'
 import { LinkButton } from '@/components/ui/link-button'
 import { formatDate } from '@/lib/utils/format'
 import { STORAGE_BUCKETS } from '@/lib/utils/constants'
+import { canManagePortfolio } from '@/lib/roles'
 
 export const metadata: Metadata = { title: 'My Portfolio' }
-
-const PROFESSIONAL_ROLES = new Set(['agent', 'vendor', 'contractor', 'engineer', 'architect', 'lawyer'])
 
 type ProjectRow = {
   id:               string
@@ -28,7 +27,7 @@ type ProjectRow = {
 export default async function PortfolioPage() {
   const profile = await getServerProfile()
   if (!profile) redirect('/login')
-  if (!PROFESSIONAL_ROLES.has(profile.role)) redirect('/account/profile')
+  if (!canManagePortfolio(profile.role)) forbidden()
   requireActiveProfile(profile)
 
   const supabase    = await createClient()

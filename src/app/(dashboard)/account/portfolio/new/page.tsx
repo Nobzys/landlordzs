@@ -1,20 +1,19 @@
 import type { Metadata } from 'next'
-import { redirect } from 'next/navigation'
+import { redirect, forbidden } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 import { getServerProfile } from '@/lib/supabase/server'
 import { requireActiveProfile } from '@/lib/utils/account-status'
 import { ProjectForm } from '@/components/portfolio/ProjectForm'
 import { Button } from '@/components/ui/button'
+import { canManagePortfolio } from '@/lib/roles'
 
 export const metadata: Metadata = { title: 'Add Portfolio Project' }
-
-const PROFESSIONAL_ROLES = new Set(['agent', 'vendor', 'contractor', 'engineer', 'architect', 'lawyer'])
 
 export default async function NewProjectPage() {
   const profile = await getServerProfile()
   if (!profile) redirect('/login')
-  if (!PROFESSIONAL_ROLES.has(profile.role)) redirect('/account/profile')
+  if (!canManagePortfolio(profile.role)) forbidden()
   requireActiveProfile(profile)
 
   return (

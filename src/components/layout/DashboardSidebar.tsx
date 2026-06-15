@@ -5,9 +5,10 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Menu, LogOut,
-  Heart, Search, Building2, Plus, TrendingUp, Store,
+  Heart, Search, Building2, Building, Plus, TrendingUp, Store,
   Briefcase, Wrench, Ruler, Scale, LayoutDashboard,
   Users, Wallet, User, ShieldCheck, Flag, Settings, ClipboardList, FolderOpen,
+  Home, Compass, Hammer, Inbox,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { signOut } from '@/lib/actions/auth'
@@ -18,9 +19,10 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import type { Profile } from '@/types/auth'
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  Heart, Search, Building2, Plus, TrendingUp, Store,
+  Heart, Search, Building2, Building, Plus, TrendingUp, Store,
   Briefcase, Wrench, Ruler, Scale, LayoutDashboard,
   Users, Wallet, User, ShieldCheck, Flag, Settings, ClipboardList, FolderOpen,
+  Home, Compass, Hammer, Inbox,
 }
 
 function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
