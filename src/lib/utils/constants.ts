@@ -71,6 +71,7 @@ export const STORAGE_BUCKETS = {
   VERIFY_DOCS:       'verification-documents-v2',
   MARKETPLACE:       'marketplace-products',
   PORTFOLIOS:        'service-portfolios',
+  PROJECT_IMAGES:    'professional-projects',
   FORUM_IMAGES:      'forum-images',
   CHAT_ATTACHMENTS:  'chat-attachments',
 } as const
