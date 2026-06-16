@@ -5,7 +5,8 @@ import { redirect } from 'next/navigation'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { subscribePlanSchema, adminGrantSchema, toggleAutoRenewSchema } from '@/lib/validations/billing'
-import { getPaymentProvider } from '@/lib/payments/provider'
+import { getPaymentProvider } from '@/lib/payments/factory'
+import type { PaymentMethod } from '@/lib/payments/factory'
 import { getBillingStatus, getPlansForRole } from '@/lib/billing'
 import { requiresActivationFee, canAccessAdmin } from '@/lib/roles'
 import { insertNotification } from '@/lib/notifications'
@@ -120,8 +121,8 @@ export async function subscribeToPlan(
   }
 
   // Charge via payment provider
-  const provider = await getPaymentProvider(parsed.data.provider as 'mock')
-  const result = await provider.charge({
+  const provider = await getPaymentProvider((parsed.data.provider ?? 'mock') as PaymentMethod)
+  const result = await provider.createPayment({
     amount:      plan.amount,
     currency:    plan.currency,
     userId:      user.id,
@@ -142,16 +143,19 @@ export async function subscribeToPlan(
   }
   // one_time: no expiry (null)
 
+  const paymentProvider = (parsed.data.provider ?? 'mock') as string
+
   // Create subscription
   const { data: sub, error: subError } = await (adminClient as any)
     .from('subscriptions')
     .insert({
-      user_id:    user.id,
-      plan_id:    plan.id,
-      status:     'active',
-      starts_at:  startsAt.toISOString(),
-      expires_at: expiresAt?.toISOString() ?? null,
-      auto_renew: plan.billing_type !== 'one_time',
+      user_id:          user.id,
+      plan_id:          plan.id,
+      status:           'active',
+      starts_at:        startsAt.toISOString(),
+      expires_at:       expiresAt?.toISOString() ?? null,
+      auto_renew:       plan.billing_type !== 'one_time',
+      payment_provider: paymentProvider,
     })
     .select('id')
     .single() as { data: { id: string } | null; error: unknown }
@@ -162,13 +166,14 @@ export async function subscribeToPlan(
   const { data: invoice } = await (adminClient as any)
     .from('invoices')
     .insert({
-      user_id:         user.id,
-      subscription_id: sub.id,
-      amount:          plan.amount,
-      currency:        plan.currency,
-      status:          'paid',
-      issued_at:       startsAt.toISOString(),
-      paid_at:         startsAt.toISOString(),
+      user_id:          user.id,
+      subscription_id:  sub.id,
+      amount:           plan.amount,
+      currency:         plan.currency,
+      status:           'paid',
+      payment_provider: paymentProvider,
+      issued_at:        startsAt.toISOString(),
+      paid_at:          startsAt.toISOString(),
     })
     .select('id')
     .single() as { data: { id: string } | null }
@@ -177,7 +182,7 @@ export async function subscribeToPlan(
   await (adminClient as any).from('payments').insert({
     user_id:            user.id,
     invoice_id:         invoice?.id ?? null,
-    provider:           result.reference.startsWith('mock_') ? 'mock' : parsed.data.provider,
+    provider:           paymentProvider,
     provider_reference: result.reference,
     amount:             plan.amount,
     currency:           plan.currency,
@@ -377,34 +382,25 @@ export async function createStripeCheckoutSession(input: {
 
   let customerId = existingPayment?.external_customer_id
 
-  // Create Stripe customer if first-time
-  if (!customerId) {
-    const provider = await getPaymentProvider('stripe')
-    const customer = await provider.createCustomer!(
-      user.id,
-      profile.email ?? user.email ?? '',
-      profile.full_name ?? undefined,
-    )
-    customerId = customer.customerId
-  }
+  const provider   = await getPaymentProvider('stripe')
+  const appUrl     = APP_URL || 'http://localhost:3000'
+  const successUrl = `${appUrl}/account/billing/stripe-return`
+  const cancelUrl  = `${appUrl}/account/billing`
 
-  const provider    = await getPaymentProvider('stripe')
-  const appUrl      = APP_URL || 'http://localhost:3000'
-  const successUrl  = `${appUrl}/account/billing/stripe-return`
-  const cancelUrl   = `${appUrl}/account/billing`
-
-  const session = await provider.createCheckoutSession!({
+  const session = await provider.createPayment({
     amount:      plan.amount,
     currency:    plan.currency,
     userId:      user.id,
     description: `${plan.name} — LANDLORDZS`,
     planId:      plan.id,
     billingType: plan.billing_type,
-    customerId,
-    successUrl,
+    customerId:  customerId ?? undefined,
+    successUrl:  `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
     cancelUrl,
     metadata:    { plan_id: plan.id, user_id: user.id, billing_type: plan.billing_type },
   })
+
+  if (!session.redirectUrl) return { error: 'Failed to create Stripe checkout session.' }
 
   // Record pending payment
   await (adminClient as any).from('payments').insert({
@@ -414,12 +410,12 @@ export async function createStripeCheckoutSession(input: {
     amount:               plan.amount,
     currency:             plan.currency,
     status:               'pending',
-    external_customer_id: customerId,
-    checkout_session_id:  session.sessionId,
+    external_customer_id: customerId ?? null,
+    checkout_session_id:  session.reference,
     metadata:             { plan_id: plan.id, billing_type: plan.billing_type },
   })
 
-  return { success: true, data: { url: session.url } }
+  return { success: true, data: { url: session.redirectUrl } }
 }
 
 // ─── confirmStripeSession ─────────────────────────────────────────────────────
@@ -449,7 +445,7 @@ export async function confirmStripeSession(sessionId: string): Promise<ActionRes
 
   // Verify with Stripe
   const provider = await getPaymentProvider('stripe')
-  const result   = await provider.verifyPayment!(sessionId)
+  const result   = await provider.verifyPayment(sessionId)
 
   if (!result.success) {
     return { error: 'Payment was not completed. Please try again.' }
@@ -490,12 +486,13 @@ export async function confirmStripeSession(sessionId: string): Promise<ActionRes
     const { data: sub } = await (adminClient as any)
       .from('subscriptions')
       .insert({
-        user_id:    user.id,
-        plan_id:    plan.id,
-        status:     'active',
-        starts_at:  startsAt.toISOString(),
-        expires_at: expiresAt?.toISOString() ?? null,
-        auto_renew: billingType !== 'one_time',
+        user_id:          user.id,
+        plan_id:          plan.id,
+        status:           'active',
+        starts_at:        startsAt.toISOString(),
+        expires_at:       expiresAt?.toISOString() ?? null,
+        auto_renew:       billingType !== 'one_time',
+        payment_provider: 'stripe',
       })
       .select('id')
       .single() as { data: { id: string } | null }
@@ -505,13 +502,14 @@ export async function confirmStripeSession(sessionId: string): Promise<ActionRes
     const { data: invoice } = await (adminClient as any)
       .from('invoices')
       .insert({
-        user_id:         user.id,
-        subscription_id: subscriptionId,
-        amount:          plan.amount,
-        currency:        plan.currency,
-        status:          'paid',
-        issued_at:       new Date().toISOString(),
-        paid_at:         new Date().toISOString(),
+        user_id:          user.id,
+        subscription_id:  subscriptionId,
+        amount:           plan.amount,
+        currency:         plan.currency,
+        status:           'paid',
+        payment_provider: 'stripe',
+        issued_at:        new Date().toISOString(),
+        paid_at:          new Date().toISOString(),
       })
       .select('id')
       .single() as { data: { id: string } | null }
@@ -577,7 +575,7 @@ export async function createPayPalOrder(input: {
   const successUrl = `${appUrl}/account/billing/paypal-return`
   const cancelUrl  = `${appUrl}/account/billing`
 
-  const session = await provider.createCheckoutSession!({
+  const session = await provider.createPayment({
     amount:      plan.amount,
     currency:    plan.currency,
     userId:      user.id,
@@ -589,6 +587,8 @@ export async function createPayPalOrder(input: {
     metadata:    { plan_id: plan.id, user_id: user.id, billing_type: plan.billing_type },
   })
 
+  if (!session.redirectUrl) return { error: 'Failed to create PayPal order.' }
+
   // Record pending payment
   await (adminClient as any).from('payments').insert({
     user_id:             user.id,
@@ -597,11 +597,11 @@ export async function createPayPalOrder(input: {
     amount:              plan.amount,
     currency:            plan.currency,
     status:              'pending',
-    checkout_session_id: session.sessionId,
+    checkout_session_id: session.reference,
     metadata:            { plan_id: plan.id, billing_type: plan.billing_type },
   })
 
-  return { success: true, data: { url: session.url, orderId: session.sessionId } }
+  return { success: true, data: { url: session.redirectUrl, orderId: session.reference } }
 }
 
 // ─── confirmPayPalOrder ───────────────────────────────────────────────────────
@@ -627,7 +627,7 @@ export async function confirmPayPalOrder(
   if (payment.status === 'completed') return { success: true, data: {} }
 
   const provider = await getPaymentProvider('paypal')
-  const result   = await provider.verifyPayment!(orderId)
+  const result   = await provider.verifyPayment(orderId)
 
   if (!result.success) {
     await (adminClient as any)
@@ -661,12 +661,13 @@ export async function confirmPayPalOrder(
   const { data: sub } = await (adminClient as any)
     .from('subscriptions')
     .insert({
-      user_id:    user.id,
-      plan_id:    plan.id,
-      status:     'active',
-      starts_at:  startsAt.toISOString(),
-      expires_at: expiresAt?.toISOString() ?? null,
-      auto_renew: billingType !== 'one_time',
+      user_id:          user.id,
+      plan_id:          plan.id,
+      status:           'active',
+      starts_at:        startsAt.toISOString(),
+      expires_at:       expiresAt?.toISOString() ?? null,
+      auto_renew:       billingType !== 'one_time',
+      payment_provider: 'paypal',
     })
     .select('id')
     .single() as { data: { id: string } | null }
@@ -674,13 +675,14 @@ export async function confirmPayPalOrder(
   const { data: invoice } = await (adminClient as any)
     .from('invoices')
     .insert({
-      user_id:         user.id,
-      subscription_id: sub?.id,
-      amount:          plan.amount,
-      currency:        plan.currency,
-      status:          'paid',
-      issued_at:       new Date().toISOString(),
-      paid_at:         new Date().toISOString(),
+      user_id:          user.id,
+      subscription_id:  sub?.id,
+      amount:           plan.amount,
+      currency:         plan.currency,
+      status:           'paid',
+      payment_provider: 'paypal',
+      issued_at:        new Date().toISOString(),
+      paid_at:          new Date().toISOString(),
     })
     .select('id')
     .single() as { data: { id: string } | null }
@@ -742,12 +744,13 @@ export async function initiateMobileMoneySubscription(input: {
   if (!plan) return { error: 'Plan not found or not available for your role.' }
 
   const externalRef = crypto.randomUUID()
-  const provider    = await getPaymentProvider('mobile_money')
-  const result      = await provider.charge({
+  const provider    = await getPaymentProvider(input.mobile_provider)
+  const result      = await provider.createPayment({
     amount:      plan.amount,
     currency:    plan.currency,
     userId:      user.id,
     description: `${plan.name} — LANDLORDZS`,
+    phone:       input.phone,
     metadata: {
       phone:          input.phone,
       mobileProvider: input.mobile_provider,
@@ -813,10 +816,11 @@ export async function pollMobileMoneyStatus(
 
   if (!providerRef) return { success: true, data: { status: 'pending' } }
 
-  const provider = await getPaymentProvider('mobile_money')
-  const result   = await (provider as any).verifyPayment(providerRef, {
+  const provider = await getPaymentProvider(mobileProvider)
+  const result   = await provider.verifyPayment(providerRef, {
     mobileProvider,
     externalRef: meta.external_ref,
+    payToken:    meta.pay_token,
   })
 
   if (result.status === 'pending') {
@@ -856,12 +860,13 @@ export async function pollMobileMoneyStatus(
   const { data: sub } = await (adminClient as any)
     .from('subscriptions')
     .insert({
-      user_id:    user.id,
-      plan_id:    plan.id,
-      status:     'active',
-      starts_at:  startsAt.toISOString(),
-      expires_at: expiresAt?.toISOString() ?? null,
-      auto_renew: false,
+      user_id:          user.id,
+      plan_id:          plan.id,
+      status:           'active',
+      starts_at:        startsAt.toISOString(),
+      expires_at:       expiresAt?.toISOString() ?? null,
+      auto_renew:       false,
+      payment_provider: mobileProvider,
     })
     .select('id')
     .single() as { data: { id: string } | null }
@@ -869,13 +874,14 @@ export async function pollMobileMoneyStatus(
   const { data: invoice } = await (adminClient as any)
     .from('invoices')
     .insert({
-      user_id:         user.id,
-      subscription_id: sub?.id,
-      amount:          plan.amount,
-      currency:        plan.currency,
-      status:          'paid',
-      issued_at:       new Date().toISOString(),
-      paid_at:         new Date().toISOString(),
+      user_id:          user.id,
+      subscription_id:  sub?.id,
+      amount:           plan.amount,
+      currency:         plan.currency,
+      status:           'paid',
+      payment_provider: mobileProvider,
+      issued_at:        new Date().toISOString(),
+      paid_at:          new Date().toISOString(),
     })
     .select('id')
     .single() as { data: { id: string } | null }
@@ -928,8 +934,8 @@ export async function adminRefundPayment(
   let refundResult: { success: boolean; reference: string; error?: string }
 
   try {
-    const provider = await getPaymentProvider(payment.provider as 'stripe' | 'paypal' | 'mock')
-    refundResult   = await provider.refund(providerRef, refundAmount)
+    const provider = await getPaymentProvider(payment.provider as PaymentMethod)
+    refundResult   = await provider.refundPayment(providerRef, refundAmount)
   } catch {
     return { error: 'Could not connect to payment provider for refund.' }
   }

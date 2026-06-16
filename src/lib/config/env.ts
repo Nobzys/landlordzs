@@ -73,6 +73,32 @@ export const PAYPAL_CLIENT_SECRET = optional('PAYPAL_CLIENT_SECRET')
 export const PAYPAL_WEBHOOK_ID    = optional('PAYPAL_WEBHOOK_ID')
 export const PAYPAL_BASE_URL      = optional('PAYPAL_BASE_URL', 'https://api-m.sandbox.paypal.com')
 
+// ─── Bank Transfer ────────────────────────────────────────────────────────────
+// Manual payment flow: user submits transfer reference → admin approves.
+// Set these to your company's bank account details.
+
+export const BANK_TRANSFER_ACCOUNT_NAME   = optional('BANK_TRANSFER_ACCOUNT_NAME',   'LANDLORDZS SARL')
+export const BANK_TRANSFER_ACCOUNT_NUMBER = optional('BANK_TRANSFER_ACCOUNT_NUMBER', 'XX0000000000')
+export const BANK_TRANSFER_BANK_NAME      = optional('BANK_TRANSFER_BANK_NAME',      'Afriland First Bank')
+export const BANK_TRANSFER_SWIFT_CODE     = optional('BANK_TRANSFER_SWIFT_CODE')
+
+// ─── Payment defaults ──────────────────────────────────────────────────────────
+// PAYMENT_DEFAULT_COUNTRY drives provider ordering:
+//   CM → Cameroon-first (MTN MoMo, Orange Money, Bank Transfer, Stripe, PayPal)
+
+export const PAYMENT_DEFAULT_COUNTRY = optional('PAYMENT_DEFAULT_COUNTRY', 'CM')
+
+// ─── MTN MoMo API key aliases (convenience) ──────────────────────────────────
+// These are read by providers/mtn-momo.ts for simpler env naming.
+// Underlying values map to MTN_COLL_KEY / MTN_COLL_SECRET already defined above.
+// Set either set of variable names — whichever your MTN portal gives you.
+// MTN_MOMO_API_KEY=  (alias for MTN_MOMO_SUBSCRIPTION_KEY)
+// MTN_MOMO_API_SECRET=  (not used directly — credentials come from MTN_MOMO_API_KEY + MTN_MOMO_API_USER)
+
+// ─── Orange Money API key aliases ────────────────────────────────────────────
+// ORANGE_MONEY_API_KEY=    (alias for ORANGE_MONEY_CLIENT_ID)
+// ORANGE_MONEY_API_SECRET= (alias for ORANGE_MONEY_CLIENT_SECRET)
+
 // ─── Application ──────────────────────────────────────────────────────────────
 export const APP_URL = optional('NEXT_PUBLIC_APP_URL', 'http://localhost:3000')
 

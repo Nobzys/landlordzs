@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect, useRef } from 'react'
-import { CreditCard, Smartphone, Loader2, CheckCircle2 } from 'lucide-react'
+import { CreditCard, Smartphone, Loader2, CheckCircle2, Building2, Globe2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   createStripeCheckoutSession,
@@ -10,7 +10,9 @@ import {
   pollMobileMoneyStatus,
   subscribeToPlan,
 } from '@/lib/actions/billing'
+import { BankTransferForm } from '@/components/payments/BankTransferForm'
 import type { SubscriptionPlan } from '@/types/billing'
+import { formatXAF } from '@/lib/utils/format'
 
 // ─── Provider logo components ─────────────────────────────────────────────────
 
@@ -34,30 +36,36 @@ function PayPalLogo() {
 
 // ─── Provider type ────────────────────────────────────────────────────────────
 
-type Provider = 'stripe' | 'paypal' | 'mtn_momo' | 'orange_money' | 'mock'
+type Provider = 'mtn_momo' | 'orange_money' | 'bank_transfer' | 'stripe' | 'paypal' | 'mock'
+
+interface ProviderOption {
+  id:       Provider
+  label:    string
+  icon:     React.ReactNode
+  desc:     string
+  devOnly?: boolean
+}
 
 interface Props {
-  plan:     SubscriptionPlan
-  isDev?:   boolean
+  plan:   SubscriptionPlan
+  isDev?: boolean
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function PaymentProviderSelector({ plan, isDev = false }: Props) {
-  const [selected, setSelected]       = useState<Provider>('stripe')
-  const [phone, setPhone]             = useState('')
-  const [error, setError]             = useState<string | null>(null)
+  const [selected, setSelected]           = useState<Provider>('mtn_momo')
+  const [phone, setPhone]                 = useState('')
+  const [error, setError]                 = useState<string | null>(null)
   const [momoPaymentId, setMomoPaymentId] = useState<string | null>(null)
-  const [momoStatus, setMomoStatus]   = useState<'idle' | 'pending' | 'completed' | 'failed'>('idle')
-  const [isPending, startTransition]  = useTransition()
-  const pollInterval                  = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [momoStatus, setMomoStatus]       = useState<'idle' | 'pending' | 'completed' | 'failed'>('idle')
+  const [isPending, startTransition]      = useTransition()
+  const pollInterval                      = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Clean up polling on unmount
   useEffect(() => {
     return () => { if (pollInterval.current) clearInterval(pollInterval.current) }
   }, [])
 
-  // Start polling when a mobile money payment is initiated
   useEffect(() => {
     if (!momoPaymentId || momoStatus !== 'pending') return
 
@@ -144,19 +152,7 @@ export function PaymentProviderSelector({ plan, isDev = false }: Props) {
     )
   }
 
-  const providers: { id: Provider; label: string; icon: React.ReactNode; desc: string; devOnly?: boolean }[] = [
-    {
-      id:    'stripe',
-      label: 'Card / Apple Pay / Google Pay',
-      icon:  <StripeLogo />,
-      desc:  'Visa, Mastercard, Apple Pay, Google Pay',
-    },
-    {
-      id:    'paypal',
-      label: 'PayPal',
-      icon:  <PayPalLogo />,
-      desc:  'Pay with your PayPal account',
-    },
+  const localProviders: ProviderOption[] = [
     {
       id:    'mtn_momo',
       label: 'MTN Mobile Money',
@@ -169,47 +165,57 @@ export function PaymentProviderSelector({ plan, isDev = false }: Props) {
       icon:  <Smartphone className="h-5 w-5 text-orange-500" />,
       desc:  'Pay via Orange Money (push to phone)',
     },
-    ...(isDev ? [{
-      id:      'mock' as const,
-      label:   'Mock (Dev only)',
-      icon:    <CreditCard className="h-5 w-5 text-gray-400" />,
-      desc:    'Instant success — for development/testing',
-      devOnly: true,
-    }] : []),
+    {
+      id:    'bank_transfer',
+      label: 'Bank Transfer',
+      icon:  <Building2 className="h-5 w-5 text-blue-500" />,
+      desc:  'Transfer to our bank account — verified within 1–2 business days',
+    },
   ]
+
+  const internationalProviders: ProviderOption[] = [
+    {
+      id:    'stripe',
+      label: 'Card / Apple Pay / Google Pay',
+      icon:  <StripeLogo />,
+      desc:  'Visa, Mastercard, Apple Pay, Google Pay',
+    },
+    {
+      id:    'paypal',
+      label: 'PayPal',
+      icon:  <PayPalLogo />,
+      desc:  'Pay with your PayPal account',
+    },
+  ]
+
+  const devProviders: ProviderOption[] = isDev ? [{
+    id:      'mock' as const,
+    label:   'Mock (Dev only)',
+    icon:    <CreditCard className="h-5 w-5 text-gray-400" />,
+    desc:    'Instant success — for development/testing',
+    devOnly: true,
+  }] : []
 
   const needsPhone = selected === 'mtn_momo' || selected === 'orange_money'
 
   return (
-    <div className="space-y-3">
-      {/* Provider selector */}
+    <div className="space-y-4">
+      {/* ── Local payment methods ── */}
       <div className="space-y-2">
-        {providers.map((p) => (
-          <button
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          Cameroon
+        </p>
+        {localProviders.map((p) => (
+          <ProviderButton
             key={p.id}
-            type="button"
-            onClick={() => { setSelected(p.id); setError(null) }}
-            className={`w-full flex items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors ${
-              selected === p.id
-                ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
-                : 'border-border hover:bg-muted/40'
-            } ${p.devOnly ? 'opacity-60' : ''}`}
-          >
-            <div className="shrink-0 text-foreground">{p.icon}</div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium">{p.label}</p>
-              <p className="text-xs text-muted-foreground">{p.desc}</p>
-            </div>
-            <div className={`h-4 w-4 rounded-full border-2 shrink-0 flex items-center justify-center ${
-              selected === p.id ? 'border-primary' : 'border-muted-foreground/40'
-            }`}>
-              {selected === p.id && <div className="h-2 w-2 rounded-full bg-primary" />}
-            </div>
-          </button>
+            provider={p}
+            selected={selected}
+            onSelect={(id) => { setSelected(id); setError(null) }}
+          />
         ))}
       </div>
 
-      {/* Phone field for Mobile Money */}
+      {/* ── Phone field for Mobile Money ── */}
       {needsPhone && (
         <div>
           <label htmlFor="momo-phone" className="block text-xs font-medium text-muted-foreground mb-1">
@@ -226,27 +232,99 @@ export function PaymentProviderSelector({ plan, isDev = false }: Props) {
         </div>
       )}
 
+      {/* ── Bank Transfer inline form ── */}
+      {selected === 'bank_transfer' && (
+        <BankTransferForm plan={plan} />
+      )}
+
+      {/* ── International payment methods ── */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Globe2 className="h-3.5 w-3.5 text-muted-foreground" />
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            International payments
+          </p>
+        </div>
+        {internationalProviders.map((p) => (
+          <ProviderButton
+            key={p.id}
+            provider={p}
+            selected={selected}
+            onSelect={(id) => { setSelected(id); setError(null) }}
+          />
+        ))}
+      </div>
+
+      {/* ── Dev mock ── */}
+      {devProviders.map((p) => (
+        <ProviderButton
+          key={p.id}
+          provider={p}
+          selected={selected}
+          onSelect={(id) => { setSelected(id); setError(null) }}
+        />
+      ))}
+
       {error && (
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
           {error}
         </p>
       )}
 
-      <Button
-        type="button"
-        onClick={handlePay}
-        disabled={isPending}
-        className="w-full"
-      >
-        {isPending ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            Processing…
-          </>
-        ) : (
-          `Pay ${plan.amount.toLocaleString()} ${plan.currency}`
-        )}
-      </Button>
+      {/* ── Pay button (not shown for bank_transfer — it has its own form) ── */}
+      {selected !== 'bank_transfer' && (
+        <Button
+          type="button"
+          onClick={handlePay}
+          disabled={isPending}
+          className="w-full"
+        >
+          {isPending ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Processing…
+            </>
+          ) : (
+            `Pay ${formatXAF(plan.amount)}`
+          )}
+        </Button>
+      )}
     </div>
+  )
+}
+
+// ─── Provider button ──────────────────────────────────────────────────────────
+
+function ProviderButton({
+  provider,
+  selected,
+  onSelect,
+}: {
+  provider: ProviderOption
+  selected: Provider
+  onSelect: (id: Provider) => void
+}) {
+  const isSelected = selected === provider.id
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(provider.id)}
+      className={`w-full flex items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors ${
+        isSelected
+          ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
+          : 'border-border hover:bg-muted/40'
+      } ${provider.devOnly ? 'opacity-60' : ''}`}
+    >
+      <div className="shrink-0 text-foreground">{provider.icon}</div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium">{provider.label}</p>
+        <p className="text-xs text-muted-foreground">{provider.desc}</p>
+      </div>
+      <div className={`h-4 w-4 rounded-full border-2 shrink-0 flex items-center justify-center ${
+        isSelected ? 'border-primary' : 'border-muted-foreground/40'
+      }`}>
+        {isSelected && <div className="h-2 w-2 rounded-full bg-primary" />}
+      </div>
+    </button>
   )
 }

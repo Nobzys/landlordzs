@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { AlertTriangle, Download } from 'lucide-react'
+import { AlertTriangle, Download, Building2, CheckCircle2, XCircle } from 'lucide-react'
 import { getServerProfile } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { canAccessAdmin } from '@/lib/roles'
 import { adminGrantActivation, adminSuspendSubscription, adminRefundPayment, adminRetryPayment } from '@/lib/actions/billing'
+import { adminApproveBankTransfer, adminRejectBankTransfer } from '@/lib/actions/bank-transfer'
 import { Button } from '@/components/ui/button'
 import { formatXAF, formatDate } from '@/lib/utils/format'
 import { ROLE_LABELS } from '@/types/auth'
@@ -28,19 +29,21 @@ const STATUS_OPTIONS = [
 ]
 
 const PROVIDER_OPTIONS = [
-  { value: '',             label: 'All providers' },
-  { value: 'stripe',       label: 'Stripe' },
-  { value: 'paypal',       label: 'PayPal' },
+  { value: '',              label: 'All providers' },
   { value: 'mtn_momo',     label: 'MTN MoMo' },
   { value: 'orange_money', label: 'Orange Money' },
+  { value: 'bank_transfer', label: 'Bank Transfer' },
+  { value: 'stripe',       label: 'Stripe' },
+  { value: 'paypal',       label: 'PayPal' },
   { value: 'mock',         label: 'Mock' },
 ]
 
 const PROVIDER_LABELS: Record<string, string> = {
-  stripe:       'Stripe',
-  paypal:       'PayPal',
   mtn_momo:     'MTN MoMo',
   orange_money: 'Orange Money',
+  bank_transfer: 'Bank Transfer',
+  stripe:       'Stripe',
+  paypal:       'PayPal',
   mock:         'Mock',
   wallet:       'Wallet',
 }
@@ -100,6 +103,16 @@ export default async function AdminBillingPage({
     .order('created_at', { ascending: false })
     .limit(50) as { data: PaymentRow[] | null }
 
+  // ── Pending bank transfers (reference submitted, awaiting admin decision) ─
+  const { data: pendingBankTransfers } = await (adminClient as any)
+    .from('payments')
+    .select('*, user:profiles(full_name,display_name,email)')
+    .eq('provider', 'bank_transfer')
+    .eq('status', 'pending_verification')
+    .not('bank_transfer_reference', 'is', null)
+    .order('created_at', { ascending: true })
+    .limit(100) as { data: PaymentRow[] | null }
+
   // ── Plans ─────────────────────────────────────────────────────────────────
   const { data: plans } = await (adminClient as any)
     .from('subscription_plans')
@@ -116,7 +129,7 @@ export default async function AdminBillingPage({
   }
   const totalRevenue  = Object.values(revenueByProvider).reduce((a, b) => a + b, 0)
 
-  const tabs = ['subscriptions', 'invoices', 'payments', 'failed', 'plans', 'revenue'] as const
+  const tabs = ['subscriptions', 'invoices', 'payments', 'bank_transfers', 'failed', 'plans', 'revenue'] as const
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
@@ -139,7 +152,11 @@ export default async function AdminBillingPage({
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            {t === 'failed' ? `Failed (${failedPayments?.length ?? 0})` : t}
+            {t === 'failed'
+              ? `Failed (${failedPayments?.length ?? 0})`
+              : t === 'bank_transfers'
+                ? `Bank Transfers${(pendingBankTransfers?.length ?? 0) > 0 ? ` (${pendingBankTransfers!.length})` : ''}`
+                : t.replace('_', ' ')}
           </a>
         ))}
       </nav>
@@ -340,6 +357,88 @@ export default async function AdminBillingPage({
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Bank Transfer Approval Queue ───────────────────────────────── */}
+      {tab === 'bank_transfers' && (
+        <div className="space-y-4">
+          {(pendingBankTransfers?.length ?? 0) > 0 && (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 flex gap-3">
+              <Building2 className="h-5 w-5 text-blue-600 shrink-0" />
+              <p className="text-sm text-blue-800">
+                {pendingBankTransfers!.length} bank transfer{pendingBankTransfers!.length !== 1 ? 's' : ''} awaiting verification.
+                Approve after confirming receipt in your bank account, or reject with a reason.
+              </p>
+            </div>
+          )}
+
+          {!pendingBankTransfers?.length ? (
+            <EmptyState message="No pending bank transfers." />
+          ) : (
+            <div className="space-y-3">
+              {pendingBankTransfers.map((pmt: PaymentRow) => {
+                const userName = pmt.user?.display_name ?? pmt.user?.full_name ?? '—'
+                const p = pmt as BillingPayment
+                return (
+                  <div key={pmt.id} className="rounded-xl border bg-card p-5 space-y-4">
+                    {/* User + amount header */}
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div>
+                        <p className="font-semibold text-sm">{userName}</p>
+                        <p className="text-xs text-muted-foreground">{pmt.user?.email}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-base">{formatXAF(pmt.amount)}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(pmt.created_at)}</p>
+                      </div>
+                    </div>
+
+                    {/* Transfer reference */}
+                    <div className="rounded-lg bg-muted/40 border px-4 py-3 space-y-1">
+                      <p className="text-xs text-muted-foreground font-medium">Transfer Reference</p>
+                      <p className="font-mono font-semibold text-sm">{p.bank_transfer_reference ?? '—'}</p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-3 flex-wrap">
+                      {/* Approve */}
+                      <form action={async () => {
+                        'use server'
+                        await adminApproveBankTransfer(pmt.id)
+                      }} className="flex-1 min-w-[120px]">
+                        <Button type="submit" className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm">
+                          <CheckCircle2 className="h-4 w-4" />
+                          Approve
+                        </Button>
+                      </form>
+
+                      {/* Reject */}
+                      <form
+                        action={async (formData: FormData) => {
+                          'use server'
+                          const reason = formData.get('reason') as string
+                          await adminRejectBankTransfer(pmt.id, reason)
+                        }}
+                        className="flex-1 min-w-[220px] flex gap-2"
+                      >
+                        <input
+                          name="reason"
+                          placeholder="Rejection reason (optional)"
+                          className="flex-1 rounded-md border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                        <Button type="submit" variant="outline"
+                          className="gap-2 text-red-600 border-red-200 hover:bg-red-50 text-sm shrink-0">
+                          <XCircle className="h-4 w-4" />
+                          Reject
+                        </Button>
+                      </form>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
@@ -571,14 +670,18 @@ function InvoiceStatusBadge({ status }: { status: string }) {
 
 function PaymentStatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    completed: 'bg-emerald-100 text-emerald-700',
-    pending:   'bg-yellow-100 text-yellow-700',
-    failed:    'bg-red-100 text-red-700',
-    refunded:  'bg-gray-100 text-gray-500',
+    completed:            'bg-emerald-100 text-emerald-700',
+    pending:              'bg-yellow-100 text-yellow-700',
+    pending_verification: 'bg-blue-100 text-blue-700',
+    failed:               'bg-red-100 text-red-700',
+    refunded:             'bg-gray-100 text-gray-500',
+  }
+  const labels: Record<string, string> = {
+    pending_verification: 'Awaiting Verification',
   }
   return (
     <span className={`inline-flex text-xs font-medium px-2 py-0.5 rounded-full ${colors[status] ?? 'bg-gray-100 text-gray-500'}`}>
-      {status}
+      {labels[status] ?? status}
     </span>
   )
 }
