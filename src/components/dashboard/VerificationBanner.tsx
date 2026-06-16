@@ -3,12 +3,13 @@ import { AlertCircle, Clock, ShieldCheck, ShieldX, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export interface KycRecord {
-  status:            'pending' | 'approved' | 'rejected'
-  review_notes:      string | null
-  national_id_front: string | null
-  national_id_back:  string | null
-  business_reg:      string | null
-  submitted_at:      string | null
+  id:                    string
+  status:                'pending' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'expired'
+  notes:                 string | null
+  submitted_at:          string | null
+  has_id_front:          boolean
+  has_id_back:           boolean
+  has_professional_cert: boolean
 }
 
 export function VerificationBanner({
@@ -56,10 +57,10 @@ export function VerificationBanner({
     )
   }
 
-  if (kyc.status === 'pending') {
+  if (kyc.status === 'under_review' || kyc.status === 'submitted') {
     const missingDocs: string[] = []
-    if (!kyc.national_id_front) missingDocs.push('National ID front')
-    if (!kyc.national_id_back)  missingDocs.push('National ID back')
+    if (!kyc.has_id_front) missingDocs.push('National ID front')
+    if (!kyc.has_id_back)  missingDocs.push('National ID back')
 
     return (
       <div className="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
@@ -84,8 +85,8 @@ export function VerificationBanner({
           <ShieldX className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
           <div className="min-w-0">
             <p className="text-sm font-semibold text-red-800">Verification rejected</p>
-            {kyc.review_notes && (
-              <p className="text-xs text-red-700 mt-0.5">{kyc.review_notes}</p>
+            {kyc.notes && (
+              <p className="text-xs text-red-700 mt-0.5">{kyc.notes}</p>
             )}
             <p className="text-xs text-red-600 mt-1">
               Please resubmit your documents addressing the feedback above.

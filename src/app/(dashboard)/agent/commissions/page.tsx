@@ -13,15 +13,29 @@ export default async function CommissionsPage() {
   requireActiveProfile(profile)
 
   const supabase = await createClient()
-  const { data: rawKyc } = await (supabase as any)
-    .from('kyc_records')
-    .select('status, review_notes, national_id_front, national_id_back, business_reg, submitted_at')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: vr } = await (supabase as any)
+    .from('verification_requests')
+    .select('id, status, notes, submitted_at, verification_documents(document_type)')
     .eq('user_id', profile.id)
+    .eq('verification_type', 'identity')
     .order('submitted_at', { ascending: false })
     .limit(1)
     .maybeSingle()
 
-  const kyc = rawKyc as KycRecord | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const kyc: KycRecord | null = vr ? {
+    id:                    vr.id,
+    status:                vr.status,
+    notes:                 vr.notes ?? null,
+    submitted_at:          vr.submitted_at ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    has_id_front:          (vr.verification_documents ?? []).some((d: any) => d.document_type === 'id_front'),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    has_id_back:           (vr.verification_documents ?? []).some((d: any) => d.document_type === 'id_back'),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    has_professional_cert: (vr.verification_documents ?? []).some((d: any) => d.document_type === 'professional_cert'),
+  } : null
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">

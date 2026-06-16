@@ -808,6 +808,35 @@ export async function adminRejectProfessional(
   return { success: true }
 }
 
+// ─── Admin: Add review note to verification request ──────────────────────────
+
+export async function adminAddVerificationNote(
+  requestId: string,
+  notes: string,
+): Promise<ActionResult> {
+  if (!notes?.trim()) return { error: 'Notes cannot be empty.' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  const adminClient = createAdminClient()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (adminClient as any)
+    .from('verification_requests')
+    .update({ notes: notes.trim() })
+    .eq('id', requestId)
+
+  if (error) {
+    console.error('[adminAddVerificationNote] failed:', error)
+    return { error: error.message }
+  }
+
+  revalidatePath('/admin/verifications')
+  return { success: true }
+}
+
 // ─── Submit Correction Request / Appeal ───────────────────────────────────────
 
 export async function submitAppeal(

@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { formatRelative } from '@/lib/utils/format'
 import { ROLE_LABELS } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
+import { canAccessAdmin } from '@/lib/roles'
 
 export const metadata: Metadata = { title: 'Account Verification — Admin' }
 
@@ -64,7 +65,7 @@ export default async function AdminProfessionalsPage({
   searchParams: Promise<SearchParams>
 }) {
   const profile = await getServerProfile()
-  if (!profile || profile.role !== 'admin') redirect('/login')
+  if (!profile || !canAccessAdmin(profile.role)) redirect('/login')
 
   const params = await searchParams
   const tab: AccountStatus =

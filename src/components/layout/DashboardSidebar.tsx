@@ -5,7 +5,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Menu, LogOut,
-  Heart, Search, Building2, Plus, TrendingUp, Store,
+  Bell, Inbox,
+  Heart, Search, Building, Building2, ClipboardList, Compass,
+  CreditCard, FolderOpen, Hammer, Home, Plus, TrendingUp, Store,
   Briefcase, Wrench, Ruler, Scale, LayoutDashboard,
   Users, Wallet, User, ShieldCheck, Flag, Settings,
 } from 'lucide-react'
@@ -18,7 +20,9 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import type { Profile } from '@/types/auth'
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  Heart, Search, Building2, Plus, TrendingUp, Store,
+  Bell, Inbox,
+  Heart, Search, Building, Building2, ClipboardList, Compass,
+  CreditCard, FolderOpen, Hammer, Home, Plus, TrendingUp, Store,
   Briefcase, Wrench, Ruler, Scale, LayoutDashboard,
   Users, Wallet, User, ShieldCheck, Flag, Settings,
 }
