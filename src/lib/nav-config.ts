@@ -52,6 +52,36 @@ export const ROLE_NAV: Record<UserRole, NavItem[]> = {
     { label: 'My Profile', href: '/account/profile',  icon: 'User' },
     { label: 'Wallet',     href: '/account/wallet',   icon: 'Wallet' },
   ],
+  tenant: [
+    { label: 'Find Rentals', href: '/tenant',           icon: 'Home',    exact: true },
+    { label: 'Browse',       href: '/properties',        icon: 'Search',  exact: true },
+    { label: 'My Profile',   href: '/account/profile',  icon: 'User' },
+    { label: 'Wallet',       href: '/account/wallet',   icon: 'Wallet' },
+  ],
+  developer: [
+    { label: 'Dashboard',   href: '/developer',           icon: 'Building',  exact: true },
+    { label: 'My Listings', href: '/seller/listings',     icon: 'Building2' },
+    { label: 'New Listing', href: '/seller/listings/new', icon: 'Plus',      exact: true },
+    { label: 'My Profile',  href: '/account/profile',     icon: 'User' },
+    { label: 'Wallet',      href: '/account/wallet',      icon: 'Wallet' },
+  ],
+  property_manager: [
+    { label: 'Dashboard',  href: '/manager',            icon: 'ClipboardList', exact: true },
+    { label: 'Properties', href: '/seller/listings',    icon: 'Building2' },
+    { label: 'My Profile', href: '/account/profile',    icon: 'User' },
+    { label: 'Wallet',     href: '/account/wallet',     icon: 'Wallet' },
+  ],
+  surveyor: [
+    { label: 'Dashboard',  href: '/surveyor',           icon: 'Compass',    exact: true },
+    { label: 'Portfolio',  href: '/account/portfolio',  icon: 'FolderOpen' },
+    { label: 'My Profile', href: '/account/profile',    icon: 'User' },
+    { label: 'Wallet',     href: '/account/wallet',     icon: 'Wallet' },
+  ],
+  maintenance: [
+    { label: 'Dashboard',  href: '/maintenance',        icon: 'Hammer',  exact: true },
+    { label: 'My Profile', href: '/account/profile',    icon: 'User' },
+    { label: 'Wallet',     href: '/account/wallet',     icon: 'Wallet' },
+  ],
   admin: [
     { label: 'Overview',       href: '/admin',                  icon: 'LayoutDashboard', exact: true },
     { label: 'Users',          href: '/admin/users',            icon: 'Users' },
