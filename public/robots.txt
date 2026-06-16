@@ -1,0 +1,27 @@
+User-agent: *
+Allow: /
+Allow: /properties
+Allow: /professionals
+Allow: /search
+
+# Disallow authenticated-only sections
+Disallow: /admin/
+Disallow: /account/
+Disallow: /buyer/
+Disallow: /seller/
+Disallow: /agent/
+Disallow: /vendor/
+Disallow: /contractor/
+Disallow: /engineer/
+Disallow: /architect/
+Disallow: /lawyer/
+Disallow: /developer/
+Disallow: /manager/
+Disallow: /surveyor/
+Disallow: /maintenance/
+Disallow: /tenant/
+Disallow: /onboarding/
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://landlordzs.com/sitemap.xml

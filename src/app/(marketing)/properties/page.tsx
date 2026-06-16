@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
-import { PropertyGrid } from '@/components/properties/PropertyGrid'
 import { PropertyFilters } from '@/components/properties/PropertyFilters'
 import { PropertySearchBar } from '@/components/properties/PropertySearchBar'
+import { PropertyViewToggle } from '@/components/properties/PropertyViewToggle'
 
 export const metadata: Metadata = {
   title: 'Properties',
@@ -20,7 +20,7 @@ export default function PropertiesPage() {
 
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
         <PropertyFilters />
-        <PropertyGrid />
+        <PropertyViewToggle />
       </div>
     </main>
   )

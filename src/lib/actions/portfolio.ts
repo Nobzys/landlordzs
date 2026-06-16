@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { STORAGE_BUCKETS } from '@/lib/utils/constants'
 import type { ActionResult } from '@/types/auth'
 import { canManagePortfolio } from '@/lib/roles'
+import { checkCanPublishContent } from '@/lib/billing'
 const BUCKET = STORAGE_BUCKETS.PROJECT_IMAGES
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -47,6 +48,11 @@ export async function createProject(
 
   if (!profile || !canManagePortfolio(profile.role)) {
     return { error: 'Only portfolio professionals can manage projects.' }
+  }
+
+  const canPublish = await checkCanPublishContent(user.id, profile.role, supabase)
+  if (!canPublish) {
+    return { error: 'An active subscription is required to manage your portfolio. Visit /account/billing to subscribe.' }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -21,6 +21,8 @@ import { ROLE_DASHBOARDS, APP_URL, APPROVAL_REQUIRED_ROLES } from '@/lib/utils/c
 import type { ActionResult } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
 import { canAccessAdmin } from '@/lib/roles'
+import { checkRateLimit } from '@/lib/rate-limit'
+import { logAuditEvent } from '@/lib/audit'
 import type {
   LoginInput,
   RegisterInput,
@@ -43,6 +45,9 @@ export async function signIn(
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message }
   }
+
+  const rateLimit = await checkRateLimit('sign_in')
+  if (!rateLimit.allowed) return { error: rateLimit.message! }
 
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithPassword({
@@ -101,6 +106,9 @@ export async function signUp(
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message }
   }
+
+  const rateLimit = await checkRateLimit('sign_up')
+  if (!rateLimit.allowed) return { error: rateLimit.message! }
 
   const { full_name, email, password, role } = parsed.data
 
@@ -199,6 +207,9 @@ export async function forgotPassword(
     return { error: parsed.error.issues[0].message }
   }
 
+  const rateLimit = await checkRateLimit('forgot_password')
+  if (!rateLimit.allowed) return { error: rateLimit.message! }
+
   const supabase = await createClient()
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${APP_URL}/api/auth/callback?next=/reset-password`,
@@ -258,6 +269,9 @@ export async function sendPhoneOtp(data: PhoneInput): Promise<ActionResult> {
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message }
   }
+
+  const rateLimit = await checkRateLimit('send_phone_otp')
+  if (!rateLimit.allowed) return { error: rateLimit.message! }
 
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithOtp({
@@ -805,6 +819,11 @@ export async function adminApproveProfessional(
     if (vreqError) console.error('[adminApproveProfessional] verification_requests update failed:', vreqError)
   }
 
+  await logAuditEvent({
+    adminId: user.id, actionType: 'professional_approved',
+    entityType: 'profile', entityId: targetUserId,
+  })
+
   revalidatePath('/admin/professionals')
   return { success: true }
 }
@@ -884,6 +903,12 @@ export async function adminRejectProfessional(
     type:       'rejection',
     reason:     effectiveReason,
     created_by: user.id,
+  })
+
+  await logAuditEvent({
+    adminId: user.id, actionType: 'professional_rejected',
+    entityType: 'profile', entityId: targetUserId,
+    newValues: { reason: effectiveReason },
   })
 
   // account_status stays pending_verification so they can resubmit

@@ -5,6 +5,7 @@ import { PropertyGallery } from '@/components/properties/PropertyGallery'
 import { PropertyDetails } from '@/components/properties/PropertyDetails'
 import { PropertyAmenities } from '@/components/properties/PropertyAmenities'
 import { PropertyInquiryForm } from '@/components/properties/PropertyInquiryForm'
+import { ViewTracker } from '@/components/tracking/ViewTracker'
 import type { PropertyWithDetails } from '@/types/property'
 
 interface PropertyPageProps {
@@ -87,6 +88,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
 
   return (
     <main className="min-h-screen bg-background">
+      <ViewTracker entityType="property" entityId={property.id} />
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main column */}

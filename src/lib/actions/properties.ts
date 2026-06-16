@@ -9,6 +9,8 @@ import { STORAGE_BUCKETS } from '@/lib/utils/constants'
 import type { ActionResult } from '@/types/auth'
 import type { PropertyCreateInput, InquiryInput } from '@/lib/validations/property'
 import { canAccessAdmin } from '@/lib/roles'
+import { checkCanPublishContent } from '@/lib/billing'
+import { insertNotification } from '@/lib/notifications'
 
 // â”€â”€â”€ Create â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -25,9 +27,14 @@ export async function createProperty(
   if (authError || !user) return { error: 'Unauthorized' }
 
   const { data: actor } = await (supabase as any)
-    .from('profiles').select('account_status').eq('id', user.id).single()
+    .from('profiles').select('account_status, role').eq('id', user.id).single()
   if (actor?.account_status !== 'active') {
     return { error: 'Your account must be approved before creating listings.' }
+  }
+
+  const canPublish = await checkCanPublishContent(user.id, actor.role, supabase)
+  if (!canPublish) {
+    return { error: 'An active subscription is required to publish property listings. Visit /account/billing to subscribe.' }
   }
 
   const { amenities, has_security, has_generator, has_borehole, is_negotiable, land_area_sqm, ...fields } = parsed.data
@@ -72,9 +79,14 @@ export async function updateProperty(
   if (authError || !user) return { error: 'Unauthorized' }
 
   const { data: actor } = await (supabase as any)
-    .from('profiles').select('account_status').eq('id', user.id).single()
+    .from('profiles').select('account_status, role').eq('id', user.id).single()
   if (actor?.account_status !== 'active') {
     return { error: 'Your account must be approved before editing listings.' }
+  }
+
+  const canPublish = await checkCanPublishContent(user.id, actor.role, supabase)
+  if (!canPublish) {
+    return { error: 'An active subscription is required to edit listings. Visit /account/billing to subscribe.' }
   }
 
   const { amenities, is_negotiable, land_area_sqm, ...fields } = data
@@ -315,6 +327,18 @@ export async function requestVerification(propertyId: string): Promise<ActionRes
     .eq('id', propertyId)
     .eq('owner_id', user.id)
 
+  // Confirm submission to owner
+  const verifAdminClient = createAdminClient()
+  await insertNotification(
+    verifAdminClient,
+    user.id,
+    'property_update',
+    'Verification submitted',
+    'Your property has been submitted for verification. We will review it shortly.',
+    `/properties/${propertyId}`,
+    { entityType: 'property', entityId: propertyId },
+  )
+
   revalidatePath(`/properties/${propertyId}`)
   return { success: true }
 }
@@ -358,6 +382,29 @@ export async function reviewVerification(
       .from('properties')
       .update({ status: 'rejected' })
       .eq('id', verification.property_id)
+  }
+
+  // Notify property owner
+  const { data: prop } = await (adminClient as any)
+    .from('properties')
+    .select('owner_id, title')
+    .eq('id', verification.property_id)
+    .single() as { data: { owner_id: string; title: string } | null }
+
+  if (prop) {
+    const notifTitle   = action === 'approved' ? 'Property approved' : 'Property review update'
+    const notifBody    = action === 'approved'
+      ? `Your property "${prop.title}" has been verified and is now live.`
+      : `Your property "${prop.title}" was not approved. ${notes ? `Reason: ${notes}` : 'Please contact support for details.'}`
+    await insertNotification(
+      adminClient,
+      prop.owner_id,
+      'property_update',
+      notifTitle,
+      notifBody,
+      `/properties/${verification.property_id}`,
+      { entityType: 'property', entityId: verification.property_id },
+    )
   }
 
   revalidatePath(`/properties/${verification.property_id}`)

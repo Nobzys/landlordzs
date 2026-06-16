@@ -4,6 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ProfessionalProfile } from '@/components/professionals/ProfessionalProfile'
 import type { ProfessionalProfileData, PublicProject } from '@/components/professionals/ProfessionalProfile'
+import { SaveProfessionalButton } from '@/components/professionals/SaveProfessionalButton'
+import { ViewTracker } from '@/components/tracking/ViewTracker'
+import { getSavedProfessionalIds } from '@/lib/actions/saved-professionals'
 import { STORAGE_BUCKETS } from '@/lib/utils/constants'
 import { PUBLIC_PROFESSIONAL_ROLES } from '@/lib/roles'
 
@@ -133,5 +136,19 @@ export default async function ProfessionalProfilePage({
     projects,
   }
 
-  return <ProfessionalProfile profile={profile} />
+  // Check if the viewing user has saved this professional (best-effort)
+  const savedIds = await getSavedProfessionalIds().catch(() => [] as string[])
+  const isSaved  = savedIds.includes(profile.id)
+
+  return (
+    <>
+      <ViewTracker entityType="professional" entityId={profile.id} />
+      <div className="relative">
+        <div className="absolute top-4 right-4 z-10">
+          <SaveProfessionalButton professionalId={profile.id} initialSaved={isSaved} />
+        </div>
+        <ProfessionalProfile profile={profile} />
+      </div>
+    </>
+  )
 }

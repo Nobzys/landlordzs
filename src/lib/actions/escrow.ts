@@ -8,6 +8,8 @@ import type { ActionResult } from '@/types/auth'
 import type { CreateEscrowInput, DisputeEscrowInput, CompleteMilestoneInput } from '@/lib/validations/payment'
 import { lookupPropertyAgent, creditAgentCommission } from '@/lib/utils/commission-helpers'
 import { canAccessAdmin } from '@/lib/roles'
+import { insertNotification } from '@/lib/notifications'
+import { logAuditEvent } from '@/lib/audit'
 
 const PLATFORM_FEE_PCT = 2.5
 
@@ -46,6 +48,18 @@ export async function createEscrow(
     .single()
 
   if (error || !escrow) return { error: error?.message ?? 'Failed to create escrow' }
+
+  // Notify payee
+  const adminClient = createAdminClient()
+  await insertNotification(
+    adminClient,
+    parsed.data.payee_id,
+    'payment',
+    'Escrow initiated',
+    `A new escrow of ${parsed.data.amount.toLocaleString()} XAF has been created for you.`,
+    `/account/escrow/${escrow.id}`,
+    { entityType: 'escrow', entityId: escrow.id },
+  )
 
   // Log creation event
   await (supabase as any).from('escrow_events').insert({
@@ -151,7 +165,7 @@ export async function releaseEscrow(escrowId: string): Promise<ActionResult> {
 
   const { data: escrow } = await (supabase as any)
     .from('escrow_accounts')
-    .select('id, payer_id, status, reference_type, reference_id, amount')
+    .select('id, payer_id, payee_id, status, reference_type, reference_id, amount')
     .eq('id', escrowId)
     .single()
 
@@ -169,6 +183,18 @@ export async function releaseEscrow(escrowId: string): Promise<ActionResult> {
     description: 'Escrow released by payer',
     metadata:    {},
   })
+
+  // Notify payee: funds released
+  const escrowAdminClient = createAdminClient()
+  await insertNotification(
+    escrowAdminClient,
+    escrow.payee_id,
+    'payment',
+    'Escrow released',
+    `Your escrow of ${(escrow.amount as number).toLocaleString()} XAF has been released to your wallet.`,
+    `/account/escrow/${escrowId}`,
+    { entityType: 'escrow', entityId: escrowId },
+  )
 
   // Auto-record and auto-pay agent commission if a property agent is attached
   const agent = await lookupPropertyAgent(escrow.reference_type, escrow.reference_id)
@@ -226,6 +252,19 @@ export async function disputeEscrow(
     description: parsed.data.reason,
     metadata:    {},
   })
+
+  // Notify the other party about the dispute
+  const disputeOtherId = user.id === escrow.payer_id ? escrow.payee_id : escrow.payer_id
+  const disputeAdmin = createAdminClient()
+  await insertNotification(
+    disputeAdmin,
+    disputeOtherId,
+    'payment',
+    'Escrow disputed',
+    'A dispute has been raised on your escrow. Our team will review and resolve it.',
+    `/account/escrow/${escrowId}`,
+    { entityType: 'escrow', entityId: escrowId },
+  )
 
   revalidatePath(`/account/escrow/${escrowId}`)
   return { success: true }
@@ -391,6 +430,35 @@ export async function resolveDisputeAdmin(
     event_type:  'dispute_resolved',
     description: notes,
     metadata:    { resolution, recipient_id: recipientId, net_amount: netAmount },
+  })
+
+  // Notify both parties
+  const loserId = resolution === 'release_to_payee' ? escrow.payer_id : escrow.payee_id
+  await Promise.all([
+    insertNotification(
+      adminClient,
+      recipientId,
+      'payment',
+      'Dispute resolved — funds released',
+      `The escrow dispute has been resolved in your favour. ${netAmount.toLocaleString()} XAF has been credited to your wallet.`,
+      `/account/escrow/${escrowId}`,
+      { entityType: 'escrow', entityId: escrowId },
+    ),
+    insertNotification(
+      adminClient,
+      loserId,
+      'system',
+      'Dispute resolved',
+      'The escrow dispute has been resolved. Please check the escrow details for more information.',
+      `/account/escrow/${escrowId}`,
+      { entityType: 'escrow', entityId: escrowId },
+    ),
+  ])
+
+  await logAuditEvent({
+    adminId: user.id, actionType: 'escrow_dispute_resolved',
+    entityType: 'escrow', entityId: escrowId,
+    newValues: { resolution, notes, recipient_id: recipientId, net_amount: netAmount },
   })
 
   revalidatePath(`/account/escrow/${escrowId}`)

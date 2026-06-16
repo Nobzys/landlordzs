@@ -8,7 +8,8 @@ import {
   Heart, Search, Building2, Building, Plus, TrendingUp, Store,
   Briefcase, Wrench, Ruler, Scale, LayoutDashboard,
   Users, Wallet, User, ShieldCheck, Flag, Settings, ClipboardList, FolderOpen,
-  Home, Compass, Hammer, Inbox,
+  Home, Compass, Hammer, Inbox, CreditCard, Bell, Bookmark, BarChart2,
+  Shield, Activity, Database,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { signOut } from '@/lib/actions/auth'
@@ -22,10 +23,11 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Heart, Search, Building2, Building, Plus, TrendingUp, Store,
   Briefcase, Wrench, Ruler, Scale, LayoutDashboard,
   Users, Wallet, User, ShieldCheck, Flag, Settings, ClipboardList, FolderOpen,
-  Home, Compass, Hammer, Inbox,
+  Home, Compass, Hammer, Inbox, CreditCard, Bell, Bookmark, BarChart2,
+  Shield, Activity, Database,
 }
 
-function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
+function NavLink({ item, onClick, badge }: { item: NavItem; onClick?: () => void; badge?: number }) {
   const pathname = usePathname()
   const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href)
   const Icon = ICONS[item.icon]
@@ -42,12 +44,17 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
       )}
     >
       {Icon && <Icon className="h-4 w-4 shrink-0" />}
-      {item.label}
+      <span className="flex-1">{item.label}</span>
+      {badge != null && badge > 0 && (
+        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-1">
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
     </Link>
   )
 }
 
-function SidebarBody({ profile, onNavigate }: { profile: Profile; onNavigate?: () => void }) {
+function SidebarBody({ profile, onNavigate, unreadCount }: { profile: Profile; onNavigate?: () => void; unreadCount?: number }) {
   const navItems = ROLE_NAV[profile.role] ?? []
   const displayName = profile.display_name ?? profile.full_name ?? profile.email
 
@@ -69,7 +76,12 @@ function SidebarBody({ profile, onNavigate }: { profile: Profile; onNavigate?: (
 
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
         {navItems.map((item) => (
-          <NavLink key={item.href} item={item} onClick={onNavigate} />
+          <NavLink
+            key={item.href}
+            item={item}
+            onClick={onNavigate}
+            badge={item.href === '/account/notifications' ? unreadCount : undefined}
+          />
         ))}
       </nav>
 
@@ -88,14 +100,14 @@ function SidebarBody({ profile, onNavigate }: { profile: Profile; onNavigate?: (
   )
 }
 
-export function DashboardSidebar({ profile }: { profile: Profile }) {
+export function DashboardSidebar({ profile, unreadCount }: { profile: Profile; unreadCount?: number }) {
   const [open, setOpen] = useState(false)
 
   return (
     <>
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex lg:flex-col w-64 h-screen border-r bg-card shrink-0 sticky top-0 overflow-y-auto">
-        <SidebarBody profile={profile} />
+        <SidebarBody profile={profile} unreadCount={unreadCount} />
       </aside>
 
       {/* Mobile: fixed top bar + Sheet drawer */}
@@ -108,11 +120,20 @@ export function DashboardSidebar({ profile }: { profile: Profile }) {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0">
-            <SidebarBody profile={profile} onNavigate={() => setOpen(false)} />
+            <SidebarBody profile={profile} onNavigate={() => setOpen(false)} unreadCount={unreadCount} />
           </SheetContent>
         </Sheet>
         <Link href="/" className="font-extrabold text-sm tracking-tight text-primary">
           LANDLORDZS
+        </Link>
+        {/* Mobile bell icon */}
+        <Link href="/account/notifications" className="ml-auto relative p-2">
+          <Bell className="h-5 w-5 text-muted-foreground" />
+          {(unreadCount ?? 0) > 0 && (
+            <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
+              {(unreadCount ?? 0) > 9 ? '9+' : unreadCount}
+            </span>
+          )}
         </Link>
       </div>
     </>

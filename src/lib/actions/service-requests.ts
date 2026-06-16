@@ -18,31 +18,12 @@ import {
   canReceiveOrders,
   canAccessAdmin,
 } from '@/lib/roles'
+import { insertNotification } from '@/lib/notifications'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function isProvider(role: string): boolean {
   return canReceiveServiceRequests(role) || canReceiveOrders(role)
-}
-
-async function insertNotification(
-  supabase: ReturnType<typeof createAdminClient>,
-  userId: string,
-  type: string,
-  title: string,
-  body: string,
-  actionUrl: string,
-  data: Record<string, unknown> = {}
-) {
-  await (supabase as any).from('notifications').insert({
-    user_id:    userId,
-    type,
-    title,
-    body,
-    data,
-    action_url: actionUrl,
-    is_read:    false,
-  })
 }
 
 // ─── Create ───────────────────────────────────────────────────────────────────
@@ -110,7 +91,6 @@ export async function createServiceRequest(
 
   // Notify provider
   const adminClient = createAdminClient()
-  const providerName = provider.display_name ?? provider.full_name ?? 'Someone'
   await insertNotification(
     adminClient,
     parsed.data.provider_id,
@@ -118,7 +98,7 @@ export async function createServiceRequest(
     'New service request',
     `You received a new ${requestTypeLabel} request.`,
     `/requests/${request.id}`,
-    { request_id: request.id }
+    { entityType: 'service_request', entityId: request.id },
   )
 
   revalidatePath('/account/requests')
@@ -180,7 +160,7 @@ export async function acceptServiceRequest(requestId: string): Promise<ActionRes
     'Request accepted',
     `Your ${reqTypeLabel} request has been accepted.`,
     `/requests/${requestId}`,
-    { request_id: requestId }
+    { entityType: 'service_request', entityId: requestId },
   )
 
   revalidatePath(`/requests/${requestId}`)
@@ -228,7 +208,7 @@ export async function rejectServiceRequest(
     'Request declined',
     `Your ${reqTypeLabel} request was not accepted.`,
     `/requests/${requestId}`,
-    { request_id: requestId }
+    { entityType: 'service_request', entityId: requestId },
   )
 
   revalidatePath(`/requests/${requestId}`)
@@ -298,7 +278,7 @@ export async function markRequestCompleted(requestId: string): Promise<ActionRes
     'Service completed',
     `Your ${reqTypeLabel} request has been marked as completed. You can now leave a review.`,
     `/requests/${requestId}`,
-    { request_id: requestId }
+    { entityType: 'service_request', entityId: requestId },
   )
 
   revalidatePath(`/requests/${requestId}`)

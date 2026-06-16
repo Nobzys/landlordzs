@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { ProfessionalCard } from '@/components/professionals/ProfessionalCard'
 import type { ProfessionalCardData } from '@/components/professionals/ProfessionalCard'
+import { ProfessionalFilters } from '@/components/professionals/ProfessionalFilters'
 import { ROLE_LABELS } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
 import { PUBLIC_PROFESSIONAL_ROLES } from '@/lib/roles'
@@ -15,16 +16,25 @@ export const metadata: Metadata = {
 type ProfRole = (typeof PUBLIC_PROFESSIONAL_ROLES)[number]
 
 const PUBLIC_COLS =
-  'id, full_name, display_name, avatar_url, city, role, is_premium, company_name, years_experience, specialties, slug, created_at'
+  'id, full_name, display_name, avatar_url, city, role, is_premium, is_verified, company_name, years_experience, specialties, slug, created_at'
 
-interface SearchParams { role?: string }
+interface SearchParams {
+  role?: string
+  city?: string
+  verified?: string
+  premium?: string
+  min_exp?: string
+  sort?: string
+  q?: string
+}
 
 export default async function ProfessionalsPage({
   searchParams,
 }: {
   searchParams: Promise<SearchParams>
 }) {
-  const params      = await searchParams
+  const params = await searchParams
+
   const selectedRole =
     (PUBLIC_PROFESSIONAL_ROLES as readonly string[]).includes(params.role ?? '')
       ? (params.role as ProfRole)
@@ -33,14 +43,42 @@ export default async function ProfessionalsPage({
   const supabase = await createClient()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: raw } = await (supabase as any)
+  let query = (supabase as any)
     .from('profiles')
     .select(PUBLIC_COLS)
     .in('role', selectedRole ? [selectedRole] : [...PUBLIC_PROFESSIONAL_ROLES])
-    .eq('account_status', 'active')
     .not('slug', 'is', null)
-    .order('created_at', { ascending: false })
-    .limit(60) as { data: Record<string, any>[] | null }
+
+  if (params.city)    query = query.eq('city', params.city)
+  if (params.verified === 'true') query = query.eq('is_verified', true)
+  if (params.premium  === 'true') query = query.eq('is_premium', true)
+  if (params.min_exp) query = query.gte('years_experience', parseInt(params.min_exp, 10))
+
+  if (params.q) {
+    const term = params.q.trim()
+    query = query.or(
+      `full_name.ilike.%${term}%,display_name.ilike.%${term}%,company_name.ilike.%${term}%`,
+    )
+  }
+
+  // Sort
+  switch (params.sort) {
+    case 'newest':
+      query = query.order('created_at', { ascending: false })
+      break
+    case 'experience':
+      query = query
+        .order('years_experience', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
+      break
+    default: // 'recommended' or 'premium'
+      query = query
+        .order('is_premium', { ascending: false })
+        .order('is_verified', { ascending: false })
+        .order('created_at', { ascending: false })
+  }
+
+  const { data: raw } = await query.limit(60) as { data: Record<string, any>[] | null }
 
   const professionals = raw ?? []
 
@@ -115,6 +153,9 @@ export default async function ProfessionalsPage({
             </a>
           ))}
         </div>
+
+        {/* Advanced filters (client component, updates URL params) */}
+        <ProfessionalFilters />
 
         {/* Results */}
         {cards.length === 0 ? (

@@ -5,6 +5,7 @@ import {
   Users, Building2, TrendingUp, ShieldCheck,
   Wallet, AlertCircle, Scale, Flag,
   UserPlus, CheckCircle2, XCircle, ClipboardList,
+  CreditCard, Briefcase, Wrench,
 } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
@@ -37,18 +38,30 @@ const STATUS_BADGE_COLOR: Record<string, string> = {
 }
 
 type AdminMetrics = {
-  users_by_role: Record<string, number>
-  new_users_today: number
-  props_by_status: Record<string, number>
-  verif_pending: number
-  verif_approved_today: number
-  verif_rejected_today: number
-  total_verified_props: number
-  pending_payouts: number
-  active_escrows: number
-  disputed_escrows: number
-  pending_reports: number
-  pending_commissions: number
+  users_by_role:              Record<string, number>
+  new_users_today:            number
+  total_users:                number
+  activated_accounts:         number
+  pending_identity_verif:     number
+  props_by_status:            Record<string, number>
+  verif_pending:              number
+  verif_approved_today:       number
+  verif_rejected_today:       number
+  total_verified_props:       number
+  total_professionals:        number
+  active_subscriptions:       number
+  expired_subscriptions:      number
+  open_service_requests:      number
+  completed_service_requests: number
+  total_revenue:              number
+  mrr:                        number
+  activation_fees_collected:  number
+  outstanding_invoices:       number
+  pending_payouts:            number
+  active_escrows:             number
+  disputed_escrows:           number
+  pending_reports:            number
+  pending_commissions:        number
 }
 
 type ActivityRow = {
@@ -90,9 +103,12 @@ export default async function AdminPage() {
   ])
 
   const m: AdminMetrics = rawMetrics ?? {
-    users_by_role: {}, new_users_today: 0,
+    users_by_role: {}, new_users_today: 0, total_users: 0, activated_accounts: 0, pending_identity_verif: 0,
     props_by_status: {},
     verif_pending: 0, verif_approved_today: 0, verif_rejected_today: 0, total_verified_props: 0,
+    total_professionals: 0, active_subscriptions: 0, expired_subscriptions: 0,
+    open_service_requests: 0, completed_service_requests: 0,
+    total_revenue: 0, mrr: 0, activation_fees_collected: 0, outstanding_invoices: 0,
     pending_payouts: 0, active_escrows: 0, disputed_escrows: 0,
     pending_reports: 0, pending_commissions: 0,
   }
@@ -325,6 +341,87 @@ export default async function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* Professionals & subscriptions */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Briefcase className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold">Professionals</h2>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-lg border px-3 py-2 text-center">
+              <p className="text-2xl font-bold">{m.total_professionals}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Total</p>
+            </div>
+            <div className="rounded-lg border px-3 py-2 text-center">
+              <p className="text-2xl font-bold text-emerald-600">{m.active_subscriptions}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Active subs</p>
+            </div>
+            <div className="rounded-lg border px-3 py-2 text-center">
+              <p className="text-2xl font-bold text-gray-500">{m.expired_subscriptions}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Expired</p>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {m.activated_accounts} activated accounts · {m.pending_identity_verif} pending identity verif
+          </p>
+        </div>
+
+        <div className="rounded-xl border p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Wrench className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold">Service Requests</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Link href="/admin/service-requests" className="rounded-lg border px-3 py-2 text-center hover:bg-accent transition-colors">
+              <p className="text-2xl font-bold text-amber-600">{m.open_service_requests}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Open</p>
+            </Link>
+            <div className="rounded-lg border px-3 py-2 text-center">
+              <p className="text-2xl font-bold text-emerald-600">{m.completed_service_requests}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Completed</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Financial metrics */}
+      <div className="rounded-xl border p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <CreditCard className="h-4 w-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold">Financial Overview</h2>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-lg border p-3">
+            <p className="text-xs text-muted-foreground font-medium">Total Revenue</p>
+            <p className="text-xl font-bold mt-1">
+              {(m.total_revenue / 1000).toFixed(0)}K XAF
+            </p>
+          </div>
+          <div className="rounded-lg border p-3">
+            <p className="text-xs text-muted-foreground font-medium">MRR</p>
+            <p className="text-xl font-bold mt-1">
+              {(m.mrr / 1000).toFixed(0)}K XAF
+            </p>
+          </div>
+          <div className="rounded-lg border p-3">
+            <p className="text-xs text-muted-foreground font-medium">Activation Fees</p>
+            <p className="text-xl font-bold mt-1">
+              {(m.activation_fees_collected / 1000).toFixed(0)}K XAF
+            </p>
+          </div>
+          <Link
+            href="/admin/billing"
+            className={`rounded-lg border p-3 transition-colors ${m.outstanding_invoices > 0 ? 'border-amber-200 bg-amber-50 hover:bg-amber-100' : 'hover:bg-accent'}`}
+          >
+            <p className="text-xs text-muted-foreground font-medium">Outstanding</p>
+            <p className={`text-xl font-bold mt-1 ${m.outstanding_invoices > 0 ? 'text-amber-700' : ''}`}>
+              {(m.outstanding_invoices / 1000).toFixed(0)}K XAF
+            </p>
+          </Link>
+        </div>
+      </div>
 
       {/* Recent activity feed */}
       {activityRows && activityRows.length > 0 && (
