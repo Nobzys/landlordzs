@@ -3,7 +3,9 @@
 import { useAuth } from './useAuth'
 import type { UserRole } from '@/types/auth'
 
-// Maps each role to what it can do across the platform.
+// Maps each role to its platform permissions.
+// Kept client-side for UI gating only — server actions / routes enforce
+// capabilities independently via src/lib/roles.ts.
 const ROLE_PERMISSIONS: Record<UserRole, Set<string>> = {
   admin: new Set([
     'property:create', 'property:edit', 'property:delete', 'property:verify',
@@ -22,6 +24,13 @@ const ROLE_PERMISSIONS: Record<UserRole, Set<string>> = {
     'message:send',
     'forum:post', 'forum:comment',
     'job:apply',
+  ]),
+  tenant: new Set([
+    'property:favorite', 'property:inquire',
+    'rental:book',
+    'review:submit',
+    'message:send',
+    'forum:post', 'forum:comment',
   ]),
   seller: new Set([
     'property:create', 'property:edit', 'property:delete',
@@ -48,6 +57,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Set<string>> = {
   ]),
   contractor: new Set([
     'service:create', 'service:edit',
+    'portfolio:manage',
     'job:apply', 'tender:bid',
     'review:respond',
     'message:send',
@@ -56,6 +66,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Set<string>> = {
   ]),
   engineer: new Set([
     'service:create', 'service:edit',
+    'portfolio:manage',
     'job:apply', 'tender:bid',
     'review:respond',
     'message:send',
@@ -63,12 +74,43 @@ const ROLE_PERMISSIONS: Record<UserRole, Set<string>> = {
   ]),
   architect: new Set([
     'service:create', 'service:edit',
+    'portfolio:manage',
     'job:apply', 'tender:bid',
     'review:respond',
     'message:send',
     'forum:post', 'forum:comment',
   ]),
   lawyer: new Set([
+    'service:create', 'service:edit',
+    'job:apply', 'tender:bid',
+    'review:respond',
+    'message:send',
+    'forum:post', 'forum:comment',
+  ]),
+  developer: new Set([
+    'property:create', 'property:edit', 'property:delete',
+    'property:inquire',
+    'review:submit', 'review:respond',
+    'message:send',
+    'forum:post', 'forum:comment',
+    'job:post',
+  ]),
+  property_manager: new Set([
+    'property:create', 'property:edit',
+    'property:inquire',
+    'review:respond',
+    'message:send',
+    'forum:post', 'forum:comment',
+  ]),
+  surveyor: new Set([
+    'service:create', 'service:edit',
+    'portfolio:manage',
+    'job:apply', 'tender:bid',
+    'review:respond',
+    'message:send',
+    'forum:post', 'forum:comment',
+  ]),
+  maintenance: new Set([
     'service:create', 'service:edit',
     'job:apply', 'tender:bid',
     'review:respond',
