@@ -6,7 +6,7 @@ export type SubscriptionStatus = 'pending' | 'active' | 'past_due' | 'expired' |
 
 export type InvoiceStatus = 'pending' | 'paid' | 'void' | 'overdue'
 
-export type BillingPaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded'
+export type BillingPaymentStatus = 'pending' | 'pending_verification' | 'completed' | 'failed' | 'refunded'
 
 // ─── Row interfaces ───────────────────────────────────────────────────────────
 
@@ -32,6 +32,8 @@ export interface Subscription {
   expires_at:            string | null
   auto_renew:            boolean
   grace_period_ends_at:  string | null
+  /** Payment method used to fund this subscription (null = admin grant / legacy) */
+  payment_provider:      string | null
   created_at:            string
   updated_at:            string
   /** Populated via join when available */
@@ -39,32 +41,40 @@ export interface Subscription {
 }
 
 export interface Invoice {
-  id:              string
-  user_id:         string
-  subscription_id: string | null
-  amount:          number
-  currency:        string
-  status:          InvoiceStatus
-  issued_at:       string
-  paid_at:         string | null
-  created_at:      string
-  updated_at:      string
+  id:               string
+  user_id:          string
+  subscription_id:  string | null
+  amount:           number
+  currency:         string
+  status:           InvoiceStatus
+  issued_at:        string
+  paid_at:          string | null
+  /** Payment method used to settle this invoice (null = legacy / admin grant) */
+  payment_provider: string | null
+  created_at:       string
+  updated_at:       string
 }
 
 export interface BillingPayment {
-  id:                 string
-  user_id:            string
-  invoice_id:         string | null
-  provider:           string
-  provider_reference: string | null
-  amount:             number
-  currency:           string
-  status:             BillingPaymentStatus
-  metadata:           Record<string, unknown>
-  created_at:         string
-  updated_at:         string
+  id:                               string
+  user_id:                          string
+  invoice_id:                       string | null
+  provider:                         string
+  provider_reference:               string | null
+  amount:                           number
+  currency:                         string
+  status:                           BillingPaymentStatus
+  metadata:                         Record<string, unknown>
+  /** Bank transfer: user-submitted receipt / reference number */
+  bank_transfer_reference:          string | null
+  /** Admin who actioned the bank transfer verification */
+  bank_transfer_approved_by:        string | null
+  bank_transfer_approved_at:        string | null
+  bank_transfer_rejection_reason:   string | null
+  created_at:                       string
+  updated_at:                       string
   /** Populated via join when available */
-  invoice?:           Invoice | null
+  invoice?:                         Invoice | null
 }
 
 // ─── Computed billing status ──────────────────────────────────────────────────
@@ -118,4 +128,20 @@ export const INVOICE_STATUS_COLORS: Record<InvoiceStatus, string> = {
   paid:    'bg-emerald-100 text-emerald-700',
   void:    'bg-gray-100 text-gray-500',
   overdue: 'bg-red-100 text-red-700',
+}
+
+export const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  pending:              'Pending',
+  pending_verification: 'Awaiting Verification',
+  completed:            'Completed',
+  failed:               'Failed',
+  refunded:             'Refunded',
+}
+
+export const PAYMENT_STATUS_COLORS: Record<string, string> = {
+  pending:              'bg-yellow-100 text-yellow-700',
+  pending_verification: 'bg-blue-100 text-blue-700',
+  completed:            'bg-emerald-100 text-emerald-700',
+  failed:               'bg-red-100 text-red-700',
+  refunded:             'bg-gray-100 text-gray-500',
 }
