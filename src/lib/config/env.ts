@@ -54,6 +54,25 @@ export const OM_RETURN_URL    = get('ORANGE_MONEY_RETURN_URL')
 export const OM_CANCEL_URL    = get('ORANGE_MONEY_CANCEL_URL')
 export const OM_NOTIF_URL     = get('ORANGE_MONEY_NOTIF_URL')
 
+// ─── Stripe ──────────────────────────────────────────────────────────────────
+// Docs: https://dashboard.stripe.com/apikeys
+// Sandbox: use sk_test_xxx / pk_test_xxx keys
+// Production: use sk_live_xxx / pk_live_xxx keys
+
+export const STRIPE_SECRET_KEY      = optional('STRIPE_SECRET_KEY')
+export const STRIPE_WEBHOOK_SECRET  = optional('STRIPE_WEBHOOK_SECRET')
+export const STRIPE_PUBLISHABLE_KEY = optional('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY')
+
+// ─── PayPal ───────────────────────────────────────────────────────────────────
+// Docs: https://developer.paypal.com/api/rest/
+// Sandbox: https://api-m.sandbox.paypal.com
+// Production: https://api-m.paypal.com
+
+export const PAYPAL_CLIENT_ID     = optional('PAYPAL_CLIENT_ID')
+export const PAYPAL_CLIENT_SECRET = optional('PAYPAL_CLIENT_SECRET')
+export const PAYPAL_WEBHOOK_ID    = optional('PAYPAL_WEBHOOK_ID')
+export const PAYPAL_BASE_URL      = optional('PAYPAL_BASE_URL', 'https://api-m.sandbox.paypal.com')
+
 // ─── Application ──────────────────────────────────────────────────────────────
 export const APP_URL = optional('NEXT_PUBLIC_APP_URL', 'http://localhost:3000')
 
