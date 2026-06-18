@@ -4,7 +4,7 @@ import { Separator } from '@/components/ui/separator'
 import { PropertyPriceTag } from './PropertyPriceTag'
 import { FavoriteButton } from './FavoriteButton'
 import { ShareButton } from './ShareButton'
-import { formatArea, formatDate } from '@/lib/utils/format'
+import { formatArea, formatDate, getInitial } from '@/lib/utils/format'
 import type { PropertyWithDetails } from '@/types/property'
 
 const LAND_TITLE_LABELS: Record<string, string> = {
@@ -179,12 +179,12 @@ function ContactCard({
   return (
     <div className="flex items-center gap-3 rounded-lg border p-4">
       <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center font-semibold text-lg">
-        {(person.display_name ?? person.full_name ?? '?').charAt(0).toUpperCase()}
+        {getInitial(person.display_name, person.full_name)}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <p className="font-medium text-sm truncate">
-            {person.display_name ?? person.full_name ?? 'Unknown'}
+            {person.display_name?.trim() || person.full_name?.trim() || 'Unknown'}
           </p>
           {person.is_verified && <BadgeCheck className="h-4 w-4 text-blue-600 shrink-0" />}
         </div>

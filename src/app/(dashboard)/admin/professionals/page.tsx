@@ -196,7 +196,7 @@ export default async function AdminProfessionalsPage({
         <div className="space-y-3">
           {withUrls.map((p) => {
             const latestKyc    = p.kyc_records[0] ?? null
-            const displayName  = p.full_name ?? p.display_name ?? p.email
+            const displayName  = p.full_name?.trim() || p.display_name?.trim() || p.email?.trim() || 'Unnamed user'
             const profType     = p.professional_profiles?.profession_type ?? p.role
             const userId       = p.id
 
@@ -211,10 +211,10 @@ export default async function AdminProfessionalsPage({
                         {ROLE_LABELS[p.role as UserRole] ?? p.role}
                       </Badge>
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${ACCOUNT_COLOR[p.account_status] ?? 'bg-gray-100 text-gray-700'}`}>
-                        {p.account_status.replace(/_/g, ' ')}
+                        {p.account_status?.replace(/_/g, ' ') ?? 'unknown'}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">{p.email}</p>
+                    <p className="text-xs text-muted-foreground">{p.email?.trim() || 'No email'}</p>
                     {p.professional_profiles?.company_name && (
                       <p className="text-xs text-muted-foreground">{p.professional_profiles.company_name}</p>
                     )}

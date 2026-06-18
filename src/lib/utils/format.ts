@@ -46,3 +46,15 @@ export function truncate(text: string, maxLength: number): string {
 export function formatArea(sqm: number): string {
   return `${sqm.toLocaleString()} m²`
 }
+
+// Avatar-initial helper. Picks the first non-blank candidate (treating
+// whitespace-only strings the same as null/undefined, not just absent
+// fields) and uppercases its first character. Falls back to '?' so a row
+// with no name and no email never throws instead of just looking generic.
+export function getInitial(...candidates: (string | null | undefined)[]): string {
+  for (const candidate of candidates) {
+    const trimmed = candidate?.trim()
+    if (trimmed) return trimmed[0].toUpperCase()
+  }
+  return '?'
+}

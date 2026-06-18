@@ -7,7 +7,7 @@ import { adminSuspendAccount, adminActivateAccount, adminAssignRole } from '@/li
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ROLE_LABELS } from '@/types/auth'
-import { formatRelative } from '@/lib/utils/format'
+import { formatRelative, getInitial } from '@/lib/utils/format'
 import type { UserRole } from '@/types/auth'
 import type { ProfileRow } from '@/types/database'
 
@@ -155,31 +155,31 @@ export default async function AdminUsersPage({
               <div key={u.id} className="flex items-center gap-3 px-4 py-3 flex-wrap sm:flex-nowrap">
                 {/* Avatar */}
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                  {(u.full_name ?? u.email ?? '?')[0].toUpperCase()}
+                  {getInitial(u.full_name, u.display_name, u.email)}
                 </div>
 
                 {/* Identity */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">
-                    {u.full_name ?? u.display_name ?? 'Unnamed'}
+                    {u.full_name?.trim() || u.display_name?.trim() || 'Unnamed'}
                     {u.is_verified && (
                       <span className="ml-1.5 text-blue-600 text-xs">✓</span>
                     )}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                  <p className="text-xs text-muted-foreground truncate">{u.email?.trim() || 'No email'}</p>
                 </div>
 
                 {/* Badges */}
                 <div className="flex items-center gap-2 shrink-0">
                   <Badge variant="secondary" className="text-xs">
-                    {ROLE_LABELS[u.role as UserRole] ?? u.role}
+                    {ROLE_LABELS[u.role as UserRole] ?? u.role ?? 'Unknown role'}
                   </Badge>
                   <span
                     className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
                       STATUS_COLOR[u.account_status] ?? 'bg-gray-100 text-gray-700'
                     }`}
                   >
-                    {u.account_status.replace(/_/g, ' ')}
+                    {u.account_status?.replace(/_/g, ' ') ?? 'unknown'}
                   </span>
                 </div>
 

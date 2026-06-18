@@ -14,7 +14,7 @@ import { useEscrow } from '@/hooks/payments/useEscrow'
 import { useWallet } from '@/hooks/payments/useWallet'
 import { useReleaseEscrow, useDisputeEscrow, useFundEscrow } from '@/hooks/payments/usePaymentMutations'
 import { useAuthStore } from '@/stores/authStore'
-import { formatXAF, formatDate } from '@/lib/utils/format'
+import { formatXAF, formatDate, getInitial } from '@/lib/utils/format'
 import { useState, use } from 'react'
 import Link from 'next/link'
 
@@ -257,10 +257,10 @@ function PartyCard({
       <p className="text-xs text-muted-foreground mb-2">{label} {highlight && '(You)'}</p>
       <div className="flex items-center gap-2">
         <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">
-          {((person.display_name ?? person.full_name) ?? '?').charAt(0).toUpperCase()}
+          {getInitial(person.display_name, person.full_name)}
         </div>
         <p className="text-sm font-medium truncate">
-          {person.display_name ?? person.full_name ?? 'Unknown'}
+          {person.display_name?.trim() || person.full_name?.trim() || 'Unknown'}
         </p>
       </div>
     </div>
