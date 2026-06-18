@@ -1409,3 +1409,170 @@ limiting, and a capture-only secure account recovery workflow.
    pre-existing implicit default, so removing the explicit line from
    `supabase/config.toml` (via the `git revert` in step 1) restores the
    prior (identical) implicit behavior.
+
+## Phase 2 — Roles & Approval Workflow: Extend Existing System (2026-06-18)
+
+**Status: implemented, tested, pending commit/push/PR.**
+
+### Gap analysis vs. the literal Phase 2 request
+
+The Phase 2 request asked for a role/approval/onboarding system
+(`role` enum, `approval_status`, `/onboarding/role-selection`,
+`/pending-approval`, `/admin/users/pending-approvals`,
+`/dashboard/<role>` routing, middleware protection, least-privilege
+RLS). Investigation found this system **already exists**, built,
+tested, and merged to `main`, under different names:
+
+| Spec asks for | Already exists as |
+|---|---|
+| `role` enum (9 values incl. buyer/seller/.../lawyer) | `UserRole` in `src/types/auth.ts` — identical 9 values, already in DB |
+| Role chosen post-verification at `/onboarding/role-selection` | Role chosen **at registration** (`RegisterForm.tsx` + `REGISTERABLE_ROLES`), set by the `handle_new_user()` trigger |
+| `approval_status` (pending/approved/rejected) | `account_status` (`active`/`pending_verification`/`suspended`/`banned`) gated via `APPROVAL_REQUIRED_ROLES` (7 professional roles; `buyer` excluded → auto-approved) |
+| `/pending-approval` page | `/account/pending`, gated by `requireActiveProfile()` in `src/lib/utils/account-status.ts` |
+| `/admin/users/pending-approvals` | `/admin/professionals` — tabs (pending/active/suspended), KYC document review, `adminApproveProfessional`/`adminRejectProfessional` |
+| `/dashboard/<role>` routing | `ROLE_DASHBOARDS` in `src/types/auth.ts`, already wired into middleware + `completeOnboarding` |
+| Middleware route protection | Already implemented in `middleware.ts` (auth gate, account-status gate, `ROLE_PROTECTED_PREFIXES` role gate, admin bypass) |
+| RLS least-privilege | Already implemented — `profiles_update_own` (from `20260613000003_fix_profiles_update_rls.sql`) blocks self-promotion of `role`/`is_verified`/`is_premium`/`account_status`; `profiles_admin_all` covers admin writes |
+
+### Decisions (confirmed with the user before implementation)
+
+- **Extend the existing system rather than duplicate it.** All
+  existing routes, fields, and UX are kept as-is — zero regression
+  risk to the already-shipped, tested auth/onboarding/approval flows.
+  No new `approval_status` column/enum, no new routes
+  (`/onboarding/role-selection`, `/pending-approval`,
+  `/admin/users/pending-approvals`, `/dashboard/<role>`), no change to
+  where/when role is selected (stays at registration, not
+  post-verification).
+- **Rejection stays resubmittable.** `adminRejectProfessional` leaves
+  `account_status = 'pending_verification'` unchanged — no behavior
+  change — and now also stamps a `rejected_at`/`rejected_by` audit
+  trail.
+- **No `onboarding_step` persistence.** Not needed today; the existing
+  3-step `OnboardingFlow.tsx` wizard already tracks step state
+  client-side and this is not a gap that needed filling.
+- The only genuine gap was an **audit trail** for approve/reject
+  actions (`approved_at`/`approved_by`/`rejected_at`/`rejected_by`)
+  and for onboarding completion (`registration_completed_at`), plus
+  test coverage for the approval-gate logic — neither existed before
+  this task.
+
+### Changed files
+
+- `supabase/migrations/20260618000003_approval_audit_columns.sql`
+  (new) — purely additive: adds `approved_at`, `approved_by`,
+  `rejected_at`, `rejected_by`, `registration_completed_at` to
+  `public.profiles`; tightens `profiles_update_own` (same
+  `DROP POLICY`/`CREATE POLICY` pattern as
+  `20260613000003_fix_profiles_update_rls.sql`) to pin the four new
+  approve/reject audit columns to their previous value, so they can
+  only ever be written by an admin via the service-role client.
+  `registration_completed_at` is left self-writable (non-sensitive,
+  set by `completeOnboarding` via the user's own client). **Not yet
+  applied to any database** — no `supabase db push` has been run.
+- `src/types/auth.ts` — `Profile` interface: added the 5 new nullable
+  fields.
+- `src/types/database.ts` — `ProfileRow`: same 5 fields.
+- `src/lib/supabase/server.ts` — `getServerProfile()`'s provisional
+  (no-DB-row-yet) `Profile` fallback: added the 5 new fields as `null`
+  so it still satisfies the `Profile` type.
+- `src/lib/actions/auth.ts`:
+  - `adminApproveProfessional` — `.update({ account_status: 'active' })`
+    now also sets `approved_at`/`approved_by`.
+  - `adminRejectProfessional` — added a `.update({ rejected_at,
+    rejected_by })` call on the target profile; `account_status` is
+    untouched (still `pending_verification`, resubmittable).
+  - `completeOnboarding` — `.update({ onboarding_completed: true })`
+    now also sets `registration_completed_at`.
+- `src/lib/actions/approvalWorkflow.test.ts` (new) — 5 tests covering
+  `adminApproveProfessional`, `adminRejectProfessional`,
+  `completeOnboarding` (see Test results below).
+- `src/lib/utils/roleRouting.test.ts` (new) — 11 tests covering
+  `APPROVAL_REQUIRED_ROLES`, `ROLE_DASHBOARDS`/`ROLE_PROTECTED_PREFIXES`
+  consistency, and `requireActiveProfile()` (see Test results below).
+
+### Test results
+
+- `npx vitest run` → **72 passed (72)** — 41 pre-existing + 31 new
+  across the two new files:
+  - `adminApproveProfessional`: sets `account_status='active'` +
+    `approved_at`/`approved_by` on the target row; non-admin caller
+    gets `'Insufficient permissions.'` without `createAdminClient()`
+    ever being called.
+  - `adminRejectProfessional`: sets `rejected_at`/`rejected_by`,
+    never touches `account_status`, writes an `account_notices` row;
+    non-admin caller rejected the same way.
+  - `completeOnboarding`: sets `registration_completed_at` alongside
+    `onboarding_completed`.
+  - `APPROVAL_REQUIRED_ROLES` excludes `buyer`/`admin`, includes
+    exactly the other 7 roles.
+  - Every `UserRole`'s `ROLE_DASHBOARDS` entry has a matching prefix in
+    `ROLE_PROTECTED_PREFIXES` that includes that role (regression
+    guard for the `/seller` vs. `agent` class of bug already fixed
+    once in the Phase 1 log).
+  - `requireActiveProfile()`: no redirect for buyers or active
+    professionals; redirects pending/suspended/banned professionals to
+    `/account/pending`, `/account/suspended`, `/account/banned`
+    respectively.
+- `npx tsc --noEmit` → clean, no errors.
+- `npm run build` → succeeded, 47/47 routes generated, no regressions.
+- Lint: not run (no working `npm run lint` script in this environment,
+  consistent with prior tasks).
+
+### Manual QA steps (for whoever applies the migration and tests against a live Supabase project)
+
+1. Run `supabase db push` (or apply the migration via Studio) to add
+   the 5 columns and replace `profiles_update_own`.
+2. As an admin, approve a pending professional via
+   `/admin/professionals` → confirm `approved_at`/`approved_by`
+   populate on that profile row.
+3. As an admin, reject a pending professional → confirm
+   `rejected_at`/`rejected_by` populate and `account_status` remains
+   `pending_verification` (resubmittable).
+4. Complete onboarding as a buyer → confirm `registration_completed_at`
+   populates.
+5. As a non-admin authenticated user, attempt a direct REST `PATCH` on
+   your own `profiles` row setting `approved_by` to yourself → confirm
+   RLS rejects it (permission-denied), proving the tightened
+   `profiles_update_own` policy works.
+6. Confirm no regression in existing auth flows: sign up, email
+   verification, sign in/out, password reset — none of those files
+   were touched by this task.
+
+### Deferred items
+
+- New `approval_status` enum/column, new onboarding/approval routes,
+  post-verification role selection, `onboarding_step` persistence —
+  all explicitly out of scope per the user-confirmed "extend, don't
+  duplicate" decision above. Revisit only if a concrete need for those
+  exact mechanics emerges later.
+
+### Rollback
+
+1. Revert the application code: `git revert <phase-2-commit-sha>`
+   (replace with the actual SHA once committed).
+2. If the migration has been applied to any database, manually reverse
+   it:
+   ```sql
+   DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
+   CREATE POLICY "profiles_update_own" ON public.profiles
+     FOR UPDATE
+     USING (id = auth.uid())
+     WITH CHECK (
+       id              = auth.uid()
+       AND role        = (SELECT role        FROM public.profiles WHERE id = auth.uid())
+       AND is_verified = (SELECT is_verified FROM public.profiles WHERE id = auth.uid())
+       AND is_premium  = (SELECT is_premium  FROM public.profiles WHERE id = auth.uid())
+       AND (
+         account_status = (SELECT account_status FROM public.profiles WHERE id = auth.uid())
+         OR account_status = 'pending_verification'
+       )
+     );
+
+   ALTER TABLE public.profiles
+     DROP COLUMN IF EXISTS approved_at,
+     DROP COLUMN IF EXISTS approved_by,
+     DROP COLUMN IF EXISTS rejected_at,
+     DROP COLUMN IF EXISTS rejected_by,
+     DROP COLUMN IF EXISTS registration_completed_at;
+   ```

@@ -607,7 +607,7 @@ export async function completeOnboarding(): Promise<ActionResult<{ redirectTo: s
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
     .from('profiles')
-    .update({ onboarding_completed: true })
+    .update({ onboarding_completed: true, registration_completed_at: new Date().toISOString() })
     .eq('id', user.id)
 
   if (error) return { error: error.message }
@@ -676,12 +676,30 @@ export async function adminAssignRole(
 
   const adminClient = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: prevProfile } = await (adminClient as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', targetUserId)
+    .single() as { data: { role: string } | null }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (adminClient as any)
     .from('profiles')
     .update({ role: newRole })
     .eq('id', targetUserId)
 
   if (error) return { error: error.message }
+
+  // Log admin action
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from('admin_logs').insert({
+    actor_id:    user.id,
+    action:      'assign_role',
+    target_type: 'profile',
+    target_id:   targetUserId,
+    old_data:    { role: prevProfile?.role ?? null },
+    new_data:    { role: newRole },
+  })
 
   revalidatePath('/admin/users')
   return { success: true }
@@ -769,6 +787,15 @@ export async function adminActivateAccount(
 
   if (error) return { error: error.message }
 
+  // Log admin action
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from('admin_logs').insert({
+    actor_id:    user.id,
+    action:      'activate_account',
+    target_type: 'profile',
+    target_id:   targetUserId,
+  })
+
   revalidatePath('/admin/users')
   return { success: true }
 }
@@ -833,7 +860,7 @@ export async function adminApproveProfessional(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (adminClient as any)
     .from('profiles')
-    .update({ account_status: 'active' })
+    .update({ account_status: 'active', approved_at: now, approved_by: user.id })
     .eq('id', targetUserId)
 
   // Set verified flag on role-specific table
@@ -869,6 +896,16 @@ export async function adminApproveProfessional(
       .update({ status: 'approved', reviewed_by: user.id, reviewed_at: now })
       .eq('id', kyc.id)
   }
+
+  // Log admin action
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from('admin_logs').insert({
+    actor_id:    user.id,
+    action:      'approve_professional',
+    target_type: 'profile',
+    target_id:   targetUserId,
+    new_data:    { role: target?.role ?? null },
+  })
 
   revalidatePath('/admin/professionals')
   return { success: true }
@@ -931,6 +968,22 @@ export async function adminRejectProfessional(
   })
 
   // account_status stays pending_verification so they can resubmit
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (adminClient as any)
+    .from('profiles')
+    .update({ rejected_at: now, rejected_by: user.id })
+    .eq('id', targetUserId)
+
+  // Log admin action
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from('admin_logs').insert({
+    actor_id:    user.id,
+    action:      'reject_professional',
+    target_type: 'profile',
+    target_id:   targetUserId,
+    new_data:    { reason: effectiveReason },
+  })
+
   revalidatePath('/admin/professionals')
   return { success: true }
 }

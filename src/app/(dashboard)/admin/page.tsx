@@ -258,9 +258,14 @@ export default async function AdminPage() {
 
       {/* Users by role */}
       <div className="rounded-xl border p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold">Users by Role</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold">Users by Role</h2>
+          </div>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/admin/roles">Manage roles →</Link>
+          </Button>
         </div>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
           {ROLE_ORDER.map((role) => {
@@ -450,6 +455,15 @@ export default async function AdminPage() {
           </Button>
           <Button asChild variant="outline" size="sm">
             <Link href="/admin/commissions">Commissions</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/roles">Roles</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/analytics">Analytics</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/audit-logs">Audit Logs</Link>
           </Button>
           <Button asChild variant="outline" size="sm">
             <Link href="/admin/settings">Settings</Link>

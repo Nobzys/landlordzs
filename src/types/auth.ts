@@ -51,6 +51,11 @@ export interface Profile {
   account_status: AccountStatus
   onboarding_completed: boolean
   expo_push_token: string | null
+  approved_at: string | null
+  approved_by: string | null
+  rejected_at: string | null
+  rejected_by: string | null
+  registration_completed_at: string | null
   created_at: string
   updated_at: string
 }
