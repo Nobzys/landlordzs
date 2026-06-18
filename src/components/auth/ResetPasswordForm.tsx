@@ -61,7 +61,7 @@ export function ResetPasswordForm() {
                 <div className="relative">
                   <Input
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Min. 8 chars, uppercase, number"
+                    placeholder="8+ chars, upper, lower, number, symbol"
                     autoComplete="new-password"
                     autoFocus
                     disabled={isPending}

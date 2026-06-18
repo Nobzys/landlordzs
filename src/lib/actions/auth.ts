@@ -10,6 +10,7 @@ import {
   registerSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  changePasswordSchema,
   phoneSchema,
   phoneOtpSchema,
   basicProfileSchema,
@@ -25,6 +26,7 @@ import type {
   RegisterInput,
   ForgotPasswordInput,
   ResetPasswordInput,
+  ChangePasswordInput,
   PhoneInput,
   PhoneOtpInput,
   BasicProfileInput,
@@ -503,10 +505,10 @@ export async function completeOnboarding(): Promise<ActionResult<{ redirectTo: s
 
 // â”€â”€â”€ Update Password (from Account settings) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-export async function updatePassword(data: {
-  current_password: string
-  new_password: string
-}): Promise<ActionResult> {
+export async function updatePassword(data: ChangePasswordInput): Promise<ActionResult> {
+  const parsed = changePasswordSchema.safeParse(data)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
   const supabase = await createClient()
 
   // Re-authenticate with current password first
@@ -515,11 +517,11 @@ export async function updatePassword(data: {
 
   const { error: verifyError } = await supabase.auth.signInWithPassword({
     email:    user.email,
-    password: data.current_password,
+    password: parsed.data.current_password,
   })
   if (verifyError) return { error: 'Current password is incorrect.' }
 
-  const { error } = await supabase.auth.updateUser({ password: data.new_password })
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.new_password })
   if (error) return { error: error.message }
 
   return { success: true }

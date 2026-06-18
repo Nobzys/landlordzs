@@ -1038,3 +1038,72 @@ All other roles denied at every layer (frontend, server action, RLS).
 **Rollback:** see implementation report delivered alongside this entry for
 exact rollback steps (revert commit + optionally re-run the inverse RLS
 migration).
+
+## Phase 1 — Sprint 1, Task 2: Password complexity enforcement (2026-06-18)
+
+**Branch:** `feature/phase1-sprint1-security`
+
+**Scope:** Enforce password complexity (min 8 chars, uppercase, lowercase,
+number, special character) consistently across Registration, Password
+reset, and Change password, with clear user-facing messages and automated
+tests.
+
+**Decisions:**
+
+- `registerSchema` and `resetPasswordSchema` already enforced 4 of the 5
+  rules (missing only the special-character check). Extracted both into a
+  single shared `passwordSchema` constant in `src/lib/validations/auth.ts`
+  rather than leaving the rules duplicated, so the two flows cannot drift
+  apart again.
+- `updatePassword` (change-password) had **no validation at all** — it
+  accepted a raw `{ current_password, new_password }` object with no Zod
+  schema and no UI. Added a new `changePasswordSchema` (reuses
+  `passwordSchema` for `new_password`, requires `confirm_password` to
+  match, and rejects `new_password === current_password`) and wired
+  `updatePassword` to validate against it before any Supabase call.
+- No change-password UI existed in the codebase prior to this task. Built
+  `ChangePasswordForm.tsx`, mirroring `ResetPasswordForm.tsx`'s exact
+  conventions (react-hook-form + zodResolver, show/hide toggle, `Alert`
+  for server errors), and mounted it on `account/profile/page.tsx` below
+  the existing KYC section.
+- No database or RLS changes required — Supabase Auth owns password
+  storage/hashing; this task is application-layer validation only.
+
+**Changed files:**
+- `src/lib/validations/auth.ts` — added shared `passwordSchema` (now
+  includes the special-character rule); `registerSchema` and
+  `resetPasswordSchema` reuse it; added `changePasswordSchema`.
+- `src/lib/actions/auth.ts` — `updatePassword` now validates input via
+  `changePasswordSchema.safeParse()` before re-authenticating and calling
+  `supabase.auth.updateUser()`.
+- `src/components/auth/RegisterForm.tsx`,
+  `src/components/auth/ResetPasswordForm.tsx` — password field placeholder
+  updated to reflect all 5 rules (previously omitted lowercase and special
+  character from the hint text).
+- `src/components/auth/ChangePasswordForm.tsx` — new component, the first
+  UI for the previously-unused `updatePassword` action.
+- `src/app/(dashboard)/account/profile/page.tsx` — mounts
+  `<ChangePasswordForm />`.
+- `src/lib/validations/auth.test.ts`, `src/lib/actions/updatePassword.test.ts`
+  — new Vitest suites (20 tests) covering each complexity rule in
+  isolation, schema-level refine checks, and the `updatePassword` action's
+  validation/re-auth/Supabase-error branches.
+
+**Deferred:** none — this task's scope (registration, reset, change) is
+fully covered.
+
+**Manual QA steps:**
+1. Register with a password missing a special character (e.g.
+   `Str0ngPass`) on `/register` → rejected with "Must contain at least
+   one special character".
+2. Same check on `/reset-password`.
+3. On `/account/profile`, in the new "Change Password" section, enter an
+   incorrect current password → "Current password is incorrect."
+4. Enter a new password identical to the current password → blocked with
+   "New password must be different from your current password".
+5. Enter a compliant new password with a matching confirmation → success
+   message shown; sign out and back in with the new password to confirm
+   it actually changed.
+
+**Rollback:** revert this commit. No migrations were added, so no database
+rollback is required.
