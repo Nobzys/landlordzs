@@ -1136,3 +1136,276 @@ fully covered.
 - Code: `git revert 7adbf84`
 - No database changes were made in this task, so no database rollback
   step is required.
+
+## Phase 1 — Sprint 1, Task 3: Pre-implementation decisions (2026-06-18)
+
+This entry records decisions made in response to clarifying questions,
+**before any code was written**, per the working rule "wait for approval
+before coding."
+
+**Scope:** Password reset token expiration handling, password reset rate
+limiting, and a capture-only secure account recovery workflow.
+
+**1. Token expiration — CONFIRMED VALUE: 60 minutes (3600 seconds)**
+- No custom expiration logic is implemented. The app relies entirely on
+  Supabase Auth's own recovery-code TTL (enforced inside
+  `exchangeCodeForSession`); we do not re-implement or duplicate that
+  check.
+- **Exact mechanism, verified directly (not assumed):** the controlling
+  key is `[auth.email] otp_expiry` in `supabase/config.toml`, confirmed
+  by generating a fresh default config with the project's installed
+  Supabase CLI (`v2.105.0`, `supabase init` into a scratch directory)
+  and inspecting its output — the CLI's own default is
+  `otp_expiry = 3600` (comment: "Number of seconds before the email OTP
+  expires (defaults to 1 hour)"). This same key governs password-reset
+  email link validity, since Supabase's recovery flow uses the email
+  OTP/PKCE-code mechanism under the hood.
+- Prior to this change, this repo's `supabase/config.toml` did not
+  declare `otp_expiry` at all, so it silently inherited the CLI's
+  `3600`-second default. **This matches the Phase 1 decision below
+  exactly, so no behavior changes — only the value is now explicit in
+  source instead of implicit.** `otp_expiry = 3600` has been added
+  under `[auth.email]` in `supabase/config.toml`.
+- **Required dashboard configuration for all environments:** local dev
+  (`supabase start`) and any environment driven by
+  `supabase config push` against a linked project will now pick up
+  `otp_expiry = 3600` automatically from this file. However, if the
+  hosted production project's Auth settings are managed directly via
+  the Supabase Dashboard (Authentication → Email → "Email OTP expiration")
+  rather than via `supabase config push`, the dashboard value is the
+  actual source of truth and can drift from this file independently.
+  **Action item for whoever administers the production project:**
+  confirm "Email OTP expiration" reads **3600 seconds (60 minutes)** in
+  the Dashboard, or run `supabase config push` against the linked
+  production project to sync this file's value. This codebase has no
+  credentials or API access to read or set that Dashboard value
+  directly, so this step must be performed manually outside this repo.
+- This task's app-layer change only fixes what happens *after* Supabase
+  reports a code as expired/invalid (redirect to
+  `/forgot-password?error=link_expired` instead of the unrelated
+  `/verify-email` page) — it does not itself change the TTL; the TTL is
+  now pinned at 3600s via the config file as documented above.
+
+**2. Rate limiting**
+- Confirmed rule: a request is blocked if **either** the target email
+  **or** the requesting IP has reached 3 attempts within the trailing 15
+  minutes (OR logic — whichever limit is hit first blocks the request).
+  Both counters are recorded on every attempt (even blocked ones aren't
+  double-recorded — the check runs before the insert).
+- IP source: production deploys behind **Vercel** (confirmed). Vercel's
+  edge network sets `x-forwarded-for` to the verified client IP and
+  overwrites any client-supplied value before it reaches the app, so it
+  is safe to read directly via `headers().get('x-forwarded-for')`
+  (first entry in the list) with no additional spoofing defense needed.
+  If `x-forwarded-for` is ever absent (e.g. local dev), the literal
+  string `'unknown'` is used as the IP bucket — meaning all local
+  requests share one IP bucket, which is acceptable for dev and does not
+  affect production behavior.
+- On exceeding the limit: `forgotPassword` returns
+  `{ error: 'Too many requests. Please try again later.' }` and exits
+  before calling `supabase.auth.resetPasswordForEmail` (no email is
+  sent, no further state changes). This response is distinguishable
+  from the normal `{ success: true }`, but the distinguishing signal is
+  "this exact input was used 3+ times in 15 minutes" — fully
+  attacker-controlled and identical regardless of whether the target
+  email is a real account, so it does not weaken the existing
+  email-enumeration protection (see item 4).
+
+**3. Account recovery workflow — full end-to-end definition**
+- Entry points: a "Need help accessing your account?" link on `/login`
+  and `/forgot-password`, leading to a new public page `/account-recovery`.
+- Evidence collected (capture-only, minimal PII by design): full name,
+  phone number, alternative email, and a free-text note. No passwords,
+  no security questions, no document uploads are collected by this task.
+- On submit: a row is inserted into `account_recovery_requests` with
+  `status = 'pending'` via the service-role admin client (never exposed
+  to anonymous RLS). The user sees a static confirmation ("Your request
+  has been received. Our support team will contact you.") — submitting
+  this form never changes any account state by itself.
+- Review process (capture-only scope, confirmed with user): there is
+  **no in-app admin queue** in this task. Support/admin staff review
+  pending rows directly via the Supabase Studio/Dashboard table view.
+  Approval/rejection and the actual recovery assistance (e.g. verifying
+  identity by calling the phone number provided, then manually helping
+  the user regain access) happen **out-of-band**, matching the master
+  spec's "Customer support verifies identity… assists with account
+  recovery" wording, which describes a human process, not an automated
+  one.
+- **Expiry policy (Phase 1 decision): unresolved requests expire after 7
+  days.** The table includes an `expires_at` column, set at insert time
+  to `created_at + interval '7 days'`. Because this task's scope is
+  capture-only (no in-app admin queue, no scheduled job infrastructure
+  exists in this repo), expiry is **recorded, not automatically
+  enforced** — there is no cron/edge function that auto-marks rows
+  `expired` or deletes them. Support reviewing the table via Supabase
+  Studio should treat any `pending` row past its `expires_at` as stale
+  and ask the user to resubmit rather than act on it. Automatic
+  enforcement (e.g. a scheduled function flipping status to `expired`)
+  would require new scheduling infrastructure and is deferred — it can
+  be added later without a breaking change, since `expires_at` is
+  already being recorded now.
+- Audit trail: the table includes `status`, `reviewed_at`, and
+  `reviewed_by` columns so that when support updates a row's status
+  (manually, via SQL/Studio), a record persists. **Explicit limitation:**
+  because there is no in-app review action, nothing forces `reviewed_by`
+  to be set correctly — it depends on whoever performs the manual update
+  filling it in. This is the known tradeoff of the capture-only scope;
+  if stronger audit guarantees are needed later, that requires the
+  in-app admin-queue scope, which was explicitly deferred this round.
+
+**4. Security confirmations**
+- No plaintext reset tokens are logged anywhere. Confirmed by reading
+  `src/app/api/auth/callback/route.ts`: the only `console.error` calls
+  log `errorMsg`/`error.message`, never the `code` query param. The new
+  redirect-on-expiry change does not add any logging of the code either.
+- No recovery-request PII (full name, phone, alternative email, note) is
+  ever passed to `console.*` — it is written only to the database via
+  the service-role client.
+- Account enumeration remains prevented: `forgotPassword` already
+  returns `{ success: true }` unconditionally regardless of whether the
+  email exists (pre-existing behavior, unchanged). The new rate-limit
+  branch returns early only when an input (email or IP) has itself been
+  reused 3+ times in 15 minutes — see item 2's reasoning for why this
+  adds no enumeration signal.
+- Service-role (`createAdminClient()`) calls occur only inside
+  `'use server'` files in `src/lib/actions/auth.ts` — never in a client
+  component, never in a route handler reachable without going through a
+  validated server action. This task preserves that existing invariant.
+- Both new tables (`password_reset_attempts`, `account_recovery_requests`)
+  will have `ENABLE ROW LEVEL SECURITY` with **zero policies created**.
+  In Postgres, RLS-enabled-with-no-policies denies all access to any
+  role subject to RLS (`anon`, `authenticated`) — only the Supabase
+  service role, which bypasses RLS by design, can read or write. This is
+  the same pattern already used for `is_admin()`-gated tables elsewhere
+  in this project, applied here by omitting policies entirely rather
+  than gating by role.
+
+## Phase 1 — Sprint 1, Task 3: Implementation (2026-06-18)
+
+**Status: implemented, tested, pending commit/push/PR.**
+
+### Changed files
+
+- `supabase/config.toml` — added `otp_expiry = 3600` under `[auth.email]`,
+  making the previously-implicit 60-minute token TTL explicit (no
+  behavior change).
+- `supabase/migrations/20260618000002_password_reset_rate_limit.sql`
+  (new) — two purely additive tables: `password_reset_attempts`
+  (rate-limit ledger) and `account_recovery_requests` (capture-only
+  recovery intake), both RLS-enabled with zero policies. **Not yet
+  applied to any database** — no `supabase db push` has been run.
+- `src/lib/validations/auth.ts` — added `accountRecoverySchema` /
+  `AccountRecoveryInput`.
+- `src/lib/actions/auth.ts` — added `PASSWORD_RESET_RATE_LIMIT` (3),
+  `PASSWORD_RESET_RATE_WINDOW_MS` (15 min), and `getClientIp()`.
+  Rewrote `forgotPassword` to check both counters before sending the
+  reset email and to record every attempt. Added new
+  `submitAccountRecoveryRequest` action. `resetPassword` was reviewed
+  and intentionally left unchanged — no custom expiration logic, per
+  item 1 above.
+- `src/app/api/auth/callback/route.ts` — when `exchangeCodeForSession`
+  fails and `next === '/reset-password'`, redirect to
+  `/forgot-password?error=link_expired` instead of the generic
+  `/verify-email?error=...` path.
+- `src/components/auth/ForgotPasswordForm.tsx` — reads
+  `?error=link_expired` via `useSearchParams()` and shows an inline
+  "Your reset link expired or was already used" message; added a
+  "Need help accessing your account?" link to `/account-recovery`.
+- `src/app/(auth)/forgot-password/page.tsx` — wrapped `<ForgotPasswordForm />`
+  in `<Suspense>`, required because the component now calls
+  `useSearchParams()` (same convention as `login/page.tsx` + `LoginForm`).
+- `src/components/auth/LoginForm.tsx` — added the same "Need help
+  accessing your account?" link to `/account-recovery`.
+- `src/components/auth/AccountRecoveryForm.tsx` (new) — capture-only
+  form (full name, phone, alternative email, optional note) that calls
+  `submitAccountRecoveryRequest`.
+- `src/app/(auth)/account-recovery/page.tsx` (new) — public page hosting
+  `AccountRecoveryForm`, inherits the shared `(auth)` layout.
+- `src/lib/actions/passwordResetRateLimit.test.ts` (new) — 9 unit tests
+  covering both new/changed actions (see below).
+
+### Test results
+
+- `npx vitest run` → **41 passed (41)** — 32 pre-existing + 9 new:
+  - `forgotPassword`: sends email under the limit; blocks on email
+    count ≥ 3; blocks on IP count ≥ 3 with a *different* email
+    (confirms OR logic, not just per-email); falls back to `'unknown'`
+    IP without throwing when `x-forwarded-for` is absent; rejects
+    invalid email before touching Supabase; surfaces a
+    `resetPasswordForEmail` error.
+  - `submitAccountRecoveryRequest`: captures a valid request; rejects
+    an invalid phone before touching Supabase; surfaces an insert
+    failure as a generic `'Could not submit your request...'` error
+    (no raw DB error leaked to the client).
+- `npx tsc --noEmit` → clean, no errors.
+- `npm run build` → succeeded. 46/46 routes generated, including the
+  new `/account-recovery` route as a dynamic (ƒ) page. No Suspense
+  boundary warnings.
+- Lint: not run (no working `npm run lint` script in this environment,
+  consistent with Tasks 1 and 2).
+
+### Manual QA steps (for whoever applies the migration and tests against a live Supabase project)
+
+1. Run `supabase db push` (or apply the migration via Studio) to create
+   `password_reset_attempts` and `account_recovery_requests`.
+2. Submit `/forgot-password` 3 times in under 15 minutes with the same
+   email → 4th attempt should show "Too many requests. Please try
+   again later." instead of sending another email.
+3. Submit `/forgot-password` 3 times in under 15 minutes from the same
+   IP using 3 *different* emails → 4th attempt (any email) should also
+   be blocked, confirming the IP-based counter independently of the
+   email-based one.
+4. Wait out (or manually backdate rows past) the 15-minute window and
+   confirm a new attempt succeeds again.
+5. Request a reset link, wait for it to be consumed or for >60 minutes
+   to pass, then click it → should land on
+   `/forgot-password?error=link_expired` with the inline expired-link
+   message, not the generic `/verify-email` error page.
+6. Visit `/login` and `/forgot-password` → confirm the "Need help
+   accessing your account?" link is visible on both and navigates to
+   `/account-recovery`.
+7. Submit `/account-recovery` with valid data → confirm the
+   confirmation screen appears and a row lands in
+   `account_recovery_requests` with `status = 'pending'` and
+   `expires_at` ≈ `created_at + 7 days` (verify via Supabase Studio,
+   since there is no in-app admin queue by design).
+8. Submit `/account-recovery` with an invalid phone number → confirm
+   client-side validation blocks submission before any network call.
+9. Confirm anon/authenticated Supabase clients cannot read or write
+   either new table directly (e.g. via the Supabase JS client in the
+   browser console) — both should fail with a permission-denied/RLS
+   error, since zero policies were created for either role.
+
+### Deferred items
+
+- Automatic enforcement of the 7-day account-recovery expiry (status
+  flip to `'expired'`) — requires scheduling infrastructure that
+  doesn't exist in this repo yet; `expires_at` is recorded now so this
+  can be added later without a breaking change.
+- In-app admin queue / review UI for `account_recovery_requests` —
+  explicitly out of scope per the user-confirmed "capture-only" design;
+  support reviews via Supabase Studio directly.
+- Confirming the hosted production Supabase project's Dashboard "Email
+  OTP expiration" setting matches `otp_expiry = 3600`, or running
+  `supabase config push` — this repo has no credentials to verify or
+  set that value directly; flagged as a manual action item for whoever
+  administers the production project.
+
+### Rollback
+
+1. Revert the application code: `git revert <task-3-commit-sha>`
+   (replace with the actual SHA once committed) — this reverts every
+   file listed above except the new migration (migrations are not
+   touched by `git revert` if already applied to a database).
+2. If the migration has been applied to any database, manually reverse
+   it (no `supabase db push` rollback command exists for already-applied
+   migrations):
+   ```sql
+   DROP TABLE IF EXISTS public.account_recovery_requests;
+   DROP TABLE IF EXISTS public.password_reset_attempts;
+   ```
+3. If `supabase config push` was run against a linked project to sync
+   `otp_expiry = 3600`, no reversal is needed — `3600` was already the
+   pre-existing implicit default, so removing the explicit line from
+   `supabase/config.toml` (via the `git revert` in step 1) restores the
+   prior (identical) implicit behavior.
