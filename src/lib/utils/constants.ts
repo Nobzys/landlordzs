@@ -29,19 +29,26 @@ export const AUTH_ROUTES = [
   '/forgot-password',
   '/reset-password',
   '/verify-email',
+  '/confirm',
 ]
 
-export const ROLE_PROTECTED_PREFIXES: Record<string, UserRole> = {
-  '/buyer':      'buyer',
-  '/seller':     'seller',
-  '/agent':      'agent',
-  '/vendor':     'vendor',
-  '/contractor': 'contractor',
-  '/engineer':   'engineer',
-  '/architect':  'architect',
-  '/lawyer':     'lawyer',
-  '/admin':      'admin',
+export const ROLE_PROTECTED_PREFIXES: Record<string, UserRole[]> = {
+  '/buyer':      ['buyer'],
+  '/seller':     ['seller', 'agent'],
+  '/agent':      ['agent'],
+  '/vendor':     ['vendor'],
+  '/contractor': ['contractor'],
+  '/engineer':   ['engineer'],
+  '/architect':  ['architect'],
+  '/lawyer':     ['lawyer'],
+  '/admin':      ['admin'],
 }
+
+// Roles permitted to create property listings. Enforced at the server-action
+// layer (createProperty), at the RLS layer (is_property_creator() in
+// 20260618000001_property_creator_rbac.sql), and via ROLE_PROTECTED_PREFIXES
+// above for /seller route access.
+export const PROPERTY_CREATOR_ROLES = ['seller', 'agent', 'admin'] as const satisfies Readonly<UserRole[]>
 
 // ─── Cameroon data ────────────────────────────────────────────────────────────
 

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm'
 
 export const metadata: Metadata = {
@@ -14,7 +15,9 @@ export default function ForgotPasswordPage() {
           No worries — we&apos;ll send you reset instructions
         </p>
       </div>
-      <ForgotPasswordForm />
+      <Suspense>
+        <ForgotPasswordForm />
+      </Suspense>
     </div>
   )
 }

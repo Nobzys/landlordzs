@@ -33,7 +33,10 @@ export async function middleware(request: NextRequest) {
   // ── Auth routes — redirect authenticated users away ───────────────────────
   const isAuthRoute = AUTH_ROUTES.some((r) => pathname.startsWith(r))
   if (isAuthRoute) {
-    if (user) {
+    // /reset-password is reached via a password-recovery session established
+    // by the callback exchange — that session IS the "authenticated" state
+    // this block would otherwise bounce away. Let it render regardless.
+    if (user && !pathname.startsWith('/reset-password')) {
       // Fetch minimal profile to know where to send them
       const { data: profile } = await (supabase as any)
         .from('profiles')
@@ -98,14 +101,14 @@ export async function middleware(request: NextRequest) {
   )
 
   if (matchedPrefix) {
-    const requiredRole = ROLE_PROTECTED_PREFIXES[matchedPrefix] as UserRole
+    const allowedRoles = ROLE_PROTECTED_PREFIXES[matchedPrefix] as UserRole[]
     const userRole = profile.role as UserRole
 
     // Admin can access all dashboards
     if (userRole === 'admin') return response
 
-    // User accessing their own dashboard — allowed
-    if (userRole === requiredRole) return response
+    // User's role is allowed for this prefix
+    if (allowedRoles.includes(userRole)) return response
 
     // Wrong role — redirect to their own dashboard
     const ownDashboard = ROLE_DASHBOARDS[userRole] ?? '/account'

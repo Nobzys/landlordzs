@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { propertyCreateSchema, inquirySchema } from '@/lib/validations/property'
 import { slugify } from '@/lib/utils/format'
-import { STORAGE_BUCKETS } from '@/lib/utils/constants'
+import { STORAGE_BUCKETS, PROPERTY_CREATOR_ROLES } from '@/lib/utils/constants'
 import type { ActionResult } from '@/types/auth'
 import type { PropertyCreateInput, InquiryInput } from '@/lib/validations/property'
 
@@ -24,8 +24,12 @@ export async function createProperty(
   if (authError || !user) return { error: 'Unauthorized' }
 
   const { data: actor } = await (supabase as any)
-    .from('profiles').select('account_status').eq('id', user.id).single()
-  if (actor?.account_status !== 'active') {
+    .from('profiles').select('account_status, role').eq('id', user.id).single()
+
+  if (!actor || !(PROPERTY_CREATOR_ROLES as readonly string[]).includes(actor.role)) {
+    return { error: 'Your account type is not permitted to create property listings.' }
+  }
+  if (actor.account_status !== 'active') {
     return { error: 'Your account must be approved before creating listings.' }
   }
 

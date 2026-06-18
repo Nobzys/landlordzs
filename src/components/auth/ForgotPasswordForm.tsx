@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Mail, ArrowLeft } from 'lucide-react'
 import { forgotPassword } from '@/lib/actions/auth'
@@ -15,7 +16,17 @@ import {
 } from '@/components/ui/form'
 
 export function ForgotPasswordForm() {
-  const [serverError, setServerError] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+  const linkExpired   = searchParams.get('error') === 'link_expired'
+  const wrongBrowser  = searchParams.get('error') === 'same_browser_required'
+
+  const [serverError, setServerError] = useState<string | null>(
+    wrongBrowser
+      ? 'This reset link only works in the browser where you requested it. Open it there, or request a new one below.'
+      : linkExpired
+        ? 'Your reset link expired or was already used. Please request a new one.'
+        : null
+  )
   const [sent,        setSent]        = useState(false)
   const [sentEmail,   setSentEmail]   = useState('')
   const [isPending,   startTransition] = useTransition()
@@ -114,6 +125,12 @@ export function ForgotPasswordForm() {
             Back to Sign In
           </Link>
         </Button>
+
+        <p className="text-center text-xs text-muted-foreground">
+          <Link href="/account-recovery" className="hover:text-primary hover:underline">
+            Need help accessing your account?
+          </Link>
+        </p>
       </form>
     </Form>
   )

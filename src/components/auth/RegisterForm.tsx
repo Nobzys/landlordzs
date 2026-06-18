@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff, UserPlus, CheckCircle2 } from 'lucide-react'
 import { signUp } from '@/lib/actions/auth'
@@ -19,6 +20,7 @@ import type { RegisterableRole } from '@/types/auth'
 type VerifyState = { email: string; skipVerification?: boolean } | null
 
 export function RegisterForm() {
+  const router = useRouter()
   const [serverError,  setServerError]  = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [verifyState,  setVerifyState]  = useState<VerifyState>(null)
@@ -37,6 +39,15 @@ export function RegisterForm() {
         setServerError(result.error)
         return
       }
+
+      // Supabase returned a real session (project's "Confirm email" setting
+      // is OFF) — the user is genuinely authenticated, safe to continue.
+      if (result?.data?.sessionCreated) {
+        router.push(result.data.redirectTo ?? '/onboarding')
+        router.refresh()
+        return
+      }
+
       if (result?.data?.email) {
         setVerifyState({
           email: result.data.email,
@@ -147,7 +158,7 @@ export function RegisterForm() {
                 <div className="relative">
                   <Input
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Min. 8 chars, uppercase, number"
+                    placeholder="8+ chars, upper, lower, number, symbol"
                     autoComplete="new-password"
                     disabled={isPending}
                     {...field}

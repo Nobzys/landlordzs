@@ -2,6 +2,18 @@
 
 const CAMEROON_PHONE_RE = /^\+237[6-9][0-9]{8}$/
 
+// ─── Shared password complexity rule ───────────────────────────────────────
+// Min 8 chars, uppercase, lowercase, number, special character. Applied to
+// every flow that sets a password: registration, reset, and change.
+
+export const passwordSchema = z
+  .string()
+  .min(8, 'Minimum 8 characters')
+  .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+  .regex(/[a-z]/, 'Must contain at least one lowercase letter')
+  .regex(/[0-9]/, 'Must contain at least one number')
+  .regex(/[^A-Za-z0-9]/, 'Must contain at least one special character')
+
 // â”€â”€â”€ Login â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const loginSchema = z.object({
@@ -20,12 +32,7 @@ export const registerSchema = z
       .min(2, 'Name must be at least 2 characters')
       .max(100, 'Name is too long'),
     email: z.string().email('Please enter a valid email address'),
-    password: z
-      .string()
-      .min(8, 'Minimum 8 characters')
-      .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
-      .regex(/[a-z]/, 'Must contain at least one lowercase letter')
-      .regex(/[0-9]/, 'Must contain at least one number'),
+    password: passwordSchema,
     confirm_password: z.string(),
     role: z.enum(
       ['buyer', 'seller', 'agent', 'vendor', 'contractor', 'engineer', 'architect', 'lawyer'] as const,
@@ -51,12 +58,7 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
 
 export const resetPasswordSchema = z
   .object({
-    password: z
-      .string()
-      .min(8, 'Minimum 8 characters')
-      .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
-      .regex(/[a-z]/, 'Must contain at least one lowercase letter')
-      .regex(/[0-9]/, 'Must contain at least one number'),
+    password: passwordSchema,
     confirm_password: z.string(),
   })
   .refine((d) => d.password === d.confirm_password, {
@@ -65,6 +67,50 @@ export const resetPasswordSchema = z
   })
 
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
+
+// ─── Change password (Account settings) ───────────────────────────────────
+
+export const changePasswordSchema = z
+  .object({
+    current_password: z.string().min(1, 'Current password is required'),
+    new_password: passwordSchema,
+    confirm_password: z.string(),
+  })
+  .refine((d) => d.new_password === d.confirm_password, {
+    message: "Passwords don't match",
+    path: ['confirm_password'],
+  })
+  .refine((d) => d.new_password !== d.current_password, {
+    message: 'New password must be different from your current password',
+    path: ['new_password'],
+  })
+
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>
+
+// ─── Account recovery (capture-only) ───────────────────────────────────────
+
+export const accountRecoverySchema = z.object({
+  full_name: z
+    .string()
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name is too long'),
+  phone: z
+    .string()
+    .regex(CAMEROON_PHONE_RE, 'Enter a valid Cameroon number: +237 6X XXX XXXX'),
+  alternative_email: z.string().email('Please enter a valid email address'),
+  note: z.string().max(500, 'Note cannot exceed 500 characters').optional().or(z.literal('')),
+})
+
+export type AccountRecoveryInput = z.infer<typeof accountRecoverySchema>
+
+// ─── Confirm email (click-to-confirm, bot/scanner-resistant) ──────────────
+
+export const confirmEmailSchema = z.object({
+  token_hash: z.string().min(1, 'Missing confirmation token'),
+  type: z.enum(['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'] as const),
+})
+
+export type ConfirmEmailInput = z.infer<typeof confirmEmailSchema>
 
 // â”€â”€â”€ Phone â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 

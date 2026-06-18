@@ -9,7 +9,7 @@ import {
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { formatRelative } from '@/lib/utils/format'
+import { formatRelative, getInitial } from '@/lib/utils/format'
 import { ROLE_LABELS } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
 import type { ProfileRow } from '@/types/database'
@@ -372,22 +372,22 @@ export default async function AdminPage() {
             {recentUsers.map((u) => (
               <div key={u.id} className="flex items-center gap-3 px-4 py-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-xs">
-                  {(u.full_name ?? u.email ?? '?')[0].toUpperCase()}
+                  {getInitial(u.full_name, u.display_name, u.email)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">
-                    {u.full_name ?? u.display_name ?? 'Unnamed user'}
+                    {u.full_name?.trim() || u.display_name?.trim() || 'Unnamed user'}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                  <p className="text-xs text-muted-foreground truncate">{u.email?.trim() || 'No email'}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <Badge variant="secondary" className="text-xs capitalize">
-                    {ROLE_LABELS[u.role as UserRole] ?? u.role}
+                    {ROLE_LABELS[u.role as UserRole] ?? u.role ?? 'Unknown role'}
                   </Badge>
                   <span
                     className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${ACCOUNT_STATUS_COLOR[u.account_status] ?? 'bg-gray-100 text-gray-700'}`}
                   >
-                    {u.account_status.replace(/_/g, ' ')}
+                    {u.account_status?.replace(/_/g, ' ') ?? 'unknown'}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground shrink-0 hidden sm:block">
