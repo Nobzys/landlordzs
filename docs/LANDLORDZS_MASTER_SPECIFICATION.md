@@ -1035,9 +1035,27 @@ All other roles denied at every layer (frontend, server action, RLS).
   be run as requested. This is a pre-existing gap, not introduced by this
   task.
 
-**Rollback:** see implementation report delivered alongside this entry for
-exact rollback steps (revert commit + optionally re-run the inverse RLS
-migration).
+**Test results:**
+- `npx vitest run` — 12/12 passed (all 9 roles, inactive-account,
+  unauthenticated, missing-profile cases).
+- `npx tsc --noEmit` — clean.
+- `npm run build` — succeeded, all 45 routes compiled including
+  `/seller/listings/new`.
+- `npm run lint` — could not run; no ESLint config exists anywhere in
+  this repo (pre-existing gap, not introduced by this task).
+
+**Rollback:**
+- Code: `git revert 160b724`
+- Database (only if the migration was applied via `supabase db push`):
+  ```sql
+  DROP POLICY IF EXISTS "prop_insert" ON public.properties;
+  CREATE POLICY "prop_insert" ON public.properties
+    FOR INSERT WITH CHECK (
+      owner_id = auth.uid()
+      AND (public.is_admin() OR public.has_active_account())
+    );
+  DROP FUNCTION IF EXISTS public.is_property_creator();
+  ```
 
 ## Phase 1 — Sprint 1, Task 2: Password complexity enforcement (2026-06-18)
 
@@ -1105,5 +1123,16 @@ fully covered.
    message shown; sign out and back in with the new password to confirm
    it actually changed.
 
-**Rollback:** revert this commit. No migrations were added, so no database
-rollback is required.
+**Test results:**
+- `npx vitest run` — 32/32 passed (12 from Task 1's suite + 20 new:
+  per-rule complexity checks, schema refine checks, and
+  `updatePassword`'s validation/re-auth/Supabase-error branches).
+- `npx tsc --noEmit` — clean.
+- `npm run build` — succeeded, all 45 routes compiled.
+- `npm run lint` — could not run; no ESLint config exists anywhere in
+  this repo (same pre-existing gap noted in Task 1).
+
+**Rollback:**
+- Code: `git revert 7adbf84`
+- No database changes were made in this task, so no database rollback
+  step is required.
