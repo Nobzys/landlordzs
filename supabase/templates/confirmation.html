@@ -1,0 +1,11 @@
+<h2>Confirm your email</h2>
+
+<p>Follow this link to confirm your email and activate your LANDLORDZS account:</p>
+
+<p>
+  <a href="{{ .SiteURL }}/confirm?token_hash={{ .TokenHash }}&type=signup&email={{ .Email }}">
+    Confirm my email
+  </a>
+</p>
+
+<p>If you didn't create an account, you can safely ignore this email.</p>

@@ -29,6 +29,7 @@ export const AUTH_ROUTES = [
   '/forgot-password',
   '/reset-password',
   '/verify-email',
+  '/confirm',
 ]
 
 export const ROLE_PROTECTED_PREFIXES: Record<string, UserRole[]> = {

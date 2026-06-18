@@ -140,6 +140,12 @@ export function LoginForm() {
             Create one free
           </Link>
         </p>
+
+        <p className="text-center text-xs text-muted-foreground">
+          <Link href="/account-recovery" className="hover:text-primary hover:underline">
+            Need help accessing your account?
+          </Link>
+        </p>
       </form>
     </Form>
   )

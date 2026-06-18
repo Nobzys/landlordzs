@@ -11,6 +11,8 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   changePasswordSchema,
+  accountRecoverySchema,
+  confirmEmailSchema,
   phoneSchema,
   phoneOtpSchema,
   basicProfileSchema,
@@ -27,6 +29,8 @@ import type {
   ForgotPasswordInput,
   ResetPasswordInput,
   ChangePasswordInput,
+  AccountRecoveryInput,
+  ConfirmEmailInput,
   PhoneInput,
   PhoneOtpInput,
   BasicProfileInput,
@@ -34,6 +38,15 @@ import type {
   VendorProfileInput,
   ProfessionalProfileInput,
 } from '@/lib/validations/auth'
+
+const PASSWORD_RESET_RATE_LIMIT       = 3
+const PASSWORD_RESET_RATE_WINDOW_MS   = 15 * 60 * 1000
+
+async function getClientIp(): Promise<string> {
+  const headersList = await headers()
+  const forwarded = headersList.get('x-forwarded-for')
+  return forwarded?.split(',')[0]?.trim() ?? 'unknown'
+}
 
 // â”€â”€â”€ Sign In â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -95,9 +108,12 @@ export async function signIn(
 // â”€â”€â”€ Sign Up â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // Returns skipVerification:true when the admin path is used (no email needed).
+// Returns sessionCreated:true when Supabase itself returned a session (i.e.
+// the project's "Confirm email" setting is OFF) — only then is the user
+// actually authenticated by signUp().
 export async function signUp(
   data: RegisterInput
-): Promise<ActionResult<{ email: string; skipVerification?: boolean }>> {
+): Promise<ActionResult<{ email: string; skipVerification?: boolean; sessionCreated?: boolean; redirectTo?: string }>> {
   const parsed = registerSchema.safeParse(data)
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message }
@@ -105,9 +121,16 @@ export async function signUp(
 
   const { full_name, email, password, role } = parsed.data
 
-  // â”€â”€ Path A: admin creates user pre-confirmed (SUPABASE_SERVICE_ROLE_KEY set) â”€
+  // â”€â”€ Path A: admin creates user pre-confirmed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // No verification email is sent. User can sign in immediately after.
-  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  // Explicit opt-in only: SUPABASE_SERVICE_ROLE_KEY is configured in every
+  // real deployment (it's required for RBAC, password-reset rate limiting,
+  // and account recovery elsewhere in this codebase), so gating on its mere
+  // presence silently bypassed Supabase's "Confirm email" project setting
+  // for every signup. SKIP_EMAIL_VERIFICATION must be explicitly set to
+  // 'true' (e.g. for local/dev environments without SMTP configured) — it
+  // must never be set in production.
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.SKIP_EMAIL_VERIFICATION === 'true') {
     const admin = createAdminClient()
     const { data: created, error: adminErr } = await admin.auth.admin.createUser({
       email,
@@ -155,14 +178,25 @@ export async function signUp(
   const siteOrigin = `${proto}://${host}`
 
   const supabase = await createClient()
+  const emailRedirectTo = `${siteOrigin}/api/auth/callback?next=/onboarding`
   const { data: authData, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${siteOrigin}/api/auth/callback?next=/onboarding`,
+      emailRedirectTo,
       data: { full_name, role },
     },
   })
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[signUp] Supabase response:', {
+      emailRedirectTo,
+      user:               authData.user,
+      session:            authData.session,
+      confirmation_sent_at: authData.user?.confirmation_sent_at ?? null,
+      error:               error ? { message: error.message, status: error.status, code: error.code } : null,
+    })
+  }
 
   if (error) {
     if (error.message.toLowerCase().includes('already registered')) {
@@ -175,9 +209,18 @@ export async function signUp(
     return { error: 'Registration failed. Please try again.' }
   }
 
-  // Best-effort profile upsert â€” the DB trigger also creates this row,
-  // but doing it here ensures it exists before the verification email arrives.
-  // Silently skipped when service role key is absent (covered by DB trigger).
+  // The existence of `authData.user` is NOT a successful login â€” Supabase
+  // always returns a user object on signUp, confirmed or not. Only a
+  // non-null `session` means Supabase actually authenticated the request,
+  // which only happens when the project's "Confirm email" setting is OFF.
+  if (authData.session) {
+    revalidatePath('/', 'layout')
+    return { success: true, data: { email, sessionCreated: true, redirectTo: '/onboarding' } }
+  }
+
+  // session is null â€” email confirmation is required. Do not redirect to
+  // the dashboard and do not create a session manually; the user must
+  // click the link Supabase just emailed them.
   return { success: true, data: { email } }
 }
 
@@ -200,8 +243,33 @@ export async function forgotPassword(
     return { error: parsed.error.issues[0].message }
   }
 
+  const email = parsed.data.email
+  const ip    = await getClientIp()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const admin = createAdminClient() as any
+  const since = new Date(Date.now() - PASSWORD_RESET_RATE_WINDOW_MS).toISOString()
+
+  const [{ count: emailCount }, { count: ipCount }] = await Promise.all([
+    admin
+      .from('password_reset_attempts')
+      .select('id', { count: 'exact', head: true })
+      .eq('email', email)
+      .gte('created_at', since),
+    admin
+      .from('password_reset_attempts')
+      .select('id', { count: 'exact', head: true })
+      .eq('ip', ip)
+      .gte('created_at', since),
+  ])
+
+  if ((emailCount ?? 0) >= PASSWORD_RESET_RATE_LIMIT || (ipCount ?? 0) >= PASSWORD_RESET_RATE_LIMIT) {
+    return { error: 'Too many requests. Please try again later.' }
+  }
+
+  await admin.from('password_reset_attempts').insert({ email, ip })
+
   const supabase = await createClient()
-  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${APP_URL}/api/auth/callback?next=/reset-password`,
   })
 
@@ -211,7 +279,57 @@ export async function forgotPassword(
   return { success: true }
 }
 
-// â”€â”€â”€ Reset Password â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Account Recovery (capture-only) ───────────────────────────────────────
+
+export async function submitAccountRecoveryRequest(
+  data: AccountRecoveryInput
+): Promise<ActionResult> {
+  const parsed = accountRecoverySchema.safeParse(data)
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const admin = createAdminClient() as any
+  const { error } = await admin.from('account_recovery_requests').insert({
+    full_name:         parsed.data.full_name,
+    phone:              parsed.data.phone,
+    alternative_email:  parsed.data.alternative_email,
+    note:               parsed.data.note || null,
+  })
+
+  if (error) return { error: 'Could not submit your request. Please try again.' }
+
+  return { success: true }
+}
+
+// â”€â”€â”€ Confirm Email (click-to-confirm, bot/scanner-resistant) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Called only when the user explicitly clicks the "Confirm my email" button
+// on /confirm — never on page load. Bare GET requests to that page (which is
+// all an automated email-security scanner/prefetcher issues) render the
+// button but never call this action, so the token is never consumed before
+// a real human clicks it. Compare to the old flow, where the email linked
+// directly to Supabase's own auto-consuming verify endpoint.
+export async function confirmEmail(
+  data: ConfirmEmailInput
+): Promise<ActionResult<{ redirectTo: string }>> {
+  const parsed = confirmEmailSchema.safeParse(data)
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.verifyOtp(parsed.data)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath('/', 'layout')
+  return { success: true, data: { redirectTo: '/onboarding' } }
+}
+
+// â”€â”€â”€ Reset Password â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function resetPassword(
   data: ResetPasswordInput
@@ -313,13 +431,20 @@ export async function resendVerificationEmail(email: string): Promise<ActionResu
   }
 
   const supabase = await createClient()
+  const emailRedirectTo = `${APP_URL}/api/auth/callback?next=/onboarding`
   const { error } = await supabase.auth.resend({
     type:  'signup',
     email,
-    options: {
-      emailRedirectTo: `${APP_URL}/api/auth/callback?next=/onboarding`,
-    },
+    options: { emailRedirectTo },
   })
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[resendVerificationEmail] Supabase response:', {
+      email,
+      emailRedirectTo,
+      error: error ? { message: error.message, status: error.status, code: error.code } : null,
+    })
+  }
 
   if (error) return { error: error.message }
   return { success: true }

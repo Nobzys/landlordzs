@@ -33,7 +33,10 @@ export async function middleware(request: NextRequest) {
   // ── Auth routes — redirect authenticated users away ───────────────────────
   const isAuthRoute = AUTH_ROUTES.some((r) => pathname.startsWith(r))
   if (isAuthRoute) {
-    if (user) {
+    // /reset-password is reached via a password-recovery session established
+    // by the callback exchange — that session IS the "authenticated" state
+    // this block would otherwise bounce away. Let it render regardless.
+    if (user && !pathname.startsWith('/reset-password')) {
       // Fetch minimal profile to know where to send them
       const { data: profile } = await (supabase as any)
         .from('profiles')

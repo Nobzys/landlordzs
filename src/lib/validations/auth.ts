@@ -87,6 +87,31 @@ export const changePasswordSchema = z
 
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>
 
+// ─── Account recovery (capture-only) ───────────────────────────────────────
+
+export const accountRecoverySchema = z.object({
+  full_name: z
+    .string()
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name is too long'),
+  phone: z
+    .string()
+    .regex(CAMEROON_PHONE_RE, 'Enter a valid Cameroon number: +237 6X XXX XXXX'),
+  alternative_email: z.string().email('Please enter a valid email address'),
+  note: z.string().max(500, 'Note cannot exceed 500 characters').optional().or(z.literal('')),
+})
+
+export type AccountRecoveryInput = z.infer<typeof accountRecoverySchema>
+
+// ─── Confirm email (click-to-confirm, bot/scanner-resistant) ──────────────
+
+export const confirmEmailSchema = z.object({
+  token_hash: z.string().min(1, 'Missing confirmation token'),
+  type: z.enum(['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'] as const),
+})
+
+export type ConfirmEmailInput = z.infer<typeof confirmEmailSchema>
+
 // â”€â”€â”€ Phone â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const phoneSchema = z.object({
