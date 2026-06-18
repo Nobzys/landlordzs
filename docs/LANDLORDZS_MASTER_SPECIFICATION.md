@@ -963,3 +963,78 @@ Always audit first.
 Always follow this specification.
 
 Always treat this document as permanent project memory.
+
+---
+
+# IMPLEMENTATION LOG
+
+This section records decisions made while implementing the roadmap above. It
+is appended to, never rewritten — each entry reflects the codebase state and
+decisions at the time it was written.
+
+## Phase 1 — Sprint 1, Task 1: RBAC enforcement for property creation (2026-06-18)
+
+**Branch:** `feature/phase1-sprint1-security`
+
+**Scope:** Restrict property listing creation to `seller`, `agent`, `admin`.
+All other roles denied at every layer (frontend, server action, RLS).
+
+**Decisions:**
+
+- The spec names `seller, agent, developer, property_manager` as allowed
+  listing creators. This codebase's `UserRole` type (`src/types/auth.ts`)
+  only has 9 roles and does not include `developer` or `property_manager` —
+  those exist only on a different branch (`feature/payment-gateways-clean`).
+  Per explicit instruction, this task enforces only the 3 roles that exist
+  today (`seller`, `agent`, `admin`). Adding `developer`/`property_manager`
+  is deferred to a separate future task — it requires its own scope (enum
+  migration, registration/onboarding, nav config) and is not "RBAC
+  enforcement" of an existing role set.
+- Phase 1 keeps one role per account (`profiles.role` remains a single
+  enum column). Multi-role accounts are explicitly out of scope until a
+  later phase, per instruction.
+- Found and fixed a pre-existing routing bug while implementing this task:
+  `middleware.ts` mapped `/seller` to the single role `'seller'`, which
+  silently blocked `agent` users from ever reaching `/seller/listings/new`
+  even though the page itself, the nav config, and the permission map all
+  already intended to allow agents. `ROLE_PROTECTED_PREFIXES` was
+  generalized from `Record<string, UserRole>` to `Record<string, UserRole[]>`
+  to fix this without changing behavior for any other role-protected prefix.
+- No test framework existed in this repo prior to this task. Vitest was
+  added (scoped to this feature) as the project's first test runner,
+  per explicit approval, rather than building an ad-hoc DB-dependent
+  script. `npm test` now runs `vitest run`.
+
+**Changed files:**
+- `src/lib/actions/properties.ts` — `createProperty` now fetches `role`
+  alongside `account_status` and rejects any role outside
+  `PROPERTY_CREATOR_ROLES` before the existing active-account check.
+- `src/lib/utils/constants.ts` — added `PROPERTY_CREATOR_ROLES = ['seller',
+  'agent', 'admin']`; changed `ROLE_PROTECTED_PREFIXES` to
+  `Record<string, UserRole[]>`, allowing `/seller` to admit both `seller`
+  and `agent`.
+- `middleware.ts` — updated the route-protection check to use
+  `allowedRoles.includes(userRole)` instead of single-role equality.
+- `supabase/migrations/20260618000001_property_creator_rbac.sql` — new
+  additive migration: adds `is_property_creator()` (SECURITY DEFINER helper,
+  same pattern as `is_admin()`/`has_active_account()`), tightens the
+  `prop_insert` RLS policy to require it. No tables/columns dropped, no
+  data modified — only the `prop_insert` policy object is replaced.
+- `src/lib/actions/properties.rbac.test.ts` — new Vitest unit tests
+  covering all 9 roles (3 allowed, 6 denied), inactive-account-but-allowed-role,
+  unauthenticated, and missing-profile cases.
+- `package.json`, `vitest.config.ts` — added Vitest as a dev dependency
+  and test runner config (alias `@/` → `src/`, matching `tsconfig.json`).
+
+**Deferred (explicitly out of scope for this task):**
+- `updateProperty`, `deleteProperty`, `publishProperty` in the same file
+  still rely on ownership only, with no role re-check. Same class of gap
+  as the one just fixed; left untouched per "Task 1 only" instruction.
+- Adding `developer`/`property_manager` roles (see Decisions above).
+- No ESLint is configured anywhere in this repo; `npm run lint` could not
+  be run as requested. This is a pre-existing gap, not introduced by this
+  task.
+
+**Rollback:** see implementation report delivered alongside this entry for
+exact rollback steps (revert commit + optionally re-run the inverse RLS
+migration).

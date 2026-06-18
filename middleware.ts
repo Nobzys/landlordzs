@@ -98,14 +98,14 @@ export async function middleware(request: NextRequest) {
   )
 
   if (matchedPrefix) {
-    const requiredRole = ROLE_PROTECTED_PREFIXES[matchedPrefix] as UserRole
+    const allowedRoles = ROLE_PROTECTED_PREFIXES[matchedPrefix] as UserRole[]
     const userRole = profile.role as UserRole
 
     // Admin can access all dashboards
     if (userRole === 'admin') return response
 
-    // User accessing their own dashboard — allowed
-    if (userRole === requiredRole) return response
+    // User's role is allowed for this prefix
+    if (allowedRoles.includes(userRole)) return response
 
     // Wrong role — redirect to their own dashboard
     const ownDashboard = ROLE_DASHBOARDS[userRole] ?? '/account'
