@@ -40,6 +40,7 @@ export interface ProfileRow {
   bio: string | null
   is_verified: boolean
   is_premium: boolean
+  is_public: boolean
   account_status: DbAccountStatus
   onboarding_completed: boolean
   expo_push_token: string | null

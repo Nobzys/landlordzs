@@ -73,6 +73,7 @@ export async function getServerProfile(): Promise<Profile | null> {
     bio:                  null,
     is_verified:          false,
     is_premium:           false,
+    is_public:            true,
     account_status:       'active'          as Profile['account_status'],
     onboarding_completed: false,
     expo_push_token:      null,

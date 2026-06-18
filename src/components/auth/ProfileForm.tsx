@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CAMEROON_CITIES, ROLE_SPECIALIZATIONS, ROLE_LABELS } from '@/lib/utils/constants'
+import { getCapabilities } from '@/lib/config/roleCapabilities'
 import type { Profile, UserRole } from '@/types/auth'
 
 // ─── Shared ───────────────────────────────────────────────────────────────────
@@ -453,8 +454,7 @@ export function ProfileForm({
   vendorProfile,
   professionalProfile,
 }: ProfileFormProps) {
-  const PROF_ROLES = ['contractor', 'engineer', 'architect', 'lawyer'] as const
-  const isProfessional = PROF_ROLES.includes(profile.role as (typeof PROF_ROLES)[number])
+  const isProfessional = getCapabilities(profile.role).profileTable === 'professional_profiles'
 
   return (
     <div className="space-y-6">

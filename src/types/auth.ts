@@ -48,6 +48,7 @@ export interface Profile {
   bio: string | null
   is_verified: boolean
   is_premium: boolean
+  is_public: boolean
   account_status: AccountStatus
   onboarding_completed: boolean
   expo_push_token: string | null
