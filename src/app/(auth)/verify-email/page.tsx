@@ -12,9 +12,10 @@ interface VerifyEmailPageProps {
 }
 
 export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageProps) {
-  const params   = await searchParams
-  const verified = params.verified === 'true'
-  const hasError = !!params.error
+  const params       = await searchParams
+  const verified     = params.verified === 'true'
+  const hasError     = !!params.error
+  const wrongBrowser = params.error === 'same_browser_required'
 
   if (verified) {
     return (
@@ -44,7 +45,9 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
         <div className="space-y-1">
           <h1 className="text-2xl font-bold">Verification failed</h1>
           <p className="text-sm text-muted-foreground">
-            The verification link may have expired or already been used.
+            {wrongBrowser
+              ? "This link only works in the browser where you signed up. Open it there, or request a new one below."
+              : 'The verification link may have expired or already been used.'}
           </p>
         </div>
         <div className="space-y-2">

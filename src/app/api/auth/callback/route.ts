@@ -57,12 +57,22 @@ export async function GET(request: Request) {
 
   if (error) {
     console.error('[auth/callback] exchangeCodeForSession failed:', error.message)
+
+    // This route only ever sees PKCE-style ?code= links (password reset,
+    // OAuth). The verifier paired with that code lives in a cookie set on
+    // the device/browser that originated the request — opening the link
+    // somewhere else (a different browser, a mail app's in-app browser, a
+    // link-scanning proxy) always fails with this exact error. It's not an
+    // expired/reused link, so don't tell the user that.
+    const wrongBrowser = error.code === 'pkce_code_verifier_not_found'
+    const reason = wrongBrowser ? 'same_browser_required' : 'link_expired'
+
     if (next === '/reset-password') {
-      const dest = `${origin}/forgot-password?error=link_expired`
+      const dest = `${origin}/forgot-password?error=${reason}`
       if (DEBUG) console.log('[auth/callback] redirecting to:', dest)
       return NextResponse.redirect(dest)
     }
-    const dest = `${origin}/verify-email?error=${encodeURIComponent(error.message)}`
+    const dest = `${origin}/verify-email?error=${wrongBrowser ? reason : encodeURIComponent(error.message)}`
     if (DEBUG) console.log('[auth/callback] redirecting to:', dest)
     return NextResponse.redirect(dest)
   }

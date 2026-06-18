@@ -18,9 +18,14 @@ import {
 export function ForgotPasswordForm() {
   const searchParams = useSearchParams()
   const linkExpired   = searchParams.get('error') === 'link_expired'
+  const wrongBrowser  = searchParams.get('error') === 'same_browser_required'
 
   const [serverError, setServerError] = useState<string | null>(
-    linkExpired ? 'Your reset link expired or was already used. Please request a new one.' : null
+    wrongBrowser
+      ? 'This reset link only works in the browser where you requested it. Open it there, or request a new one below.'
+      : linkExpired
+        ? 'Your reset link expired or was already used. Please request a new one.'
+        : null
   )
   const [sent,        setSent]        = useState(false)
   const [sentEmail,   setSentEmail]   = useState('')
