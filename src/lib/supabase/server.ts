@@ -72,6 +72,7 @@ export async function getServerProfile(): Promise<Profile | null> {
     avatar_url:           null,
     bio:                  null,
     is_verified:          false,
+    verified_at:          null,
     is_premium:           false,
     is_public:            true,
     profile_view_count:   0,

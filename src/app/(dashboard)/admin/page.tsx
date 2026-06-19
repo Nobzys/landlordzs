@@ -7,6 +7,7 @@ import {
   UserPlus, CheckCircle2, XCircle, ClipboardList,
 } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
+import { getKycStatusCounts } from '@/lib/data/verifications'
 import { Button } from '@/components/ui/button'
 import { LinkButton } from '@/components/ui/link-button'
 import { Badge } from '@/components/ui/badge'
@@ -78,6 +79,7 @@ export default async function AdminPage() {
     { data: rawMetrics },
     { data: recentUsers },
     { data: activityRows },
+    kycCounts,
   ] = await Promise.all([
     // Single RPC replaces 11 individual COUNT queries + N+1 status scan
     (supabase as any).rpc('get_admin_metrics') as Promise<{ data: AdminMetrics | null }>,
@@ -87,6 +89,11 @@ export default async function AdminPage() {
       .order('created_at', { ascending: false })
       .limit(8) as unknown as Promise<{ data: ProfileRow[] | null }>,
     (supabase as any).rpc('get_admin_activity', { p_limit: 15 }) as Promise<{ data: ActivityRow[] | null }>,
+    // Pending USER/identity verifications (kyc_records) — distinct from
+    // m.verif_pending below, which is PROPERTY listing verification
+    // (property_verifications). Same helper /admin/verifications uses, so
+    // this number and that page's "Pending" tab count can never drift apart.
+    getKycStatusCounts(),
   ])
 
   const m: AdminMetrics = rawMetrics ?? {
@@ -168,7 +175,7 @@ export default async function AdminPage() {
       )}
 
       {/* Primary stats */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md">
           <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Users className="h-4 w-4" />
@@ -198,7 +205,21 @@ export default async function AdminPage() {
           <p className={`text-3xl font-bold ${m.verif_pending > 0 ? 'text-amber-700' : ''}`}>
             {m.verif_pending}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">Verifications</p>
+          <p className="text-xs text-muted-foreground mt-1">Property listings</p>
+        </Link>
+
+        <Link
+          href="/admin/verifications"
+          className={`rounded-xl border p-5 shadow-sm transition-shadow hover:shadow-md ${kycCounts.pending > 0 ? 'border-amber-200 bg-amber-50 hover:bg-amber-100' : 'bg-card hover:bg-accent'}`}
+        >
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
+            <ShieldCheck className="h-4 w-4" />
+            <span className="text-xs font-medium">Pending Verifications</span>
+          </div>
+          <p className={`text-3xl font-bold ${kycCounts.pending > 0 ? 'text-amber-700' : ''}`}>
+            {kycCounts.pending}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">User identity (KYC)</p>
         </Link>
 
         <Link
@@ -291,9 +312,14 @@ export default async function AdminPage() {
 
       {/* Verification metrics */}
       <div className="rounded-xl border p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold">Verification Overview</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold">Property Verification Overview</h2>
+          </div>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/admin/verifications">User verifications →</Link>
+          </Button>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Link

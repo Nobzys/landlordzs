@@ -1,13 +1,16 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Users, ChevronLeft } from 'lucide-react'
+import { Users, ChevronLeft, Eye, ShieldCheck } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { adminSuspendAccount, adminActivateAccount, adminAssignRole } from '@/lib/actions/auth'
+import { adminVerifyManually } from '@/lib/actions/admin-moderation'
 import { Button } from '@/components/ui/button'
+import { LinkButton } from '@/components/ui/link-button'
 import { Badge } from '@/components/ui/badge'
+import { Avatar } from '@/components/ui/avatar'
 import { ROLE_LABELS } from '@/types/auth'
-import { formatRelative, getInitial } from '@/lib/utils/format'
+import { formatRelative } from '@/lib/utils/format'
 import type { UserRole } from '@/types/auth'
 import type { ProfileRow } from '@/types/database'
 
@@ -79,9 +82,9 @@ export default async function AdminUsersPage({
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Button asChild variant="ghost" size="icon" className="-ml-2">
-          <Link href="/admin"><ChevronLeft className="h-4 w-4" /></Link>
-        </Button>
+        <LinkButton href="/admin" variant="ghost" size="icon" className="-ml-2">
+          <ChevronLeft className="h-4 w-4" />
+        </LinkButton>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Users className="h-5 w-5" />
@@ -151,23 +154,25 @@ export default async function AdminUsersPage({
       <div className="rounded-xl border overflow-hidden">
         {users.length > 0 ? (
           <div className="divide-y">
-            {users.map((u) => (
-              <div key={u.id} className="flex items-center gap-3 px-4 py-3 flex-wrap sm:flex-nowrap">
-                {/* Avatar */}
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                  {getInitial(u.full_name, u.display_name, u.email)}
-                </div>
+            {users.map((u) => {
+              const displayName = u.full_name?.trim() || u.display_name?.trim() || u.email?.trim() || 'Unnamed'
+              return (
+              <div key={u.id} className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center">
+                {/* Avatar — links to User Details, never Preview */}
+                <Link href={`/admin/users/${u.id}`} className="shrink-0">
+                  <Avatar src={u.avatar_url} name={displayName} />
+                </Link>
 
                 {/* Identity */}
-                <div className="flex-1 min-w-0">
+                <Link href={`/admin/users/${u.id}`} className="flex-1 min-w-0 hover:underline">
                   <p className="text-sm font-medium truncate">
-                    {u.full_name?.trim() || u.display_name?.trim() || 'Unnamed'}
+                    {displayName}
                     {u.is_verified && (
                       <span className="ml-1.5 text-blue-600 text-xs">✓</span>
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">{u.email?.trim() || 'No email'}</p>
-                </div>
+                </Link>
 
                 {/* Badges */}
                 <div className="flex items-center gap-2 shrink-0">
@@ -188,9 +193,48 @@ export default async function AdminUsersPage({
                   {formatRelative(u.created_at)}
                 </p>
 
-                {/* Actions */}
+                {/* Actions column */}
                 <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                  {/* Role assignment */}
+                  <LinkButton href={`/admin/users/${u.id}`} variant="outline" size="sm" className="text-xs px-2">
+                    View Details
+                  </LinkButton>
+
+                  <LinkButton href={`/admin/users/${u.id}/preview`} variant="outline" size="sm" className="text-xs px-2">
+                    <Eye className="h-3 w-3 mr-1" /> Preview Dashboard
+                  </LinkButton>
+
+                  {!u.is_verified && (
+                    <form action={async () => {
+                      'use server'
+                      await adminVerifyManually(u.id)
+                    }}>
+                      <Button type="submit" variant="outline" size="sm" className="text-xs px-2 text-blue-600 border-blue-200 hover:bg-blue-50">
+                        <ShieldCheck className="h-3 w-3 mr-1" /> Verify User
+                      </Button>
+                    </form>
+                  )}
+
+                  {u.account_status === 'suspended' ? (
+                    <form action={async () => {
+                      'use server'
+                      await adminActivateAccount(u.id)
+                    }}>
+                      <Button type="submit" variant="outline" size="sm" className="text-xs px-2 text-green-600 border-green-200 hover:bg-green-50">
+                        Activate
+                      </Button>
+                    </form>
+                  ) : u.id !== profile.id ? (
+                    <form action={async () => {
+                      'use server'
+                      await adminSuspendAccount(u.id, 'Admin action')
+                    }}>
+                      <Button type="submit" variant="outline" size="sm" className="text-xs px-2 text-red-600 border-red-200 hover:bg-red-50">
+                        Suspend User
+                      </Button>
+                    </form>
+                  ) : null}
+
+                  {/* Role assignment (existing, kept alongside the new actions) */}
                   {u.id !== profile.id && (() => {
                     const userId = u.id
                     return (
@@ -218,40 +262,10 @@ export default async function AdminUsersPage({
                       </form>
                     )
                   })()}
-
-                  {/* Suspend / Activate */}
-                  {u.account_status === 'suspended' ? (
-                    <form action={async () => {
-                      'use server'
-                      await adminActivateAccount(u.id)
-                    }}>
-                      <Button
-                        type="submit"
-                        variant="outline"
-                        size="sm"
-                        className="text-green-600 border-green-200 hover:bg-green-50"
-                      >
-                        Activate
-                      </Button>
-                    </form>
-                  ) : u.id !== profile.id ? (
-                    <form action={async () => {
-                      'use server'
-                      await adminSuspendAccount(u.id, 'Admin action')
-                    }}>
-                      <Button
-                        type="submit"
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 border-red-200 hover:bg-red-50"
-                      >
-                        Suspend
-                      </Button>
-                    </form>
-                  ) : null}
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
           <div className="text-center py-12 text-muted-foreground">
@@ -269,14 +283,14 @@ export default async function AdminUsersPage({
           </p>
           <div className="flex gap-2">
             {page > 1 && (
-              <Button asChild variant="outline" size="sm">
-                <Link href={buildUrl({ page: String(page - 1) })}>Previous</Link>
-              </Button>
+              <LinkButton href={buildUrl({ page: String(page - 1) })} variant="outline" size="sm">
+                Previous
+              </LinkButton>
             )}
             {page < totalPages && (
-              <Button asChild variant="outline" size="sm">
-                <Link href={buildUrl({ page: String(page + 1) })}>Next</Link>
-              </Button>
+              <LinkButton href={buildUrl({ page: String(page + 1) })} variant="outline" size="sm">
+                Next
+              </LinkButton>
             )}
           </div>
         </div>

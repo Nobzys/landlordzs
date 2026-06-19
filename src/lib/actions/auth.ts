@@ -823,6 +823,16 @@ export async function submitKycDocuments(data: {
   })
 
   if (error) return { error: error.message }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from('notifications').insert({
+    user_id:    user.id,
+    type:       'verification',
+    title:      'Verification submitted',
+    body:       'Your documents have been submitted for review. We will notify you once a decision has been made.',
+    action_url: '/account/profile',
+  })
+
   return { success: true }
 }
 
