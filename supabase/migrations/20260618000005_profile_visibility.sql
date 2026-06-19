@@ -7,3 +7,5 @@
 
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT TRUE;
+
+SELECT pg_notify('pgrst', 'reload schema');

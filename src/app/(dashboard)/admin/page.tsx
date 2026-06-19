@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
+import { LinkButton } from '@/components/ui/link-button'
 import { Badge } from '@/components/ui/badge'
 import { formatRelative, getInitial } from '@/lib/utils/format'
 import { ROLE_LABELS } from '@/types/auth'
@@ -105,16 +106,24 @@ export default async function AdminPage() {
   const ROLE_ORDER: UserRole[] = ['buyer', 'seller', 'agent', 'vendor', 'contractor', 'engineer', 'architect', 'lawyer', 'admin']
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <ShieldCheck className="h-6 w-6" />
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <ShieldCheck className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+            <p className="text-sm text-muted-foreground">Platform overview and management</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Platform overview and management</p>
-        </div>
+        {needsAttention > 0 && (
+          <LinkButton href="/admin/properties" size="sm">
+            <ClipboardList className="h-4 w-4 mr-2" />
+            Review Pending Items
+          </LinkButton>
+        )}
       </div>
 
       {/* Needs Attention banner */}
@@ -159,9 +168,9 @@ export default async function AdminPage() {
       )}
 
       {/* Primary stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl border p-4">
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Users className="h-4 w-4" />
             <span className="text-xs font-medium">Total Users</span>
           </div>
@@ -169,8 +178,8 @@ export default async function AdminPage() {
           <p className="text-xs text-muted-foreground mt-1">+{m.new_users_today} today</p>
         </div>
 
-        <div className="rounded-xl border p-4">
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+        <div className="rounded-xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Building2 className="h-4 w-4" />
             <span className="text-xs font-medium">Total Properties</span>
           </div>
@@ -180,9 +189,9 @@ export default async function AdminPage() {
 
         <Link
           href="/admin/properties"
-          className={`rounded-xl border p-4 transition-colors ${m.verif_pending > 0 ? 'border-amber-200 bg-amber-50 hover:bg-amber-100' : 'hover:bg-accent'}`}
+          className={`rounded-xl border p-5 shadow-sm transition-shadow hover:shadow-md ${m.verif_pending > 0 ? 'border-amber-200 bg-amber-50 hover:bg-amber-100' : 'bg-card hover:bg-accent'}`}
         >
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Building2 className="h-4 w-4" />
             <span className="text-xs font-medium">Pending Approvals</span>
           </div>
@@ -194,9 +203,9 @@ export default async function AdminPage() {
 
         <Link
           href="/admin/payouts"
-          className={`rounded-xl border p-4 transition-colors ${m.pending_payouts > 0 ? 'border-amber-200 bg-amber-50 hover:bg-amber-100' : 'hover:bg-accent'}`}
+          className={`rounded-xl border p-5 shadow-sm transition-shadow hover:shadow-md ${m.pending_payouts > 0 ? 'border-amber-200 bg-amber-50 hover:bg-amber-100' : 'bg-card hover:bg-accent'}`}
         >
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Wallet className="h-4 w-4" />
             <span className="text-xs font-medium">Pending Payouts</span>
           </div>
@@ -208,12 +217,12 @@ export default async function AdminPage() {
       </div>
 
       {/* Secondary stats row */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Link
           href="/admin/escrow"
-          className={`rounded-xl border p-4 transition-colors ${m.disputed_escrows > 0 ? 'border-red-200 bg-red-50 hover:bg-red-100' : 'hover:bg-accent'}`}
+          className={`rounded-xl border p-5 shadow-sm transition-shadow hover:shadow-md ${m.disputed_escrows > 0 ? 'border-red-200 bg-red-50 hover:bg-red-100' : 'bg-card hover:bg-accent'}`}
         >
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Scale className="h-4 w-4" />
             <span className="text-xs font-medium">Disputed</span>
           </div>
@@ -225,9 +234,9 @@ export default async function AdminPage() {
 
         <Link
           href="/admin/reports"
-          className={`rounded-xl border p-4 transition-colors ${m.pending_reports > 0 ? 'border-amber-200 bg-amber-50 hover:bg-amber-100' : 'hover:bg-accent'}`}
+          className={`rounded-xl border p-5 shadow-sm transition-shadow hover:shadow-md ${m.pending_reports > 0 ? 'border-amber-200 bg-amber-50 hover:bg-amber-100' : 'bg-card hover:bg-accent'}`}
         >
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Flag className="h-4 w-4" />
             <span className="text-xs font-medium">Reports</span>
           </div>
@@ -237,8 +246,8 @@ export default async function AdminPage() {
           <p className="text-xs text-muted-foreground mt-1">Pending review</p>
         </Link>
 
-        <div className="rounded-xl border p-4">
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+        <div className="rounded-xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <TrendingUp className="h-4 w-4" />
             <span className="text-xs font-medium">Commissions</span>
           </div>
@@ -246,8 +255,8 @@ export default async function AdminPage() {
           <p className="text-xs text-muted-foreground mt-1">Pending payment</p>
         </div>
 
-        <div className="rounded-xl border p-4">
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+        <div className="rounded-xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Users className="h-4 w-4" />
             <span className="text-xs font-medium">New Today</span>
           </div>

@@ -49,6 +49,7 @@ export interface Profile {
   is_verified: boolean
   is_premium: boolean
   is_public: boolean
+  profile_view_count: number
   account_status: AccountStatus
   onboarding_completed: boolean
   expo_push_token: string | null

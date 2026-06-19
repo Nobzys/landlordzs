@@ -3,6 +3,7 @@ import { UserCircle, MapPin, Calendar, Star, Building2, Briefcase } from 'lucide
 import { VerifiedBadge } from '@/components/trust/VerifiedBadge'
 import { ReportProfileButton } from '@/components/trust/ReportProfileButton'
 import { ReviewList } from '@/components/reviews/ReviewList'
+import { PropertyImagePlaceholder } from '@/components/properties/PropertyImagePlaceholder'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ROLE_LABELS } from '@/lib/utils/constants'
@@ -126,10 +127,14 @@ export function PublicProfileView({ data, viewerId }: PublicProfileViewProps) {
                 const cover = item.images.find((img) => img.is_cover) ?? item.images[0]
                 return (
                   <div key={item.id} className="rounded-lg border overflow-hidden">
-                    {cover && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={cover.url} alt={item.title} className="h-40 w-full object-cover" />
-                    )}
+                    <div className="relative h-40 w-full">
+                      {cover ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={cover.url} alt={item.title} className="h-40 w-full object-cover" />
+                      ) : (
+                        <PropertyImagePlaceholder />
+                      )}
+                    </div>
                     <div className="p-3">
                       <p className="text-sm font-medium">{item.title}</p>
                       {item.description && (

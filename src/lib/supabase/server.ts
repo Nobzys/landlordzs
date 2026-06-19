@@ -74,6 +74,7 @@ export async function getServerProfile(): Promise<Profile | null> {
     is_verified:          false,
     is_premium:           false,
     is_public:            true,
+    profile_view_count:   0,
     account_status:       'active'          as Profile['account_status'],
     onboarding_completed: false,
     expo_push_token:      null,

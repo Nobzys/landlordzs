@@ -81,7 +81,7 @@ export default async function ProfilePage() {
     needsVerification && profile.account_status === 'pending_verification'
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+    <div className="w-full max-w-3xl px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Pending verification banner */}
       {showPendingBanner && (
         <div className="flex items-start justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4">

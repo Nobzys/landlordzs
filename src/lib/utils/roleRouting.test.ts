@@ -28,6 +28,7 @@ function makeProfile(overrides: Partial<Profile>): Profile {
     is_verified: false,
     is_premium: false,
     is_public: true,
+    profile_view_count: 0,
     account_status: 'active',
     onboarding_completed: true,
     expo_push_token: null,

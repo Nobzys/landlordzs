@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { PropertyPriceTag } from './PropertyPriceTag'
 import { FavoriteButton } from './FavoriteButton'
 import { ShareButton } from './ShareButton'
+import { PropertyImagePlaceholder } from './PropertyImagePlaceholder'
 import { cn } from '@/lib/utils/cn'
 import { formatArea, formatRelative } from '@/lib/utils/format'
 import type { PropertyWithImages } from '@/types/property'
@@ -49,9 +50,7 @@ export function PropertyCard({ property, className }: PropertyCardProps) {
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-muted">
-            <span className="text-sm text-muted-foreground">No image</span>
-          </div>
+          <PropertyImagePlaceholder />
         )}
 
         {/* Listing type + featured badges */}

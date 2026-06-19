@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { Plus, Eye, Edit, Trash2, ToggleRight, ShieldCheck } from 'lucide-react'
+import { Plus, Eye, Edit, Trash2, ToggleRight, ShieldCheck, Building2, Heart, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LinkButton } from '@/components/ui/link-button'
 import { Badge } from '@/components/ui/badge'
+import { EmptyState } from '@/components/ui/empty-state'
+import { MetricsGrid } from '@/components/dashboard/MetricsGrid'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { deleteProperty, publishProperty, requestVerification } from '@/lib/actions/properties'
 import { requireActiveProfile } from '@/lib/utils/account-status'
@@ -26,6 +28,27 @@ async function getMyListings(): Promise<PropertyRow[]> {
   return data ?? []
 }
 
+async function getSellerMetrics(userId: string, listings: PropertyRow[]) {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any
+  const propertyIds = listings.map((p) => p.id)
+
+  const [favoritesRes, messagesRes] = await Promise.all([
+    propertyIds.length > 0
+      ? sb.from('property_favorites').select('id', { count: 'exact', head: true }).in('property_id', propertyIds)
+      : Promise.resolve({ count: 0 }),
+    sb.from('conversation_participants').select('conversation_id', { count: 'exact', head: true }).eq('user_id', userId).is('left_at', null),
+  ])
+
+  return {
+    activeListings: listings.filter((p) => p.status === 'active').length,
+    totalViews: listings.reduce((sum, p) => sum + (p.view_count ?? 0), 0),
+    favoritesReceived: favoritesRes.count ?? 0,
+    messages: messagesRes.count ?? 0,
+  }
+}
+
 const STATUS_BADGE: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   draft:          { label: 'Draft',        variant: 'secondary' },
   pending_review: { label: 'Pending',      variant: 'outline' },
@@ -46,9 +69,10 @@ export default async function SellerListingsPage() {
   requireActiveProfile(profile)
 
   const listings = await getMyListings()
+  const metrics = await getSellerMetrics(profile.id, listings)
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">My Listings</h1>
@@ -56,16 +80,26 @@ export default async function SellerListingsPage() {
         </div>
         <LinkButton href="/seller/listings/new">
           <Plus className="h-4 w-4 mr-2" />
-          New Listing
+          Post Property
         </LinkButton>
       </div>
 
+      <MetricsGrid
+        metrics={[
+          { icon: Building2, label: 'Active Listings', value: metrics.activeListings },
+          { icon: Eye, label: 'Total Views', value: metrics.totalViews },
+          { icon: Heart, label: 'Favorites Received', value: metrics.favoritesReceived },
+          { icon: MessageSquare, label: 'Messages', value: metrics.messages },
+        ]}
+      />
+
       {listings.length === 0 ? (
-        <div className="text-center py-16 border rounded-xl text-muted-foreground">
-          <p className="font-medium mb-1">No listings yet</p>
-          <p className="text-sm mb-4">Create your first property listing to start selling or renting.</p>
-          <LinkButton href="/seller/listings/new">Create Listing</LinkButton>
-        </div>
+        <EmptyState
+          icon={Building2}
+          title="You haven't created any listings yet."
+          ctaLabel="Create your first listing"
+          ctaHref="/seller/listings/new"
+        />
       ) : (
         <div className="space-y-3">
           {listings.map(p => {

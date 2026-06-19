@@ -41,6 +41,7 @@ export interface ProfileRow {
   is_verified: boolean
   is_premium: boolean
   is_public: boolean
+  profile_view_count: number
   account_status: DbAccountStatus
   onboarding_completed: boolean
   expo_push_token: string | null

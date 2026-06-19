@@ -7,7 +7,7 @@ import type { UserRole } from '@/types/auth'
 // or `phone` — so a public page can never leak contact details regardless of
 // what other code touches this table later.
 const PUBLIC_PROFILE_COLS =
-  'id, full_name, display_name, avatar_url, bio, city, role, is_verified, is_public, created_at'
+  'id, full_name, display_name, avatar_url, bio, city, role, is_verified, is_public, profile_view_count, created_at'
 
 export interface PublicReviewItem {
   id: string
@@ -69,6 +69,10 @@ export async function getPublicProfile(id: string): Promise<PublicProfileData | 
 
   const capabilities = getCapabilities(profile.role as UserRole)
   if (!capabilities.hasPublicProfile) return null
+
+  if (viewer?.id !== profile.id) {
+    void sb.rpc('increment_profile_views', { profile_id: id })
+  }
 
   const [extensionRes, reviewsRes, portfolioRes, propertiesRes] = await Promise.all([
     capabilities.profileTable
