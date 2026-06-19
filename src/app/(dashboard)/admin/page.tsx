@@ -8,7 +8,6 @@ import {
 } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { getKycStatusCounts } from '@/lib/data/verifications'
-import { Button } from '@/components/ui/button'
 import { LinkButton } from '@/components/ui/link-button'
 import { Badge } from '@/components/ui/badge'
 import { formatRelative, getInitial } from '@/lib/utils/format'
@@ -151,24 +150,24 @@ export default async function AdminPage() {
           </div>
           <div className="flex gap-2 shrink-0 flex-wrap">
             {m.verif_pending > 0 && (
-              <Button asChild size="sm" variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
-                <Link href="/admin/properties">Review</Link>
-              </Button>
+              <LinkButton href="/admin/properties" size="sm" variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
+                Review
+              </LinkButton>
             )}
             {m.pending_payouts > 0 && (
-              <Button asChild size="sm" variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
-                <Link href="/admin/payouts">Payouts</Link>
-              </Button>
+              <LinkButton href="/admin/payouts" size="sm" variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
+                Payouts
+              </LinkButton>
             )}
             {m.disputed_escrows > 0 && (
-              <Button asChild size="sm" variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
-                <Link href="/admin/escrow">Disputes</Link>
-              </Button>
+              <LinkButton href="/admin/escrow" size="sm" variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
+                Disputes
+              </LinkButton>
             )}
             {m.pending_reports > 0 && (
-              <Button asChild size="sm" variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
-                <Link href="/admin/reports">Reports</Link>
-              </Button>
+              <LinkButton href="/admin/reports" size="sm" variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
+                Reports
+              </LinkButton>
             )}
           </div>
         </div>
@@ -293,9 +292,7 @@ export default async function AdminPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
             <h2 className="text-sm font-semibold">Users by Role</h2>
           </div>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/admin/roles">Manage roles →</Link>
-          </Button>
+          <LinkButton href="/admin/roles" variant="ghost" size="sm">Manage roles →</LinkButton>
         </div>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
           {ROLE_ORDER.map((role) => {
@@ -317,9 +314,7 @@ export default async function AdminPage() {
             <Building2 className="h-4 w-4 text-muted-foreground" />
             <h2 className="text-sm font-semibold">Property Verification Overview</h2>
           </div>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/admin/verifications">User verifications →</Link>
-          </Button>
+          <LinkButton href="/admin/verifications" variant="ghost" size="sm">User verifications →</LinkButton>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Link
@@ -403,9 +398,7 @@ export default async function AdminPage() {
       <div className="rounded-xl border overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <h2 className="text-sm font-semibold">Recent Users</h2>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/admin/users">View all →</Link>
-          </Button>
+          <LinkButton href="/admin/users" variant="ghost" size="sm">View all →</LinkButton>
         </div>
         {recentUsers && recentUsers.length > 0 ? (
           <div className="divide-y">
@@ -445,67 +438,45 @@ export default async function AdminPage() {
       <div className="rounded-xl border p-4">
         <h2 className="text-sm font-semibold mb-3">Quick Actions</h2>
         <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/users">Manage Users</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/properties">
-              Review Properties
-              {m.verif_pending > 0 && (
-                <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
-                  {m.verif_pending > 9 ? '9+' : m.verif_pending}
-                </span>
-              )}
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/payouts">
-              Process Payouts
-              {m.pending_payouts > 0 && (
-                <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
-                  {m.pending_payouts > 9 ? '9+' : m.pending_payouts}
-                </span>
-              )}
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/escrow">
-              Escrow Disputes
-              {m.disputed_escrows > 0 && (
-                <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                  {m.disputed_escrows > 9 ? '9+' : m.disputed_escrows}
-                </span>
-              )}
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/reports">
-              Reports
-              {m.pending_reports > 0 && (
-                <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                  {m.pending_reports > 9 ? '9+' : m.pending_reports}
-                </span>
-              )}
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/commissions">Commissions</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/roles">Roles</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/analytics">Analytics</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/audit-logs">Audit Logs</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/settings">Settings</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/properties">Browse Marketplace</Link>
-          </Button>
+          <LinkButton href="/admin/users" variant="outline" size="sm">Manage Users</LinkButton>
+          <LinkButton href="/admin/properties" variant="outline" size="sm">
+            Review Properties
+            {m.verif_pending > 0 && (
+              <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
+                {m.verif_pending > 9 ? '9+' : m.verif_pending}
+              </span>
+            )}
+          </LinkButton>
+          <LinkButton href="/admin/payouts" variant="outline" size="sm">
+            Process Payouts
+            {m.pending_payouts > 0 && (
+              <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
+                {m.pending_payouts > 9 ? '9+' : m.pending_payouts}
+              </span>
+            )}
+          </LinkButton>
+          <LinkButton href="/admin/escrow" variant="outline" size="sm">
+            Escrow Disputes
+            {m.disputed_escrows > 0 && (
+              <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                {m.disputed_escrows > 9 ? '9+' : m.disputed_escrows}
+              </span>
+            )}
+          </LinkButton>
+          <LinkButton href="/admin/reports" variant="outline" size="sm">
+            Reports
+            {m.pending_reports > 0 && (
+              <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                {m.pending_reports > 9 ? '9+' : m.pending_reports}
+              </span>
+            )}
+          </LinkButton>
+          <LinkButton href="/admin/commissions" variant="outline" size="sm">Commissions</LinkButton>
+          <LinkButton href="/admin/roles" variant="outline" size="sm">Roles</LinkButton>
+          <LinkButton href="/admin/analytics" variant="outline" size="sm">Analytics</LinkButton>
+          <LinkButton href="/admin/audit-logs" variant="outline" size="sm">Audit Logs</LinkButton>
+          <LinkButton href="/admin/settings" variant="outline" size="sm">Settings</LinkButton>
+          <LinkButton href="/properties" variant="outline" size="sm">Browse Marketplace</LinkButton>
         </div>
       </div>
     </div>
