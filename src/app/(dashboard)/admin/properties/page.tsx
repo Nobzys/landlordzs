@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { Building2, ChevronLeft, CheckCircle2, XCircle, ExternalLink } from 'lucide-react'
+import { Building2, ChevronLeft, CheckCircle2, XCircle, ExternalLink, RotateCcw } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
-import { reviewVerification } from '@/lib/actions/properties'
+import { reviewVerification, adminRestoreToDraft } from '@/lib/actions/properties'
 import { Button } from '@/components/ui/button'
 import { LinkButton } from '@/components/ui/link-button'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +14,15 @@ const LISTING_COLOR: Record<string, string> = {
   sale:     'bg-blue-100 text-blue-700',
   rent:     'bg-emerald-100 text-emerald-700',
   shortlet: 'bg-amber-100 text-amber-700',
+}
+
+type RejectedPropertyRow = {
+  id: string
+  title: string
+  city: string
+  price: number
+  updated_at: string
+  owner: { full_name: string | null; display_name: string | null; email: string } | null
 }
 
 type VerificationRow = {
@@ -55,6 +64,18 @@ export default async function AdminPropertiesPage() {
     .limit(100)
 
   const verifications: VerificationRow[] = raw ?? []
+
+  const { data: rejectedRaw } = await (supabase as any)
+    .from('properties')
+    .select(`
+      id, title, city, price, updated_at,
+      owner:profiles!properties_owner_id_fkey ( full_name, display_name, email )
+    `)
+    .eq('status', 'rejected')
+    .order('updated_at', { ascending: false })
+    .limit(50)
+
+  const rejectedProperties: RejectedPropertyRow[] = rejectedRaw ?? []
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
@@ -167,6 +188,40 @@ export default async function AdminPropertiesPage() {
                     >
                       <XCircle className="h-3.5 w-3.5 mr-1.5" />
                       Reject
+                    </Button>
+                  </form>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Rejected properties — admins can restore to draft */}
+      {rejectedProperties.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold">Rejected Properties</h2>
+          {rejectedProperties.map((p) => {
+            const ownerName = p.owner?.full_name ?? p.owner?.display_name ?? p.owner?.email ?? 'Unknown'
+            return (
+              <div key={p.id} className="rounded-xl border bg-card p-4 flex items-center justify-between gap-4 flex-wrap">
+                <div className="space-y-1 flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm truncate">{p.title}</h3>
+                  <p className="text-xs text-muted-foreground capitalize">{p.city} · {formatXAF(p.price)}</p>
+                  <p className="text-xs text-muted-foreground">Owner: {ownerName} · Rejected {formatRelative(p.updated_at)}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <LinkButton variant="outline" size="sm" href={`/admin/properties/${p.id}`} target="_blank">
+                    <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                    View
+                  </LinkButton>
+                  <form action={async () => {
+                    'use server'
+                    await adminRestoreToDraft(p.id)
+                  }}>
+                    <Button type="submit" variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50">
+                      <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                      Restore to Draft
                     </Button>
                   </form>
                 </div>

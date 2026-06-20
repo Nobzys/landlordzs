@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, Circle } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
-import { ROLE_LABELS, PROFESSIONAL_ROLES } from '@/lib/utils/constants'
+import { ROLE_LABELS, APPROVAL_REQUIRED_ROLES } from '@/lib/utils/constants'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { BasicProfileStep } from './onboarding/BasicProfileStep'
 import { RoleProfileStep } from './onboarding/RoleProfileStep'
@@ -28,7 +28,10 @@ export function OnboardingFlow({ profile }: OnboardingFlowProps) {
   const [error, setError] = useState<string | null>(null)
 
   const role = profile?.role as UserRole | undefined
-  const isProfessional = role ? PROFESSIONAL_ROLES.includes(role as typeof PROFESSIONAL_ROLES[number]) : false
+  // Determines whether step 3 (KYC upload) runs. Must match
+  // APPROVAL_REQUIRED_ROLES, not PROFESSIONAL_ROLES — seller and vendor
+  // also require admin-approved verification before they can publish.
+  const isProfessional = role ? (APPROVAL_REQUIRED_ROLES as readonly string[]).includes(role) : false
   const totalSteps = isProfessional ? 3 : 2
 
   const handleNext = () => {

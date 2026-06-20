@@ -1,4 +1,5 @@
 import type { UserRole, CameroonCity } from '@/types/auth'
+import { VERIFICATION_BUCKET } from '@/lib/constants/storage'
 
 export { ROLE_DASHBOARDS, ROLE_LABELS, ROLE_DESCRIPTIONS, REGISTERABLE_ROLES } from '@/types/auth'
 
@@ -75,7 +76,7 @@ export const STORAGE_BUCKETS = {
   PROPERTY_IMAGES:   'property-images',
   PROPERTY_VIDEOS:   'property-videos',
   USER_AVATARS:      'user-avatars',
-  VERIFY_DOCS:       'verification-documents',
+  VERIFY_DOCS:       VERIFICATION_BUCKET,
   MARKETPLACE:       'marketplace-products',
   PORTFOLIOS:        'service-portfolios',
   FORUM_IMAGES:      'forum-images',
