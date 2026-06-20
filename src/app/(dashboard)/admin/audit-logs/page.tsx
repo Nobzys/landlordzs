@@ -7,6 +7,7 @@ import { LinkButton } from '@/components/ui/link-button'
 import { Badge } from '@/components/ui/badge'
 import { formatRelative } from '@/lib/utils/format'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Audit Logs — Admin' }
 
 type AdminLogRow = {

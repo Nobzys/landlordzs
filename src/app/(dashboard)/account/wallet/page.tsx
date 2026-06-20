@@ -8,6 +8,7 @@ import { WalletCard } from '@/components/payments/WalletCard'
 import { TransactionList } from '@/components/payments/TransactionList'
 import { WalletTopUpForm } from '@/components/payments/WalletTopUpForm'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'My Wallet' }
 
 export default async function WalletPage() {
