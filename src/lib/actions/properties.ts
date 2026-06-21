@@ -164,6 +164,10 @@ export async function publishProperty(
     .single()
   if (!property) return { error: 'Property not found' }
 
+  if (property.status === 'suspended') {
+    return { error: 'This property was suspended by an administrator and cannot be republished directly. Contact support.' }
+  }
+
   const targetStatus: PropertyStatus = publish ? 'active' : 'off_market'
   if (!canTransition(property.status as PropertyStatus, targetStatus)) {
     return { error: `Cannot change status from "${property.status}" to "${targetStatus}". Draft listings must be submitted for review first.` }
@@ -500,5 +504,100 @@ export async function adminRestoreToDraft(propertyId: string): Promise<ActionRes
   revalidatePath('/admin/properties')
   revalidatePath(`/admin/properties/${propertyId}`)
   revalidatePath(`/properties/${propertyId}`)
+  return { success: true }
+}
+
+// ─── Admin: suspend / restore (enforcement action, distinct from the ───────
+// seller-driven off_market in publishProperty) ───────────────────────────────
+
+export async function suspendProperty(propertyId: string, reason: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  const { data: callerProfile } = await (supabase as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions' }
+
+  const trimmedReason = reason.trim()
+  if (!trimmedReason) return { error: 'A suspension reason is required' }
+
+  const adminClient = createAdminClient()
+
+  const { data: property } = await (adminClient as any)
+    .from('properties')
+    .select('status')
+    .eq('id', propertyId)
+    .single()
+  if (!property) return { error: 'Property not found' }
+
+  if (!canTransition(property.status as PropertyStatus, 'suspended')) {
+    return { error: `Cannot suspend a property with status "${property.status}". Only active properties can be suspended.` }
+  }
+
+  const { error: updateError } = await (adminClient as any)
+    .from('properties')
+    .update({ status: 'suspended', suspension_reason: trimmedReason })
+    .eq('id', propertyId)
+  if (updateError) return { error: updateError.message }
+
+  await (adminClient as any).from('admin_logs').insert({
+    actor_id:    user.id,
+    action:      'suspend_property',
+    target_type: 'property',
+    target_id:   propertyId,
+    new_data:    { reason: trimmedReason },
+  })
+
+  revalidatePath('/admin/properties')
+  revalidatePath(`/admin/properties/${propertyId}`)
+  revalidatePath(`/properties/${propertyId}`)
+  revalidatePath('/seller/listings')
+  return { success: true }
+}
+
+export async function restoreSuspendedProperty(propertyId: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  const { data: callerProfile } = await (supabase as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions' }
+
+  const adminClient = createAdminClient()
+
+  const { data: property } = await (adminClient as any)
+    .from('properties')
+    .select('status')
+    .eq('id', propertyId)
+    .single()
+  if (!property) return { error: 'Property not found' }
+
+  if (property.status !== 'suspended') return { error: 'Property is not suspended' }
+
+  const { error: updateError } = await (adminClient as any)
+    .from('properties')
+    .update({ status: 'active', suspension_reason: null })
+    .eq('id', propertyId)
+  if (updateError) return { error: updateError.message }
+
+  await (adminClient as any).from('admin_logs').insert({
+    actor_id:    user.id,
+    action:      'restore_suspended_property',
+    target_type: 'property',
+    target_id:   propertyId,
+  })
+
+  revalidatePath('/admin/properties')
+  revalidatePath(`/admin/properties/${propertyId}`)
+  revalidatePath(`/properties/${propertyId}`)
+  revalidatePath('/seller/listings')
   return { success: true }
 }

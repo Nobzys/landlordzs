@@ -59,6 +59,7 @@ const STATUS_BADGE: Record<string, { label: string; variant: 'default' | 'second
   off_market:     { label: 'Off Market',   variant: 'secondary' },
   expired:        { label: 'Expired',      variant: 'secondary' },
   rejected:       { label: 'Rejected',     variant: 'destructive' },
+  suspended:      { label: 'Suspended',    variant: 'destructive' },
 }
 
 export default async function SellerListingsPage() {
@@ -118,44 +119,54 @@ export default async function SellerListingsPage() {
                   <p className="text-xs text-muted-foreground">
                     {p.view_count} views · {p.enquiry_count} inquiries
                   </p>
+                  {p.status === 'suspended' && (p as any).suspension_reason && (
+                    <p className="text-xs text-red-700 mt-1">
+                      Suspended by an administrator — {(p as any).suspension_reason}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
                   <LinkButton variant="ghost" size="icon" title="View" href={`/properties/${p.id}`}>
                     <Eye className="h-4 w-4" />
                   </LinkButton>
-                  <LinkButton variant="ghost" size="icon" title="Edit" href={`/seller/listings/${p.id}/edit`}>
-                    <Edit className="h-4 w-4" />
-                  </LinkButton>
 
-                  <form action={async () => {
-                    'use server'
-                    await publishProperty(p.id, p.status !== 'active')
-                  }}>
-                    <Button variant="ghost" size="icon" type="submit" title={p.status === 'active' ? 'Unpublish' : 'Publish'}>
-                      <ToggleRight className="h-4 w-4" />
-                    </Button>
-                  </form>
+                  {p.status !== 'suspended' && (
+                    <>
+                      <LinkButton variant="ghost" size="icon" title="Edit" href={`/seller/listings/${p.id}/edit`}>
+                        <Edit className="h-4 w-4" />
+                      </LinkButton>
 
-                  {(p.status === 'draft' || p.status === 'rejected') && (
-                    <form action={async () => {
-                      'use server'
-                      await requestVerification(p.id)
-                    }}>
-                      <Button variant="ghost" size="icon" type="submit" title="Submit for verification" className="text-blue-600 hover:text-blue-700">
-                        <ShieldCheck className="h-4 w-4" />
-                      </Button>
-                    </form>
+                      <form action={async () => {
+                        'use server'
+                        await publishProperty(p.id, p.status !== 'active')
+                      }}>
+                        <Button variant="ghost" size="icon" type="submit" title={p.status === 'active' ? 'Unpublish' : 'Publish'}>
+                          <ToggleRight className="h-4 w-4" />
+                        </Button>
+                      </form>
+
+                      {(p.status === 'draft' || p.status === 'rejected') && (
+                        <form action={async () => {
+                          'use server'
+                          await requestVerification(p.id)
+                        }}>
+                          <Button variant="ghost" size="icon" type="submit" title="Submit for verification" className="text-blue-600 hover:text-blue-700">
+                            <ShieldCheck className="h-4 w-4" />
+                          </Button>
+                        </form>
+                      )}
+
+                      <form action={async () => {
+                        'use server'
+                        await deleteProperty(p.id)
+                      }}>
+                        <Button variant="ghost" size="icon" type="submit" title="Delete" className="text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </form>
+                    </>
                   )}
-
-                  <form action={async () => {
-                    'use server'
-                    await deleteProperty(p.id)
-                  }}>
-                    <Button variant="ghost" size="icon" type="submit" title="Delete" className="text-destructive hover:text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </form>
                 </div>
               </div>
             )

@@ -22,6 +22,8 @@ describe('canTransition — valid transitions', () => {
     ['expired', 'archived'],
     ['rejected', 'draft'],
     ['rejected', 'archived'],
+    ['active', 'suspended'],
+    ['suspended', 'active'],
   ]
 
   for (const [from, to] of validCases) {
@@ -52,6 +54,10 @@ describe('canTransition — invalid transitions', () => {
     ['rejected', 'pending_review'],
     ['archived', 'draft'],          // terminal state
     ['archived', 'active'],
+    ['draft', 'suspended'],         // only an active listing can be suspended
+    ['pending_review', 'suspended'],
+    ['suspended', 'off_market'],    // suspended can only be restored to active
+    ['suspended', 'draft'],
   ]
 
   for (const [from, to] of invalidCases) {

@@ -73,11 +73,11 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
     !!user && (user.id === property.owner_id || user.id === property.agent_id)
 
   // active / under_offer  → publicly visible to everyone
-  // draft / pending_review → owner or assigned agent only
+  // draft / pending_review / suspended → owner or assigned agent only
   //   (RLS already enforces this at the DB layer; mirrored here for defence-in-depth)
   // sold / rented / off_market / expired / rejected → 404
   const PUBLIC_STATUSES = ['active', 'under_offer']
-  const OWNER_STATUSES  = ['draft', 'pending_review']
+  const OWNER_STATUSES  = ['draft', 'pending_review', 'suspended']
 
   if (!PUBLIC_STATUSES.includes(property.status)) {
     if (!OWNER_STATUSES.includes(property.status) || !isOwnerOrAgent) {
@@ -88,6 +88,12 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   return (
     <main className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {property.status === 'suspended' && (
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            This listing has been suspended by an administrator and is not visible to the public.
+            {(property as any).suspension_reason && <> Reason: {(property as any).suspension_reason}</>}
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main column */}
           <div className="lg:col-span-2 space-y-8">

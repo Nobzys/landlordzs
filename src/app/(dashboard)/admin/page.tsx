@@ -39,6 +39,7 @@ const STATUS_BADGE_COLOR: Record<string, string> = {
 type AdminMetrics = {
   users_by_role: Record<string, number>
   new_users_today: number
+  active_sellers: number
   props_by_status: Record<string, number>
   verif_pending: number
   verif_approved_today: number
@@ -96,7 +97,7 @@ export default async function AdminPage() {
   ])
 
   const m: AdminMetrics = rawMetrics ?? {
-    users_by_role: {}, new_users_today: 0,
+    users_by_role: {}, new_users_today: 0, active_sellers: 0,
     props_by_status: {},
     verif_pending: 0, verif_approved_today: 0, verif_rejected_today: 0, total_verified_props: 0,
     pending_payouts: 0, active_escrows: 0, disputed_escrows: 0,
@@ -305,6 +306,7 @@ export default async function AdminPage() {
             )
           })}
         </div>
+        <p className="text-xs text-muted-foreground">{m.active_sellers} active seller{m.active_sellers === 1 ? '' : 's'}</p>
       </div>
 
       {/* Verification metrics */}
