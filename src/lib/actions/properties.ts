@@ -400,24 +400,20 @@ export async function reviewVerification(
     return { error: `Cannot change property status from "${currentStatus ?? 'unknown'}" to "${targetStatus}"` }
   }
 
-  await (adminClient as any)
+  const { error: verifError } = await (adminClient as any)
     .from('property_verifications')
     .update({ status: action, verified_by: user.id, notes: notes ?? null, verified_at: new Date().toISOString() })
     .eq('id', verificationId)
+  if (verifError) return { error: verifError.message }
 
-  if (action === 'approved') {
-    await (adminClient as any)
-      .from('properties')
-      .update({ is_verified: true, status: 'active' })
-      .eq('id', verification.property_id)
-  } else {
-    await (adminClient as any)
-      .from('properties')
-      .update({ status: 'rejected' })
-      .eq('id', verification.property_id)
-  }
+  const { error: propError } = await (adminClient as any)
+    .from('properties')
+    .update(action === 'approved' ? { is_verified: true, status: 'active' } : { status: 'rejected' })
+    .eq('id', verification.property_id)
+  if (propError) return { error: propError.message }
 
   revalidatePath(`/properties/${verification.property_id}`)
+  revalidatePath('/admin/properties')
   return { success: true }
 }
 
