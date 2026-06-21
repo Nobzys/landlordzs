@@ -7,7 +7,8 @@ import type { UserRole } from '@/types/auth'
 // or `phone` — so a public page can never leak contact details regardless of
 // what other code touches this table later.
 const PUBLIC_PROFILE_COLS =
-  'id, full_name, display_name, avatar_url, bio, city, role, is_verified, is_public, profile_view_count, created_at'
+  'id, full_name, display_name, avatar_url, bio, city, role, is_verified, is_public, profile_view_count, created_at,' +
+  ' slug, cover_url, company_name, years_experience, specialties, service_areas, website_url, kyc_level'
 
 export interface PublicReviewItem {
   id: string
@@ -43,6 +44,15 @@ export interface PublicProfileData {
   role: UserRole
   is_verified: boolean
   created_at: string
+  // Public Profiles
+  slug: string | null
+  cover_url: string | null
+  company_name: string | null
+  years_experience: number | null
+  specialties: string[]
+  service_areas: string[]
+  website_url: string | null
+  kyc_level: string
   capabilities: RoleCapabilities
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   extension: Record<string, any> | null
@@ -137,10 +147,29 @@ export async function getPublicProfile(id: string): Promise<PublicProfileData | 
     role: profile.role,
     is_verified: profile.is_verified,
     created_at: profile.created_at,
+    slug: profile.slug,
+    cover_url: profile.cover_url,
+    company_name: profile.company_name,
+    years_experience: profile.years_experience,
+    specialties: profile.specialties ?? [],
+    service_areas: profile.service_areas ?? [],
+    website_url: profile.website_url,
+    kyc_level: profile.kyc_level,
     capabilities,
     extension: extensionRes.data ?? null,
     reviews: { items: reviewItems, average, count: reviewItems.length },
     portfolio,
     properties,
   }
+}
+
+// Resolves a slug to an id, then delegates to getPublicProfile() unchanged —
+// for the /u/[slug] route, kept separate so the existing /sellers/[id] and
+// /professionals/[id] routes (and their RPC view-count call) are untouched.
+export async function getPublicProfileBySlug(slug: string): Promise<PublicProfileData | null> {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (supabase as any).from('profiles').select('id').eq('slug', slug).maybeSingle()
+  if (!data) return null
+  return getPublicProfile(data.id)
 }

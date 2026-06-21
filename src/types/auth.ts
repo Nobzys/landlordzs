@@ -59,6 +59,17 @@ export interface Profile {
   rejected_at: string | null
   rejected_by: string | null
   registration_completed_at: string | null
+  // Public Profiles
+  slug: string | null
+  cover_url: string | null
+  company_name: string | null
+  years_experience: number | null
+  specialties: string[]
+  service_areas: string[]
+  website_url: string | null
+  kyc_level: string
+  email_visibility: boolean
+  phone_visibility: boolean
   created_at: string
   updated_at: string
 }

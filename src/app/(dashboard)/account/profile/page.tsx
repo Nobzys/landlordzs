@@ -10,6 +10,9 @@ import { AvatarUpload } from '@/components/trust/AvatarUpload'
 import { VerifiedBadge } from '@/components/trust/VerifiedBadge'
 import { ProfileVisibilityToggle } from '@/components/trust/ProfileVisibilityToggle'
 import { ProfileCompletenessCard } from '@/components/trust/ProfileCompletenessCard'
+import { CoverImageUpload } from '@/components/profile/CoverImageUpload'
+import { ContactVisibilityToggle } from '@/components/profile/ContactVisibilityToggle'
+import { PublicProfileFieldsForm } from '@/components/profile/PublicProfileFieldsForm'
 import { Button } from '@/components/ui/button'
 import { ROLE_LABELS, APPROVAL_REQUIRED_ROLES } from '@/lib/utils/constants'
 import { getCapabilities, getPublicProfilePath } from '@/lib/config/roleCapabilities'
@@ -102,6 +105,11 @@ export default async function ProfilePage() {
         </div>
       )}
 
+      {/* Cover image (public profile only) */}
+      {capabilities.hasPublicProfile && (
+        <CoverImageUpload userId={profile.id} currentUrl={profile.cover_url} />
+      )}
+
       {/* Header */}
       <div className="flex items-center gap-4">
         <AvatarUpload userId={profile.id} currentUrl={profile.avatar_url} name={profile.display_name ?? profile.full_name} />
@@ -113,13 +121,31 @@ export default async function ProfilePage() {
           <p className="text-sm text-muted-foreground">
             {ROLE_LABELS[profile.role]} · {profile.email}
           </p>
+          {capabilities.hasPublicProfile && profile.slug && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Public profile: <code className="text-foreground">/u/{profile.slug}</code>
+            </p>
+          )}
         </div>
       </div>
 
       <ProfileCompletenessCard result={completeness} />
 
       {capabilities.hasPublicProfile && (
-        <ProfileVisibilityToggle initialIsPublic={profile.is_public} publicProfilePath={publicProfilePath} />
+        <>
+          <ProfileVisibilityToggle initialIsPublic={profile.is_public} publicProfilePath={publicProfilePath} />
+          <ContactVisibilityToggle
+            initialEmailVisibility={profile.email_visibility}
+            initialPhoneVisibility={profile.phone_visibility}
+          />
+          <PublicProfileFieldsForm
+            companyName={profile.company_name}
+            yearsExperience={profile.years_experience}
+            specialties={profile.specialties}
+            serviceAreas={profile.service_areas}
+            websiteUrl={profile.website_url}
+          />
+        </>
       )}
 
       {capabilities.hasPortfolio && (

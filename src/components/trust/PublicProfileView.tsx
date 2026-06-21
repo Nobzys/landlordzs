@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { UserCircle, MapPin, Calendar, Star, Building2, Briefcase } from 'lucide-react'
+import { UserCircle, MapPin, Calendar, Star, Building2, Briefcase, Globe } from 'lucide-react'
 import { VerifiedBadge } from '@/components/trust/VerifiedBadge'
 import { ReportProfileButton } from '@/components/trust/ReportProfileButton'
 import { ReviewList } from '@/components/reviews/ReviewList'
@@ -21,10 +21,20 @@ export function PublicProfileView({ data, viewerId }: PublicProfileViewProps) {
   const isOwnProfile = viewerId === data.id
   const ext = data.extension
 
+  const companyName  = data.company_name ?? ext?.store_name ?? ext?.company_name ?? null
+  const experience   = data.years_experience ?? (typeof ext?.experience_years === 'number' ? ext.experience_years : null)
+  const specialties  = data.specialties.length > 0 ? data.specialties : (Array.isArray(ext?.specializations) ? ext.specializations : [])
+  const serviceAreas = data.service_areas.length > 0 ? data.service_areas : (Array.isArray(ext?.service_areas) ? ext.service_areas : [])
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
       {/* Header */}
-      <div className="rounded-2xl border p-6 space-y-4">
+      <div className="rounded-2xl border overflow-hidden">
+        {data.cover_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={data.cover_url} alt="" className="h-32 w-full object-cover" />
+        )}
+        <div className="p-6 space-y-4">
         <div className="flex items-start gap-4 flex-wrap">
           {data.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -36,11 +46,13 @@ export function PublicProfileView({ data, viewerId }: PublicProfileViewProps) {
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-bold">{name}</h1>
               <VerifiedBadge verified={data.is_verified} />
+              {data.kyc_level && data.kyc_level !== 'none' && (
+                <Badge variant="secondary" className="text-xs capitalize">{data.kyc_level} verified</Badge>
+              )}
             </div>
             <div className="flex items-center gap-2 flex-wrap mt-1">
               <Badge variant="outline">{ROLE_LABELS[data.role] ?? data.role}</Badge>
-              {ext?.store_name && <span className="text-sm text-muted-foreground">{ext.store_name}</span>}
-              {ext?.company_name && <span className="text-sm text-muted-foreground">{ext.company_name}</span>}
+              {companyName && <span className="text-sm text-muted-foreground">{companyName}</span>}
             </div>
             <div className="flex items-center gap-4 flex-wrap mt-2 text-xs text-muted-foreground">
               {data.city && (
@@ -56,6 +68,11 @@ export function PublicProfileView({ data, viewerId }: PublicProfileViewProps) {
                   {data.reviews.average.toFixed(1)} ({data.reviews.count} reviews)
                 </span>
               )}
+              {data.website_url && (
+                <a href={data.website_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-primary hover:underline">
+                  <Globe className="h-3.5 w-3.5" />Website
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -63,13 +80,14 @@ export function PublicProfileView({ data, viewerId }: PublicProfileViewProps) {
         {data.bio && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{data.bio}</p>}
 
         {/* Service areas (agent / professional roles) */}
-        {Array.isArray(ext?.service_areas) && ext.service_areas.length > 0 && (
+        {serviceAreas.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {ext.service_areas.map((area: string) => (
+            {serviceAreas.map((area: string) => (
               <Badge key={area} variant="secondary" className="text-xs capitalize">{area}</Badge>
             ))}
           </div>
         )}
+        </div>
       </div>
 
       {/* Role-specific stats */}
@@ -92,18 +110,18 @@ export function PublicProfileView({ data, viewerId }: PublicProfileViewProps) {
         {typeof ext?.project_count === 'number' && (
           <Stat icon={Briefcase} label="Projects" value={ext.project_count} />
         )}
-        {typeof ext?.experience_years === 'number' && ext.experience_years > 0 && (
-          <Stat icon={Calendar} label="Experience" value={`${ext.experience_years} yrs`} />
+        {typeof experience === 'number' && experience > 0 && (
+          <Stat icon={Calendar} label="Experience" value={`${experience} yrs`} />
         )}
       </div>
 
       {/* Specializations / certifications */}
-      {Array.isArray(ext?.specializations) && ext.specializations.length > 0 && (
+      {specialties.length > 0 && (
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-base">Services Offered</CardTitle></CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {ext.specializations.map((s: string) => (
+              {specialties.map((s: string) => (
                 <Badge key={s} variant="secondary" className="text-xs capitalize">{s.replace(/_/g, ' ')}</Badge>
               ))}
             </div>
