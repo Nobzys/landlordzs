@@ -7,7 +7,8 @@ import {
   UserPlus, CheckCircle2, XCircle, ClipboardList,
 } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
-import { Button } from '@/components/ui/button'
+import { getKycStatusCounts } from '@/lib/data/verifications'
+import { LinkButton } from '@/components/ui/link-button'
 import { Badge } from '@/components/ui/badge'
 import { formatRelative, getInitial } from '@/lib/utils/format'
 import { ROLE_LABELS } from '@/types/auth'
@@ -38,6 +39,7 @@ const STATUS_BADGE_COLOR: Record<string, string> = {
 type AdminMetrics = {
   users_by_role: Record<string, number>
   new_users_today: number
+  active_sellers: number
   props_by_status: Record<string, number>
   verif_pending: number
   verif_approved_today: number
@@ -77,6 +79,7 @@ export default async function AdminPage() {
     { data: rawMetrics },
     { data: recentUsers },
     { data: activityRows },
+    kycCounts,
   ] = await Promise.all([
     // Single RPC replaces 11 individual COUNT queries + N+1 status scan
     (supabase as any).rpc('get_admin_metrics') as Promise<{ data: AdminMetrics | null }>,
@@ -87,10 +90,15 @@ export default async function AdminPage() {
       .order('created_at', { ascending: false })
       .limit(8) as unknown as Promise<{ data: ProfileRow[] | null }>,
     (supabase as any).rpc('get_admin_activity', { p_limit: 15 }) as Promise<{ data: ActivityRow[] | null }>,
+    // Pending USER/identity verifications (kyc_records) — distinct from
+    // m.verif_pending below, which is PROPERTY listing verification
+    // (property_verifications). Same helper /admin/verifications uses, so
+    // this number and that page's "Pending" tab count can never drift apart.
+    getKycStatusCounts(),
   ])
 
   const m: AdminMetrics = rawMetrics ?? {
-    users_by_role: {}, new_users_today: 0,
+    users_by_role: {}, new_users_today: 0, active_sellers: 0,
     props_by_status: {},
     verif_pending: 0, verif_approved_today: 0, verif_rejected_today: 0, total_verified_props: 0,
     pending_payouts: 0, active_escrows: 0, disputed_escrows: 0,
@@ -106,16 +114,24 @@ export default async function AdminPage() {
   const ROLE_ORDER: UserRole[] = ['buyer', 'seller', 'agent', 'vendor', 'contractor', 'engineer', 'architect', 'lawyer', 'admin']
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <ShieldCheck className="h-6 w-6" />
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <ShieldCheck className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+            <p className="text-sm text-muted-foreground">Platform overview and management</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Platform overview and management</p>
-        </div>
+        {needsAttention > 0 && (
+          <LinkButton href="/admin/properties" size="sm">
+            <ClipboardList className="h-4 w-4 mr-2" />
+            Review Pending Items
+          </LinkButton>
+        )}
       </div>
 
       {/* Needs Attention banner */}
@@ -136,33 +152,33 @@ export default async function AdminPage() {
           </div>
           <div className="flex gap-2 shrink-0 flex-wrap">
             {m.verif_pending > 0 && (
-              <Button asChild size="sm" variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
-                <Link href="/admin/properties">Review</Link>
-              </Button>
+              <LinkButton href="/admin/properties" size="sm" variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
+                Review
+              </LinkButton>
             )}
             {m.pending_payouts > 0 && (
-              <Button asChild size="sm" variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
-                <Link href="/admin/payouts">Payouts</Link>
-              </Button>
+              <LinkButton href="/admin/payouts" size="sm" variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
+                Payouts
+              </LinkButton>
             )}
             {m.disputed_escrows > 0 && (
-              <Button asChild size="sm" variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
-                <Link href="/admin/escrow">Disputes</Link>
-              </Button>
+              <LinkButton href="/admin/escrow" size="sm" variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
+                Disputes
+              </LinkButton>
             )}
             {m.pending_reports > 0 && (
-              <Button asChild size="sm" variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
-                <Link href="/admin/reports">Reports</Link>
-              </Button>
+              <LinkButton href="/admin/reports" size="sm" variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
+                Reports
+              </LinkButton>
             )}
           </div>
         </div>
       )}
 
       {/* Primary stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl border p-4">
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className="rounded-xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Users className="h-4 w-4" />
             <span className="text-xs font-medium">Total Users</span>
           </div>
@@ -170,8 +186,8 @@ export default async function AdminPage() {
           <p className="text-xs text-muted-foreground mt-1">+{m.new_users_today} today</p>
         </div>
 
-        <div className="rounded-xl border p-4">
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+        <div className="rounded-xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Building2 className="h-4 w-4" />
             <span className="text-xs font-medium">Total Properties</span>
           </div>
@@ -181,23 +197,37 @@ export default async function AdminPage() {
 
         <Link
           href="/admin/properties"
-          className={`rounded-xl border p-4 transition-colors ${m.verif_pending > 0 ? 'border-amber-200 bg-amber-50 hover:bg-amber-100' : 'hover:bg-accent'}`}
+          className={`rounded-xl border p-5 shadow-sm transition-shadow hover:shadow-md ${m.verif_pending > 0 ? 'border-amber-200 bg-amber-50 hover:bg-amber-100' : 'bg-card hover:bg-accent'}`}
         >
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Building2 className="h-4 w-4" />
             <span className="text-xs font-medium">Pending Approvals</span>
           </div>
           <p className={`text-3xl font-bold ${m.verif_pending > 0 ? 'text-amber-700' : ''}`}>
             {m.verif_pending}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">Verifications</p>
+          <p className="text-xs text-muted-foreground mt-1">Property listings</p>
+        </Link>
+
+        <Link
+          href="/admin/verifications"
+          className={`rounded-xl border p-5 shadow-sm transition-shadow hover:shadow-md ${kycCounts.pending > 0 ? 'border-amber-200 bg-amber-50 hover:bg-amber-100' : 'bg-card hover:bg-accent'}`}
+        >
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
+            <ShieldCheck className="h-4 w-4" />
+            <span className="text-xs font-medium">Pending Verifications</span>
+          </div>
+          <p className={`text-3xl font-bold ${kycCounts.pending > 0 ? 'text-amber-700' : ''}`}>
+            {kycCounts.pending}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">User identity (KYC)</p>
         </Link>
 
         <Link
           href="/admin/payouts"
-          className={`rounded-xl border p-4 transition-colors ${m.pending_payouts > 0 ? 'border-amber-200 bg-amber-50 hover:bg-amber-100' : 'hover:bg-accent'}`}
+          className={`rounded-xl border p-5 shadow-sm transition-shadow hover:shadow-md ${m.pending_payouts > 0 ? 'border-amber-200 bg-amber-50 hover:bg-amber-100' : 'bg-card hover:bg-accent'}`}
         >
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Wallet className="h-4 w-4" />
             <span className="text-xs font-medium">Pending Payouts</span>
           </div>
@@ -209,12 +239,12 @@ export default async function AdminPage() {
       </div>
 
       {/* Secondary stats row */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Link
           href="/admin/escrow"
-          className={`rounded-xl border p-4 transition-colors ${m.disputed_escrows > 0 ? 'border-red-200 bg-red-50 hover:bg-red-100' : 'hover:bg-accent'}`}
+          className={`rounded-xl border p-5 shadow-sm transition-shadow hover:shadow-md ${m.disputed_escrows > 0 ? 'border-red-200 bg-red-50 hover:bg-red-100' : 'bg-card hover:bg-accent'}`}
         >
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Scale className="h-4 w-4" />
             <span className="text-xs font-medium">Disputed</span>
           </div>
@@ -226,9 +256,9 @@ export default async function AdminPage() {
 
         <Link
           href="/admin/reports"
-          className={`rounded-xl border p-4 transition-colors ${m.pending_reports > 0 ? 'border-amber-200 bg-amber-50 hover:bg-amber-100' : 'hover:bg-accent'}`}
+          className={`rounded-xl border p-5 shadow-sm transition-shadow hover:shadow-md ${m.pending_reports > 0 ? 'border-amber-200 bg-amber-50 hover:bg-amber-100' : 'bg-card hover:bg-accent'}`}
         >
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Flag className="h-4 w-4" />
             <span className="text-xs font-medium">Reports</span>
           </div>
@@ -238,8 +268,8 @@ export default async function AdminPage() {
           <p className="text-xs text-muted-foreground mt-1">Pending review</p>
         </Link>
 
-        <div className="rounded-xl border p-4">
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+        <div className="rounded-xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <TrendingUp className="h-4 w-4" />
             <span className="text-xs font-medium">Commissions</span>
           </div>
@@ -247,8 +277,8 @@ export default async function AdminPage() {
           <p className="text-xs text-muted-foreground mt-1">Pending payment</p>
         </div>
 
-        <div className="rounded-xl border p-4">
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+        <div className="rounded-xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Users className="h-4 w-4" />
             <span className="text-xs font-medium">New Today</span>
           </div>
@@ -264,9 +294,7 @@ export default async function AdminPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
             <h2 className="text-sm font-semibold">Users by Role</h2>
           </div>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/admin/roles">Manage roles →</Link>
-          </Button>
+          <LinkButton href="/admin/roles" variant="ghost" size="sm">Manage roles →</LinkButton>
         </div>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
           {ROLE_ORDER.map((role) => {
@@ -279,13 +307,17 @@ export default async function AdminPage() {
             )
           })}
         </div>
+        <p className="text-xs text-muted-foreground">{m.active_sellers} active seller{m.active_sellers === 1 ? '' : 's'}</p>
       </div>
 
       {/* Verification metrics */}
       <div className="rounded-xl border p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold">Verification Overview</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold">Property Verification Overview</h2>
+          </div>
+          <LinkButton href="/admin/verifications" variant="ghost" size="sm">User verifications →</LinkButton>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Link
@@ -369,9 +401,7 @@ export default async function AdminPage() {
       <div className="rounded-xl border overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <h2 className="text-sm font-semibold">Recent Users</h2>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/admin/users">View all →</Link>
-          </Button>
+          <LinkButton href="/admin/users" variant="ghost" size="sm">View all →</LinkButton>
         </div>
         {recentUsers && recentUsers.length > 0 ? (
           <div className="divide-y">
@@ -411,67 +441,45 @@ export default async function AdminPage() {
       <div className="rounded-xl border p-4">
         <h2 className="text-sm font-semibold mb-3">Quick Actions</h2>
         <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/users">Manage Users</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/properties">
-              Review Properties
-              {m.verif_pending > 0 && (
-                <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
-                  {m.verif_pending > 9 ? '9+' : m.verif_pending}
-                </span>
-              )}
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/payouts">
-              Process Payouts
-              {m.pending_payouts > 0 && (
-                <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
-                  {m.pending_payouts > 9 ? '9+' : m.pending_payouts}
-                </span>
-              )}
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/escrow">
-              Escrow Disputes
-              {m.disputed_escrows > 0 && (
-                <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                  {m.disputed_escrows > 9 ? '9+' : m.disputed_escrows}
-                </span>
-              )}
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/reports">
-              Reports
-              {m.pending_reports > 0 && (
-                <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                  {m.pending_reports > 9 ? '9+' : m.pending_reports}
-                </span>
-              )}
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/commissions">Commissions</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/roles">Roles</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/analytics">Analytics</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/audit-logs">Audit Logs</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/settings">Settings</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/properties">Browse Marketplace</Link>
-          </Button>
+          <LinkButton href="/admin/users" variant="outline" size="sm">Manage Users</LinkButton>
+          <LinkButton href="/admin/properties" variant="outline" size="sm">
+            Review Properties
+            {m.verif_pending > 0 && (
+              <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
+                {m.verif_pending > 9 ? '9+' : m.verif_pending}
+              </span>
+            )}
+          </LinkButton>
+          <LinkButton href="/admin/payouts" variant="outline" size="sm">
+            Process Payouts
+            {m.pending_payouts > 0 && (
+              <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
+                {m.pending_payouts > 9 ? '9+' : m.pending_payouts}
+              </span>
+            )}
+          </LinkButton>
+          <LinkButton href="/admin/escrow" variant="outline" size="sm">
+            Escrow Disputes
+            {m.disputed_escrows > 0 && (
+              <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                {m.disputed_escrows > 9 ? '9+' : m.disputed_escrows}
+              </span>
+            )}
+          </LinkButton>
+          <LinkButton href="/admin/reports" variant="outline" size="sm">
+            Reports
+            {m.pending_reports > 0 && (
+              <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                {m.pending_reports > 9 ? '9+' : m.pending_reports}
+              </span>
+            )}
+          </LinkButton>
+          <LinkButton href="/admin/commissions" variant="outline" size="sm">Commissions</LinkButton>
+          <LinkButton href="/admin/roles" variant="outline" size="sm">Roles</LinkButton>
+          <LinkButton href="/admin/analytics" variant="outline" size="sm">Analytics</LinkButton>
+          <LinkButton href="/admin/audit-logs" variant="outline" size="sm">Audit Logs</LinkButton>
+          <LinkButton href="/admin/settings" variant="outline" size="sm">Settings</LinkButton>
+          <LinkButton href="/properties" variant="outline" size="sm">Browse Marketplace</LinkButton>
         </div>
       </div>
     </div>

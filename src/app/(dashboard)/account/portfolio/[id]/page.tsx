@@ -31,7 +31,7 @@ export default async function PortfolioItemPage({ params }: PortfolioItemPagePro
   if (!item) notFound()
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+    <div className="w-full max-w-3xl px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <Link href="/account/portfolio" className="text-sm text-muted-foreground hover:underline flex items-center gap-1">
         <ArrowLeft className="h-3.5 w-3.5" />
         Back to portfolio

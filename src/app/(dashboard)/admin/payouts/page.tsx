@@ -7,6 +7,7 @@ import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { processPayoutAdmin, retryPayoutAdmin } from '@/lib/actions/payments'
 import { Button } from '@/components/ui/button'
+import { LinkButton } from '@/components/ui/link-button'
 import { formatXAF, formatRelative } from '@/lib/utils/format'
 
 export const metadata: Metadata = { title: 'Payout Management — Admin' }
@@ -83,9 +84,9 @@ export default async function AdminPayoutsPage({
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Button asChild variant="ghost" size="icon" className="-ml-2">
-          <Link href="/admin"><ChevronLeft className="h-4 w-4" /></Link>
-        </Button>
+        <LinkButton href="/admin" variant="ghost" size="icon" className="-ml-2">
+          <ChevronLeft className="h-4 w-4" />
+        </LinkButton>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
             <Wallet className="h-5 w-5" />

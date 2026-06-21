@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { Building2, ChevronLeft, CheckCircle2, XCircle, ExternalLink, Eye } from 'lucide-react'
+import { Building2, ChevronLeft, CheckCircle2, XCircle, ExternalLink, Eye, RotateCcw, Ban, Search } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
-import { reviewVerification } from '@/lib/actions/properties'
+import { reviewVerification, adminRestoreToDraft, suspendProperty, restoreSuspendedProperty } from '@/lib/actions/properties'
 import { Button } from '@/components/ui/button'
 import { LinkButton } from '@/components/ui/link-button'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +14,33 @@ const LISTING_COLOR: Record<string, string> = {
   sale:     'bg-blue-100 text-blue-700',
   rent:     'bg-emerald-100 text-emerald-700',
   shortlet: 'bg-amber-100 text-amber-700',
+}
+
+type RejectedPropertyRow = {
+  id: string
+  title: string
+  city: string
+  price: number
+  updated_at: string
+  owner: { full_name: string | null; display_name: string | null } | null
+}
+
+type SuspendedPropertyRow = {
+  id: string
+  title: string
+  city: string
+  price: number
+  updated_at: string
+  suspension_reason: string | null
+  owner: { full_name: string | null; display_name: string | null } | null
+}
+
+type ActivePropertyRow = {
+  id: string
+  title: string
+  city: string
+  price: number
+  owner: { full_name: string | null; display_name: string | null } | null
 }
 
 type VerificationRow = {
@@ -34,9 +61,16 @@ type VerificationRow = {
   } | null
 }
 
-export default async function AdminPropertiesPage() {
+export default async function AdminPropertiesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
   const profile = await getServerProfile()
   if (!profile || profile.role !== 'admin') redirect('/login')
+
+  const { q } = await searchParams
+  const activeSearch = q?.trim() || undefined
 
   const supabase = await createClient()
 
@@ -60,26 +94,70 @@ export default async function AdminPropertiesPage() {
 
   const verifications: VerificationRow[] = raw ?? []
 
+  // email is intentionally excluded — see the note on the pending-verifications
+  // query above; the same column-privilege restriction applies here.
+  const { data: rejectedRaw } = await (supabase as any)
+    .from('properties')
+    .select(`
+      id, title, city, price, updated_at,
+      owner:profiles!properties_owner_id_fkey ( full_name, display_name )
+    `)
+    .eq('status', 'rejected')
+    .order('updated_at', { ascending: false })
+    .limit(50)
+
+  const rejectedProperties: RejectedPropertyRow[] = rejectedRaw ?? []
+
+  const { data: suspendedRaw } = await (supabase as any)
+    .from('properties')
+    .select(`
+      id, title, city, price, updated_at, suspension_reason,
+      owner:profiles!properties_owner_id_fkey ( full_name, display_name )
+    `)
+    .eq('status', 'suspended')
+    .order('updated_at', { ascending: false })
+    .limit(50)
+
+  const suspendedProperties: SuspendedPropertyRow[] = suspendedRaw ?? []
+
+  let activeResults: ActivePropertyRow[] = []
+  if (activeSearch) {
+    const { data: activeRaw } = await (supabase as any)
+      .from('properties')
+      .select(`
+        id, title, city, price,
+        owner:profiles!properties_owner_id_fkey ( full_name, display_name )
+      `)
+      .eq('status', 'active')
+      .ilike('title', `%${activeSearch}%`)
+      .order('title', { ascending: true })
+      .limit(20)
+    activeResults = activeRaw ?? []
+  }
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <LinkButton variant="ghost" size="icon" className="-ml-2" href="/admin">
-          <ChevronLeft className="h-4 w-4" />
-        </LinkButton>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
-            <Building2 className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Property Verification</h1>
-            <p className="text-sm text-muted-foreground">
-              {verifications.length === 0
-                ? 'No pending submissions'
-                : `${verifications.length} pending review — oldest first`}
-            </p>
+          <LinkButton variant="ghost" size="icon" className="-ml-2" href="/admin">
+            <ChevronLeft className="h-4 w-4" />
+          </LinkButton>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+              <Building2 className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">Property Verification</h1>
+              <p className="text-sm text-muted-foreground">
+                {verifications.length === 0
+                  ? 'No pending submissions'
+                  : `${verifications.length} pending review — oldest first`}
+              </p>
+            </div>
           </div>
         </div>
+        <LinkButton href="/admin/properties/history" variant="outline" size="sm">View Moderation History</LinkButton>
       </div>
 
       {verifications.length === 0 ? (
@@ -183,6 +261,139 @@ export default async function AdminPropertiesPage() {
           })}
         </div>
       )}
+
+      {/* Rejected properties — admins can restore to draft */}
+      {rejectedProperties.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold">Rejected Properties</h2>
+          {rejectedProperties.map((p) => {
+            const ownerName = p.owner?.full_name ?? p.owner?.display_name ?? 'Unknown'
+            return (
+              <div key={p.id} className="rounded-xl border bg-card p-4 flex items-center justify-between gap-4 flex-wrap">
+                <div className="space-y-1 flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm truncate">{p.title}</h3>
+                  <p className="text-xs text-muted-foreground capitalize">{p.city} · {formatXAF(p.price)}</p>
+                  <p className="text-xs text-muted-foreground">Owner: {ownerName} · Rejected {formatRelative(p.updated_at)}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <LinkButton variant="outline" size="sm" href={`/admin/properties/${p.id}`} target="_blank">
+                    <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                    View
+                  </LinkButton>
+                  <form action={async () => {
+                    'use server'
+                    await adminRestoreToDraft(p.id)
+                  }}>
+                    <Button type="submit" variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50">
+                      <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                      Restore to Draft
+                    </Button>
+                  </form>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Suspended properties — admin enforcement action, restore returns to active */}
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold">Suspended Properties</h2>
+        {suspendedProperties.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No properties are currently suspended.</p>
+        ) : (
+          suspendedProperties.map((p) => {
+            const ownerName = p.owner?.full_name ?? p.owner?.display_name ?? 'Unknown'
+            return (
+              <div key={p.id} className="rounded-xl border bg-card p-4 flex items-center justify-between gap-4 flex-wrap">
+                <div className="space-y-1 flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm truncate">{p.title}</h3>
+                  <p className="text-xs text-muted-foreground capitalize">{p.city} · {formatXAF(p.price)}</p>
+                  <p className="text-xs text-muted-foreground">Owner: {ownerName} · Suspended {formatRelative(p.updated_at)}</p>
+                  {p.suspension_reason && (
+                    <p className="text-xs text-red-700">Reason: {p.suspension_reason}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <LinkButton variant="outline" size="sm" href={`/admin/properties/${p.id}`} target="_blank">
+                    <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                    View
+                  </LinkButton>
+                  <form action={async () => {
+                    'use server'
+                    await restoreSuspendedProperty(p.id)
+                  }}>
+                    <Button type="submit" variant="outline" size="sm" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50">
+                      <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                      Restore
+                    </Button>
+                  </form>
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      {/* Find an active property to suspend */}
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold">Suspend an Active Property</h2>
+        <form className="flex gap-2">
+          <input
+            name="q"
+            defaultValue={activeSearch ?? ''}
+            placeholder="Search active properties by title"
+            className="flex-1 rounded-md border px-3 py-1.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <Button type="submit" variant="outline" size="sm">
+            <Search className="h-3.5 w-3.5 mr-1.5" />
+            Search
+          </Button>
+        </form>
+
+        {activeSearch && activeResults.length === 0 && (
+          <p className="text-sm text-muted-foreground">No active properties match &quot;{activeSearch}&quot;.</p>
+        )}
+
+        {activeResults.map((p) => {
+          const ownerName = p.owner?.full_name ?? p.owner?.display_name ?? 'Unknown'
+          return (
+            <div key={p.id} className="rounded-xl border bg-card p-4 flex items-center justify-between gap-4 flex-wrap">
+              <div className="space-y-1 flex-1 min-w-0">
+                <h3 className="font-semibold text-sm truncate">{p.title}</h3>
+                <p className="text-xs text-muted-foreground capitalize">{p.city} · {formatXAF(p.price)}</p>
+                <p className="text-xs text-muted-foreground">Owner: {ownerName}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <LinkButton variant="outline" size="sm" href={`/admin/properties/${p.id}`} target="_blank">
+                  <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                  View
+                </LinkButton>
+                <form
+                  action={async (fd: FormData) => {
+                    'use server'
+                    const reason = (fd.get('reason') as string | null) ?? ''
+                    await suspendProperty(p.id, reason)
+                  }}
+                  className="flex gap-2"
+                >
+                  <input
+                    name="reason"
+                    required
+                    placeholder="Suspension reason (required)"
+                    className="min-w-0 rounded-md border px-3 py-1.5 text-xs bg-background
+                      placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                  <Button type="submit" variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50 shrink-0">
+                    <Ban className="h-3.5 w-3.5 mr-1.5" />
+                    Suspend
+                  </Button>
+                </form>
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

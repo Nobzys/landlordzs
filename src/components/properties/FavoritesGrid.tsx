@@ -1,10 +1,9 @@
 'use client'
 
 import { Heart } from 'lucide-react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { PropertyCard } from './PropertyCard'
 import { PropertyCardSkeleton } from './PropertyCardSkeleton'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useFavorites } from '@/hooks/properties/useFavorites'
 
 export function FavoritesGrid() {
@@ -28,14 +27,12 @@ export function FavoritesGrid() {
 
   if (!data || data.length === 0) {
     return (
-      <div className="text-center py-16 text-muted-foreground">
-        <Heart className="h-12 w-12 mx-auto mb-4 opacity-20" />
-        <p className="font-medium mb-1">No saved properties</p>
-        <p className="text-sm mb-4">Browse properties and tap the heart icon to save them here.</p>
-        <Button asChild variant="outline">
-          <Link href="/properties">Browse Properties</Link>
-        </Button>
-      </div>
+      <EmptyState
+        icon={Heart}
+        title="You haven't saved any properties yet."
+        ctaLabel="Browse properties"
+        ctaHref="/properties"
+      />
     )
   }
 

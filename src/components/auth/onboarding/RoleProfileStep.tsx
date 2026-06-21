@@ -40,14 +40,16 @@ export function RoleProfileStep({ role, isProfessional, onNext, onFinish, onErro
     case 'agent':
       return <AgentStep onNext={onNext} onFinish={onFinish} onError={onError} isProfessional={isProfessional} />
     case 'vendor':
-      return <VendorStep onFinish={onFinish} onError={onError} />
+      return <VendorStep onNext={onNext} onError={onError} />
     case 'contractor':
     case 'engineer':
     case 'architect':
     case 'lawyer':
       return <ProfessionalStep role={role} onNext={onNext} onError={onError} />
+    case 'seller':
+      return <SkipStep onNext={onNext} onFinish={onFinish} onError={onError} requiresVerification={isProfessional} />
     default:
-      return <SkipStep onFinish={onFinish} onError={onError} />
+      return <SkipStep onNext={onNext} onFinish={onFinish} onError={onError} requiresVerification={false} />
   }
 }
 
@@ -144,7 +146,7 @@ function AgentStep({
 
 // ─── Vendor ───────────────────────────────────────────────────────────────────
 
-function VendorStep({ onFinish, onError }: { onFinish: (r: string) => void; onError: (m: string) => void }) {
+function VendorStep({ onNext, onError }: { onNext: () => void; onError: (m: string) => void }) {
   const [isPending, startTransition] = useTransition()
 
   const form = useForm<VendorProfileInput>({
@@ -156,9 +158,7 @@ function VendorStep({ onFinish, onError }: { onFinish: (r: string) => void; onEr
     startTransition(async () => {
       const r1 = await completeVendorProfile(data)
       if (r1?.error) { onError(r1.error); return }
-      const r2 = await completeOnboarding()
-      if (r2?.error) { onError(r2.error); return }
-      onFinish(r2.data?.redirectTo ?? '/vendor')
+      onNext()
     })
   }
 
@@ -184,7 +184,7 @@ function VendorStep({ onFinish, onError }: { onFinish: (r: string) => void; onEr
           </FormItem>
         )} />
 
-        <SubmitButton isPending={isPending} label="Finish Setup" />
+        <SubmitButton isPending={isPending} label="Continue" />
       </form>
     </Form>
   )
@@ -282,12 +282,18 @@ function ProfessionalStep({
   )
 }
 
-// ─── Skip (buyer / seller — no extra profile data needed) ────────────────────
+// ─── Skip (buyer — no extra profile data needed; seller — proceeds to KYC) ───
 
-function SkipStep({ onFinish, onError }: { onFinish: (r: string) => void; onError: (m: string) => void }) {
+function SkipStep({
+  onNext, onFinish, onError, requiresVerification,
+}: { onNext: () => void; onFinish: (r: string) => void; onError: (m: string) => void; requiresVerification: boolean }) {
   const [isPending, startTransition] = useTransition()
 
   const handleFinish = () => {
+    if (requiresVerification) {
+      onNext()
+      return
+    }
     startTransition(async () => {
       const result = await completeOnboarding()
       if (result?.error) { onError(result.error); return }
@@ -298,7 +304,9 @@ function SkipStep({ onFinish, onError }: { onFinish: (r: string) => void; onErro
   return (
     <div className="space-y-4 text-center">
       <p className="text-sm text-muted-foreground">
-        Your profile is ready. You can fill in more details from your account settings at any time.
+        {requiresVerification
+          ? 'Your profile is ready. Next, upload your identity documents for verification.'
+          : 'Your profile is ready. You can fill in more details from your account settings at any time.'}
       </p>
       <Button onClick={handleFinish} className="w-full" disabled={isPending}>
         {isPending ? (
@@ -309,7 +317,7 @@ function SkipStep({ onFinish, onError }: { onFinish: (r: string) => void; onErro
         ) : (
           <span className="flex items-center gap-2">
             <CheckSquare size={16} />
-            Go to Dashboard
+            {requiresVerification ? 'Continue' : 'Go to Dashboard'}
           </span>
         )}
       </Button>

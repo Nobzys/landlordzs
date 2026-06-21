@@ -47,8 +47,10 @@ export interface Profile {
   avatar_url: string | null
   bio: string | null
   is_verified: boolean
+  verified_at: string | null
   is_premium: boolean
   is_public: boolean
+  profile_view_count: number
   account_status: AccountStatus
   onboarding_completed: boolean
   expo_push_token: string | null

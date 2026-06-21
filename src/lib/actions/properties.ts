@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { propertyCreateSchema, inquirySchema } from '@/lib/validations/property'
 import { slugify } from '@/lib/utils/format'
 import { STORAGE_BUCKETS, PROPERTY_CREATOR_ROLES } from '@/lib/utils/constants'
+import { canTransition, type PropertyStatus } from '@/lib/property-status'
 import type { ActionResult } from '@/types/auth'
 import type { PropertyCreateInput, InquiryInput } from '@/lib/validations/property'
 
@@ -112,14 +113,32 @@ export async function updateProperty(
 
 // â”€â”€â”€ Delete â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+// Soft delete: transitions the property to 'archived', which sets
+// deleted_at via the database trigger and preserves the row + its status
+// history instead of erasing it. Only allowed from statuses that can reach
+// 'archived' per the lifecycle rules (see src/lib/property-status.ts) —
+// e.g. an active/pending_review/under_offer listing must be moved off
+// first (off_market/expired/sold/rented/draft) before it can be deleted.
 export async function deleteProperty(propertyId: string): Promise<ActionResult> {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
+  const { data: property } = await (supabase as any)
+    .from('properties')
+    .select('status')
+    .eq('id', propertyId)
+    .eq('owner_id', user.id)
+    .single()
+  if (!property) return { error: 'Property not found' }
+
+  if (!canTransition(property.status as PropertyStatus, 'archived')) {
+    return { error: `Cannot delete a property with status "${property.status}". Move it to draft, off-market, expired, sold, or rented first.` }
+  }
+
   const { error } = await (supabase as any)
     .from('properties')
-    .delete()
+    .update({ status: 'archived' })
     .eq('id', propertyId)
     .eq('owner_id', user.id)
 
@@ -139,6 +158,23 @@ export async function publishProperty(
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
+  const { data: property } = await (supabase as any)
+    .from('properties')
+    .select('status')
+    .eq('id', propertyId)
+    .eq('owner_id', user.id)
+    .single()
+  if (!property) return { error: 'Property not found' }
+
+  if (property.status === 'suspended') {
+    return { error: 'This property was suspended by an administrator and cannot be republished directly. Contact support.' }
+  }
+
+  const targetStatus: PropertyStatus = publish ? 'active' : 'off_market'
+  if (!canTransition(property.status as PropertyStatus, targetStatus)) {
+    return { error: `Cannot change status from "${property.status}" to "${targetStatus}". Draft listings must be submitted for review first.` }
+  }
+
   if (publish) {
     // profiles_safe (not the base table) — see 20260624000001_profiles_safe_view.sql
     const { data: actor } = await (supabase as any)
@@ -151,7 +187,7 @@ export async function publishProperty(
   const { error } = await (supabase as any)
     .from('properties')
     .update({
-      status:       publish ? 'active' : 'off_market',
+      status:       targetStatus,
       published_at: publish ? new Date().toISOString() : null,
     })
     .eq('id', propertyId)
@@ -299,6 +335,18 @@ export async function requestVerification(propertyId: string): Promise<ActionRes
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
+  const { data: property } = await (supabase as any)
+    .from('properties')
+    .select('status')
+    .eq('id', propertyId)
+    .eq('owner_id', user.id)
+    .single()
+  if (!property) return { error: 'Property not found' }
+
+  if (!canTransition(property.status as PropertyStatus, 'pending_review')) {
+    return { error: `Cannot submit for review from status "${property.status}". Rejected listings must be restored to draft first.` }
+  }
+
   const { data: existing } = await (supabase as any)
     .from('property_verifications')
     .select('id, status')
@@ -347,26 +395,32 @@ export async function reviewVerification(
 
   const { data: verification, error: fetchError } = await (adminClient as any)
     .from('property_verifications')
-    .update({ status: action, verified_by: user.id, notes: notes ?? null, verified_at: new Date().toISOString() })
+    .select('property_id, properties(status)')
     .eq('id', verificationId)
-    .select('property_id')
     .single()
 
   if (fetchError || !verification) return { error: fetchError?.message ?? 'Not found' }
 
-  if (action === 'approved') {
-    await (adminClient as any)
-      .from('properties')
-      .update({ is_verified: true, status: 'active' })
-      .eq('id', verification.property_id)
-  } else {
-    await (adminClient as any)
-      .from('properties')
-      .update({ status: 'rejected' })
-      .eq('id', verification.property_id)
+  const targetStatus: PropertyStatus = action === 'approved' ? 'active' : 'rejected'
+  const currentStatus = verification.properties?.status as PropertyStatus | undefined
+  if (!currentStatus || !canTransition(currentStatus, targetStatus)) {
+    return { error: `Cannot change property status from "${currentStatus ?? 'unknown'}" to "${targetStatus}"` }
   }
 
+  const { error: verifError } = await (adminClient as any)
+    .from('property_verifications')
+    .update({ status: action, verified_by: user.id, notes: notes ?? null, verified_at: new Date().toISOString() })
+    .eq('id', verificationId)
+  if (verifError) return { error: verifError.message }
+
+  const { error: propError } = await (adminClient as any)
+    .from('properties')
+    .update(action === 'approved' ? { is_verified: true, status: 'active' } : { status: 'rejected' })
+    .eq('id', verification.property_id)
+  if (propError) return { error: propError.message }
+
   revalidatePath(`/properties/${verification.property_id}`)
+  revalidatePath('/admin/properties')
   return { success: true }
 }
 
@@ -406,5 +460,147 @@ export async function adminAssignAgent(
 
   revalidatePath(`/admin/properties/${propertyId}`)
   revalidatePath(`/properties/${propertyId}`)
+  return { success: true }
+}
+
+// ─── Admin: restore a rejected property to draft ───────────────────────────
+
+export async function adminRestoreToDraft(propertyId: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  const { data: callerProfile } = await (supabase as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions' }
+
+  const adminClient = createAdminClient()
+
+  const { data: property } = await (adminClient as any)
+    .from('properties')
+    .select('status')
+    .eq('id', propertyId)
+    .single()
+  if (!property) return { error: 'Property not found' }
+
+  if (!canTransition(property.status as PropertyStatus, 'draft')) {
+    return { error: `Cannot restore a property with status "${property.status}" to draft` }
+  }
+
+  const { error: updateError } = await (adminClient as any)
+    .from('properties')
+    .update({ status: 'draft' })
+    .eq('id', propertyId)
+
+  if (updateError) return { error: updateError.message }
+
+  await (adminClient as any).from('admin_logs').insert({
+    actor_id:    user.id,
+    action:      'restore_property_to_draft',
+    target_type: 'property',
+    target_id:   propertyId,
+  })
+
+  revalidatePath('/admin/properties')
+  revalidatePath(`/admin/properties/${propertyId}`)
+  revalidatePath(`/properties/${propertyId}`)
+  return { success: true }
+}
+
+// ─── Admin: suspend / restore (enforcement action, distinct from the ───────
+// seller-driven off_market in publishProperty) ───────────────────────────────
+
+export async function suspendProperty(propertyId: string, reason: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  const { data: callerProfile } = await (supabase as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions' }
+
+  const trimmedReason = reason.trim()
+  if (!trimmedReason) return { error: 'A suspension reason is required' }
+
+  const adminClient = createAdminClient()
+
+  const { data: property } = await (adminClient as any)
+    .from('properties')
+    .select('status')
+    .eq('id', propertyId)
+    .single()
+  if (!property) return { error: 'Property not found' }
+
+  if (!canTransition(property.status as PropertyStatus, 'suspended')) {
+    return { error: `Cannot suspend a property with status "${property.status}". Only active properties can be suspended.` }
+  }
+
+  const { error: updateError } = await (adminClient as any)
+    .from('properties')
+    .update({ status: 'suspended', suspension_reason: trimmedReason })
+    .eq('id', propertyId)
+  if (updateError) return { error: updateError.message }
+
+  await (adminClient as any).from('admin_logs').insert({
+    actor_id:    user.id,
+    action:      'suspend_property',
+    target_type: 'property',
+    target_id:   propertyId,
+    new_data:    { reason: trimmedReason },
+  })
+
+  revalidatePath('/admin/properties')
+  revalidatePath(`/admin/properties/${propertyId}`)
+  revalidatePath(`/properties/${propertyId}`)
+  revalidatePath('/seller/listings')
+  return { success: true }
+}
+
+export async function restoreSuspendedProperty(propertyId: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  const { data: callerProfile } = await (supabase as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions' }
+
+  const adminClient = createAdminClient()
+
+  const { data: property } = await (adminClient as any)
+    .from('properties')
+    .select('status')
+    .eq('id', propertyId)
+    .single()
+  if (!property) return { error: 'Property not found' }
+
+  if (property.status !== 'suspended') return { error: 'Property is not suspended' }
+
+  const { error: updateError } = await (adminClient as any)
+    .from('properties')
+    .update({ status: 'active', suspension_reason: null })
+    .eq('id', propertyId)
+  if (updateError) return { error: updateError.message }
+
+  await (adminClient as any).from('admin_logs').insert({
+    actor_id:    user.id,
+    action:      'restore_suspended_property',
+    target_type: 'property',
+    target_id:   propertyId,
+  })
+
+  revalidatePath('/admin/properties')
+  revalidatePath(`/admin/properties/${propertyId}`)
+  revalidatePath(`/properties/${propertyId}`)
+  revalidatePath('/seller/listings')
   return { success: true }
 }

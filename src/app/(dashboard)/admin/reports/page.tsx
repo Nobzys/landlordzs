@@ -6,6 +6,7 @@ import { Flag, ChevronLeft, CheckCircle2, XCircle, Clock } from 'lucide-react'
 import { getServerProfile } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Button } from '@/components/ui/button'
+import { LinkButton } from '@/components/ui/link-button'
 import { Badge } from '@/components/ui/badge'
 import { formatRelative } from '@/lib/utils/format'
 
@@ -99,9 +100,9 @@ export default async function AdminReportsPage({
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Button asChild variant="ghost" size="icon" className="-ml-2">
-          <Link href="/admin"><ChevronLeft className="h-4 w-4" /></Link>
-        </Button>
+        <LinkButton href="/admin" variant="ghost" size="icon" className="-ml-2">
+          <ChevronLeft className="h-4 w-4" />
+        </LinkButton>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-700">
             <Flag className="h-5 w-5" />

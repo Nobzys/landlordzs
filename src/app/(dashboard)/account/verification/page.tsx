@@ -5,6 +5,7 @@ import { ChevronLeft, Clock } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { KycResubmitForm } from '@/components/auth/KycResubmitForm'
 import { Button } from '@/components/ui/button'
+import { LinkButton } from '@/components/ui/link-button'
 import { APPROVAL_REQUIRED_ROLES } from '@/lib/utils/constants'
 import type { KycRecord } from '@/components/dashboard/VerificationBanner'
 
@@ -37,9 +38,9 @@ export default async function VerificationPage() {
     return (
       <div className="max-w-xl mx-auto px-4 py-8 space-y-6">
         <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon" className="-ml-2">
-            <Link href="/account/profile"><ChevronLeft className="h-4 w-4" /></Link>
-          </Button>
+          <LinkButton href="/account/profile" variant="ghost" size="icon" className="-ml-2">
+            <ChevronLeft className="h-4 w-4" />
+          </LinkButton>
           <h1 className="text-2xl font-bold">Verification</h1>
         </div>
         <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 p-5">

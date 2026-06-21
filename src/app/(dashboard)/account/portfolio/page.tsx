@@ -35,7 +35,7 @@ export default async function AccountPortfolioPage() {
   const items: PortfolioItemRow[] = data ?? []
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <div className="flex items-center gap-3">
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Briefcase className="h-6 w-6" />

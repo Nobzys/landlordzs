@@ -6,6 +6,7 @@ import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { ROLE_LABELS } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Analytics — Admin' }
 
 type AdminMetrics = {

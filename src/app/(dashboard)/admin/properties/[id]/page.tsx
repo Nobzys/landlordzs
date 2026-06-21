@@ -25,6 +25,7 @@ const STATUS_BADGE: Record<string, { label: string; variant: 'default' | 'second
   off_market:     { label: 'Off Market',     variant: 'secondary' },
   expired:        { label: 'Expired',        variant: 'secondary' },
   rejected:       { label: 'Rejected',       variant: 'destructive' },
+  suspended:      { label: 'Suspended',      variant: 'destructive' },
 }
 
 // Admin-only: includes email. Sourced from profiles_safe (not the base
@@ -108,6 +109,12 @@ export default async function AdminPropertyPreviewPage({ params }: AdminProperty
         <h1 className="text-lg font-semibold">Admin Preview</h1>
         <Badge variant={badge.variant}>{badge.label}</Badge>
       </div>
+
+      {property.status === 'suspended' && (property as any).suspension_reason && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          Suspended — {(property as any).suspension_reason}
+        </div>
+      )}
 
       {/* Seller contact panel — admin-only, never shown on the public property page */}
       <div className="rounded-xl border p-4 space-y-2">

@@ -28,9 +28,15 @@ export const ROLE_NAV: Record<UserRole, NavItem[]> = {
     { label: 'Wallet',       href: '/account/wallet',      icon: 'Wallet' },
   ],
   vendor: [
-    { label: 'Store Overview', href: '/vendor',          icon: 'Store',  exact: true },
-    { label: 'My Profile',     href: '/account/profile', icon: 'User' },
-    { label: 'Wallet',         href: '/account/wallet',  icon: 'Wallet' },
+    { label: 'Store Overview', href: '/vendor',           icon: 'Store',         exact: true },
+    { label: 'Products',       href: '/vendor/products',  icon: 'Package' },
+    { label: 'Orders',         href: '/vendor/orders',     icon: 'ClipboardList' },
+    { label: 'Customers',      href: '/vendor/customers',  icon: 'Users' },
+    { label: 'Messages',       href: '/vendor/messages',   icon: 'MessageSquare' },
+    { label: 'Wallet',         href: '/account/wallet',    icon: 'Wallet' },
+    { label: 'Analytics',      href: '/vendor/analytics',  icon: 'BarChart3' },
+    { label: 'My Profile',     href: '/account/profile',   icon: 'User' },
+    { label: 'Settings',       href: '/vendor/settings',   icon: 'Settings' },
   ],
   contractor: [
     { label: 'Dashboard',  href: '/contractor',       icon: 'Briefcase', exact: true },

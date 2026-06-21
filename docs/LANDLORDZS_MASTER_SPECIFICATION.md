@@ -756,9 +756,11 @@ Forum categories:
 - Roles
 - Listings
 - Verification
-- Analytics
+- Analytics (includes Active Sellers: role='seller' AND account_status='active')
 - Billing
 - Audit Logs
+- Property Moderation History (`/admin/properties/history` — read-only view of `property_status_history`, filterable by property/status/date range)
+- Suspend Properties (admin enforcement action on `/admin/properties`: suspend an active listing with a required reason, restore returns it to active; distinct from the seller's own off_market action)
 
 ---
 

@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { PortfolioItemForm } from './PortfolioItemForm'
+import { PropertyImagePlaceholder } from '@/components/properties/PropertyImagePlaceholder'
+import { EmptyState } from '@/components/ui/empty-state'
 import { formatDate } from '@/lib/utils/format'
 
 interface PortfolioItemRow {
@@ -58,23 +60,24 @@ export function PortfolioListClient({ items: initialItems }: PortfolioListClient
       </div>
 
       {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-12">
-          You haven&apos;t added any projects yet.
-        </p>
+        <EmptyState
+          icon={Plus}
+          title="No portfolio items yet."
+          ctaLabel="Add portfolio item"
+          onCtaClick={() => setCreateOpen(true)}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {items.map((item) => {
             const cover = item.portfolio_images.find((img) => img.is_cover) ?? item.portfolio_images[0]
             return (
               <Card key={item.id} className="overflow-hidden">
-                <Link href={`/account/portfolio/${item.id}`}>
+                <Link href={`/account/portfolio/${item.id}`} className="relative h-40 w-full block">
                   {cover ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={cover.url} alt={item.title} className="h-40 w-full object-cover" />
                   ) : (
-                    <div className="h-40 w-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
-                      No photos yet
-                    </div>
+                    <PropertyImagePlaceholder />
                   )}
                 </Link>
                 <CardContent className="p-4 space-y-1">

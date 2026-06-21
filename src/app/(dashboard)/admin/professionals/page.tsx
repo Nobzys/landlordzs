@@ -3,19 +3,25 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
 import {
-  ShieldCheck, ChevronLeft, CheckCircle2, XCircle,
-  Clock, AlertCircle, FileText,
+  Briefcase, ChevronLeft, CheckCircle2,
+  AlertCircle, ShieldCheck,
 } from 'lucide-react'
-import { createClient, getServerProfile } from '@/lib/supabase/server'
+import { getServerProfile } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { adminApproveProfessional, adminRejectProfessional } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
+import { LinkButton } from '@/components/ui/link-button'
 import { Badge } from '@/components/ui/badge'
+import { Avatar } from '@/components/ui/avatar'
 import { formatRelative } from '@/lib/utils/format'
 import { ROLE_LABELS } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
 
-export const metadata: Metadata = { title: 'Account Verification — Admin' }
+export const metadata: Metadata = { title: 'Professional Accounts — Admin' }
+
+// Verification (KYC approve/reject/request-info) lives exclusively at
+// /admin/verifications — it applies platform-wide, not just to professional
+// roles, so it isn't duplicated here. This page is account-status moderation
+// (active/suspended/banned) for professional-role accounts only.
 
 const STATUS_TABS = ['pending', 'active', 'suspended'] as const
 type AccountStatus = (typeof STATUS_TABS)[number]
@@ -48,6 +54,7 @@ type ProfessionalRow = {
   full_name:      string | null
   display_name:   string | null
   email:          string
+  avatar_url:     string | null
   role:           string
   account_status: string
   created_at:     string
@@ -84,7 +91,7 @@ export default async function AdminProfessionalsPage({
   const { data: raw } = await (adminClient as any)
     .from('profiles')
     .select(`
-      id, full_name, display_name, email, role, account_status, created_at,
+      id, full_name, display_name, email, avatar_url, role, account_status, created_at,
       kyc_records ( id, status, review_notes, national_id_front, national_id_back, business_reg, submitted_at ),
       professional_profiles ( profession_type, company_name, is_verified ),
       agent_profiles ( license_verified )
@@ -110,29 +117,6 @@ export default async function AdminProfessionalsPage({
       : p.agent_profiles,
   }))
 
-  // Generate signed URLs for the pending tab (worth the cost for reviewable docs)
-  const supabaseStorage = adminClient.storage
-  const withUrls = tab === 'pending'
-    ? await Promise.all(professionals.map(async (p) => {
-        const kyc = p.kyc_records[0]
-        if (!kyc) return { ...p, signedUrls: { front: null, back: null, cert: null } }
-
-        const toUrl = async (path: string | null) => {
-          if (!path) return null
-          const { data } = await supabaseStorage.from('verification-documents-v2').createSignedUrl(path, 3600)
-          return data?.signedUrl ?? null
-        }
-
-        const [front, back, cert] = await Promise.all([
-          toUrl(kyc.national_id_front),
-          toUrl(kyc.national_id_back),
-          toUrl(kyc.business_reg),
-        ])
-
-        return { ...p, signedUrls: { front, back, cert } }
-      }))
-    : professionals.map((p) => ({ ...p, signedUrls: { front: null, back: null, cert: null } }))
-
   // Counts for tab badges
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { count: pendingCount } = await (adminClient as any)
@@ -146,21 +130,33 @@ export default async function AdminProfessionalsPage({
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Button asChild variant="ghost" size="icon" className="-ml-2">
-          <Link href="/admin"><ChevronLeft className="h-4 w-4" /></Link>
-        </Button>
+        <LinkButton href="/admin" variant="ghost" size="icon" className="-ml-2">
+          <ChevronLeft className="h-4 w-4" />
+        </LinkButton>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
-            <ShieldCheck className="h-5 w-5" />
+            <Briefcase className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Account Verification</h1>
+            <h1 className="text-2xl font-bold">Professional Accounts</h1>
             <p className="text-sm text-muted-foreground">
               {professionals.length} {tab} professional{professionals.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
       </div>
+
+      {/* Identity-document review now lives in the platform-wide Verification Center */}
+      <Link
+        href="/admin/verifications"
+        className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 hover:bg-blue-100 transition-colors"
+      >
+        <ShieldCheck className="h-5 w-5 text-blue-700 shrink-0" />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-blue-900">Reviewing identity verification documents?</p>
+          <p className="text-xs text-blue-700">Approve, reject, or request more info from the dedicated Verification Center →</p>
+        </div>
+      </Link>
 
       {/* Status tabs */}
       <div className="flex gap-2 flex-wrap">
@@ -185,7 +181,7 @@ export default async function AdminProfessionalsPage({
       </div>
 
       {/* List */}
-      {withUrls.length === 0 ? (
+      {professionals.length === 0 ? (
         <div className="rounded-xl border text-center py-16">
           <CheckCircle2 className="h-10 w-10 mx-auto mb-3 text-emerald-500 opacity-60" />
           <p className="text-sm font-medium text-muted-foreground capitalize">
@@ -194,17 +190,18 @@ export default async function AdminProfessionalsPage({
         </div>
       ) : (
         <div className="space-y-3">
-          {withUrls.map((p) => {
+          {professionals.map((p) => {
             const latestKyc    = p.kyc_records[0] ?? null
             const displayName  = p.full_name?.trim() || p.display_name?.trim() || p.email?.trim() || 'Unnamed user'
-            const profType     = p.professional_profiles?.profession_type ?? p.role
             const userId       = p.id
 
             return (
               <div key={p.id} className="rounded-xl border bg-card p-4 space-y-3">
                 {/* Info row */}
                 <div className="flex items-start justify-between gap-4 flex-wrap">
-                  <div className="space-y-1 flex-1 min-w-0">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <Avatar src={p.avatar_url} name={displayName} />
+                    <div className="space-y-1 flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-semibold text-sm">{displayName}</p>
                       <Badge variant="secondary" className="text-xs capitalize">
@@ -221,6 +218,7 @@ export default async function AdminProfessionalsPage({
                     <p className="text-xs text-muted-foreground">
                       Joined {formatRelative(p.created_at)}
                     </p>
+                    </div>
                   </div>
 
                   {/* KYC status */}
@@ -235,6 +233,9 @@ export default async function AdminProfessionalsPage({
                             Submitted {formatRelative(latestKyc.submitted_at)}
                           </p>
                         )}
+                        <Link href={`/admin/verifications/${latestKyc.id}`} className="block text-xs text-primary hover:underline">
+                          View full request
+                        </Link>
                       </>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
@@ -242,87 +243,17 @@ export default async function AdminProfessionalsPage({
                         No documents
                       </span>
                     )}
+                    <Link href={`/admin/users/${p.id}`} className="block text-xs text-muted-foreground hover:underline">
+                      View profile
+                    </Link>
                   </div>
                 </div>
 
-                {/* Documents row */}
-                {latestKyc && tab === 'pending' && (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {p.signedUrls.front && (
-                      <a href={p.signedUrls.front} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                        <FileText className="h-3.5 w-3.5" />
-                        ID Front
-                      </a>
-                    )}
-                    {p.signedUrls.back && (
-                      <a href={p.signedUrls.back} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                        <FileText className="h-3.5 w-3.5" />
-                        ID Back
-                      </a>
-                    )}
-                    {p.signedUrls.cert && (
-                      <a href={p.signedUrls.cert} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                        <FileText className="h-3.5 w-3.5" />
-                        Certificate
-                      </a>
-                    )}
-                    {latestKyc.review_notes && (
-                      <p className="w-full text-xs text-muted-foreground mt-1">
-                        Previous note: {latestKyc.review_notes}
-                      </p>
-                    )}
-                  </div>
+                {latestKyc?.review_notes && tab === 'pending' && (
+                  <p className="text-xs text-muted-foreground pt-1">Latest review note: {latestKyc.review_notes}</p>
                 )}
 
-                {/* Actions */}
-                {tab === 'pending' && (
-                  <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
-                    {/* Approve */}
-                    <form action={async () => {
-                      'use server'
-                      await adminApproveProfessional(userId)
-                    }}>
-                      <Button
-                        type="submit"
-                        size="sm"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto"
-                      >
-                        <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
-                        Approve
-                      </Button>
-                    </form>
-
-                    {/* Reject with reason */}
-                    <form
-                      action={async (fd: FormData) => {
-                        'use server'
-                        const reason = (fd.get('reason') as string | null)?.trim() || 'Documents did not meet requirements.'
-                        await adminRejectProfessional(userId, reason)
-                      }}
-                      className="flex flex-1 gap-2"
-                    >
-                      <input
-                        name="reason"
-                        placeholder="Rejection reason"
-                        className="flex-1 min-w-0 rounded-md border px-3 py-1.5 text-xs bg-background
-                          placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                      />
-                      <Button
-                        type="submit"
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 border-red-200 hover:bg-red-50 shrink-0"
-                      >
-                        <XCircle className="h-3.5 w-3.5 mr-1.5" />
-                        Reject
-                      </Button>
-                    </form>
-                  </div>
-                )}
-
+                {/* Account-status actions only — KYC approve/reject happens in the Verification Center */}
                 {tab === 'active' && (
                   <div className="flex gap-2 pt-2 border-t">
                     {/* Suspend */}
