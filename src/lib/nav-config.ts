@@ -17,6 +17,7 @@ export const ROLE_NAV: Record<UserRole, NavItem[]> = {
   seller: [
     { label: 'My Listings',  href: '/seller/listings',     icon: 'Building2' },
     { label: 'New Listing',  href: '/seller/listings/new', icon: 'Plus',      exact: true },
+    { label: 'Inquiries',    href: '/seller/inquiries',    icon: 'MessageSquare' },
     { label: 'My Profile',   href: '/account/profile',     icon: 'User' },
     { label: 'Wallet',       href: '/account/wallet',      icon: 'Wallet' },
   ],
@@ -24,6 +25,7 @@ export const ROLE_NAV: Record<UserRole, NavItem[]> = {
     { label: 'Commissions',  href: '/agent/commissions',   icon: 'TrendingUp' },
     { label: 'My Listings',  href: '/seller/listings',     icon: 'Building2' },
     { label: 'New Listing',  href: '/seller/listings/new', icon: 'Plus',       exact: true },
+    { label: 'Inquiries',    href: '/seller/inquiries',    icon: 'MessageSquare' },
     { label: 'My Profile',   href: '/account/profile',     icon: 'User' },
     { label: 'Wallet',       href: '/account/wallet',      icon: 'Wallet' },
   ],

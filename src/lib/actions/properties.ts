@@ -1,7 +1,7 @@
 ﻿'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { propertyCreateSchema, inquirySchema } from '@/lib/validations/property'
 import { slugify } from '@/lib/utils/format'
@@ -318,13 +318,49 @@ export async function submitInquiry(
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Authenticated buyers never need to type their own contact details —
+  // pull name/email/phone from their own profile (server-side, via
+  // getServerProfile -> profiles_safe, always real for self) rather than
+  // trusting whatever the form submitted for those fields. Anonymous
+  // visitors keep filling the form in manually, as before.
+  let contact = { name: parsed.data.name, email: parsed.data.email, phone: parsed.data.phone }
+  if (user) {
+    const profile = await getServerProfile()
+    if (profile) {
+      contact = {
+        name:  profile.full_name?.trim() || profile.display_name?.trim() || parsed.data.name,
+        email: profile.email || parsed.data.email,
+        phone: profile.phone || parsed.data.phone,
+      }
+    }
+  }
+
   const { error } = await (supabase as any).from('property_inquiries').insert({
     property_id: propertyId,
     sender_id:   user?.id ?? null,
     ...parsed.data,
+    ...contact,
   })
 
   if (error) return { error: error.message }
+  return { success: true }
+}
+
+// ─── Seller: mark an inquiry on their own property as read ─────────────────
+
+export async function markInquiryRead(inquiryId: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  const { error } = await (supabase as any)
+    .from('property_inquiries')
+    .update({ is_read: true })
+    .eq('id', inquiryId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/seller/inquiries')
   return { success: true }
 }
 
