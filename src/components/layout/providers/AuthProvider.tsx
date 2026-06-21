@@ -29,13 +29,15 @@ export function AuthProvider({ children, initialProfile }: AuthProviderProps) {
       setUser(user ?? null)
 
       if (user && !initialProfile) {
-        // Fetch profile if not pre-seeded
-        supabase
-          .from('profiles')
+        // Fetch profile if not pre-seeded. profiles_safe (not the base
+        // table) — see 20260624000001_profiles_safe_view.sql.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any)
+          .from('profiles_safe')
           .select('*')
           .eq('id', user.id)
           .single()
-          .then(({ data }) => {
+          .then(({ data }: { data: unknown }) => {
             setProfile(data as Profile | null)
             setHydrated()
           })
@@ -57,12 +59,13 @@ export function AuthProvider({ children, initialProfile }: AuthProviderProps) {
 
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           if (session?.user) {
-            supabase
-              .from('profiles')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (supabase as any)
+              .from('profiles_safe')
               .select('*')
               .eq('id', session.user.id)
               .single()
-              .then(({ data }) => {
+              .then(({ data }: { data: unknown }) => {
                 setProfile(data as Profile | null)
               })
           }

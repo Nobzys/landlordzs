@@ -84,9 +84,10 @@ export async function signIn(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Sign in failed. Please try again.' }
 
+  // profiles_safe (not the base table) — see 20260624000001_profiles_safe_view.sql
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: profile } = await (supabase as any)
-    .from('profiles')
+    .from('profiles_safe')
     .select('role, onboarding_completed, account_status')
     .eq('id', user.id)
     .single() as { data: { role: string; onboarding_completed: boolean; account_status: string } | null }
@@ -352,9 +353,10 @@ export async function resetPassword(
   }
 
   const { data: { user } } = await supabase.auth.getUser()
+  // profiles_safe (not the base table) — see 20260624000001_profiles_safe_view.sql
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: profile } = await (supabase as any)
-    .from('profiles')
+    .from('profiles_safe')
     .select('role, onboarding_completed')
     .eq('id', user!.id)
     .single() as { data: { role: string; onboarding_completed: boolean } | null }

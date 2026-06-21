@@ -80,8 +80,9 @@ export default async function AdminPage() {
   ] = await Promise.all([
     // Single RPC replaces 11 individual COUNT queries + N+1 status scan
     (supabase as any).rpc('get_admin_metrics') as Promise<{ data: AdminMetrics | null }>,
-    supabase
-      .from('profiles')
+    // profiles_safe (not the base table) — see 20260624000001_profiles_safe_view.sql
+    (supabase as any)
+      .from('profiles_safe')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(8) as unknown as Promise<{ data: ProfileRow[] | null }>,

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { Building2, ChevronLeft, CheckCircle2, XCircle, ExternalLink } from 'lucide-react'
+import { Building2, ChevronLeft, CheckCircle2, XCircle, ExternalLink, Eye } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { reviewVerification } from '@/lib/actions/properties'
 import { Button } from '@/components/ui/button'
@@ -30,7 +30,6 @@ type VerificationRow = {
     owner: {
       full_name: string | null
       display_name: string | null
-      email: string
     } | null
   } | null
 }
@@ -41,13 +40,18 @@ export default async function AdminPropertiesPage() {
 
   const supabase = await createClient()
 
+  // Note: `email` is intentionally excluded from this embedded select.
+  // profiles.email is masked from `authenticated` at the column-privilege
+  // level (see 20260624000001_profiles_safe_view.sql) and an embedded
+  // join still requires that privilege even when nested, so including it
+  // here made the whole query fail silently (data swallowed below).
   const { data: raw } = await (supabase as any)
     .from('property_verifications')
     .select(`
       id, property_id, created_at,
       property:properties (
         id, title, city, listing_type, property_type, price,
-        owner:profiles!properties_owner_id_fkey ( full_name, display_name, email )
+        owner:profiles!properties_owner_id_fkey ( full_name, display_name )
       )
     `)
     .eq('status', 'pending')
@@ -89,7 +93,6 @@ export default async function AdminPropertiesPage() {
             const sellerName =
               v.property?.owner?.full_name ??
               v.property?.owner?.display_name ??
-              v.property?.owner?.email ??
               'Unknown'
 
             return (
@@ -112,17 +115,22 @@ export default async function AdminPropertiesPage() {
                     <p className="text-xs text-muted-foreground">
                       Submitted by{' '}
                       <span className="font-medium text-foreground">{sellerName}</span>
-                      {v.property?.owner?.email && <> · {v.property.owner.email}</>}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
                     <p className="text-xs text-muted-foreground">{formatRelative(v.created_at)}</p>
                     {v.property?.id && (
-                      <LinkButton variant="outline" size="sm" href={`/admin/properties/${v.property.id}`} target="_blank">
-                        <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                        View
-                      </LinkButton>
+                      <>
+                        <LinkButton variant="ghost" size="sm" href={`/properties/${v.property.id}`} target="_blank" title="Open the public listing page">
+                          <Eye className="h-3.5 w-3.5 mr-1" />
+                          Preview
+                        </LinkButton>
+                        <LinkButton variant="outline" size="sm" href={`/admin/properties/${v.property.id}`} target="_blank" title="Open the full verification details page">
+                          <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                          View
+                        </LinkButton>
+                      </>
                     )}
                   </div>
                 </div>

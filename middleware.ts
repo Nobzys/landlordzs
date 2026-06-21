@@ -37,9 +37,12 @@ export async function middleware(request: NextRequest) {
     // by the callback exchange — that session IS the "authenticated" state
     // this block would otherwise bounce away. Let it render regardless.
     if (user && !pathname.startsWith('/reset-password')) {
-      // Fetch minimal profile to know where to send them
+      // Fetch minimal profile to know where to send them. profiles_safe
+      // (not the base table): onboarding_completed is masked-but-passed-
+      // through-for-self there, but revoked outright on the base table
+      // for `authenticated` — see 20260624000001_profiles_safe_view.sql.
       const { data: profile } = await (supabase as any)
-        .from('profiles')
+        .from('profiles_safe')
         .select('role, onboarding_completed')
         .eq('id', user.id)
         .single() as { data: { role: string; onboarding_completed: boolean } | null }
@@ -60,9 +63,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Fetch profile for role + status checks
+  // Fetch profile for role + status checks. profiles_safe (not the base
+  // table) — see 20260624000001_profiles_safe_view.sql.
   const { data: profile } = await (supabase as any)
-    .from('profiles')
+    .from('profiles_safe')
     .select('role, onboarding_completed, account_status')
     .eq('id', user.id)
     .single() as { data: { role: string; onboarding_completed: boolean; account_status: string } | null }

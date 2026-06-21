@@ -48,8 +48,10 @@ export default async function AdminUsersPage({
 
   const supabase = await createClient()
 
-  let query = supabase
-    .from('profiles')
+  // profiles_safe (not the base table) — see 20260624000001_profiles_safe_view.sql
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query = (supabase as any)
+    .from('profiles_safe')
     .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to)

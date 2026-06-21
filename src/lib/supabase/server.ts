@@ -48,8 +48,13 @@ export async function getServerProfile(): Promise<Profile | null> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: profile } = await supabase
-    .from('profiles')
+  // profiles_safe (not the base table): the self row comes back with every
+  // column intact, but querying the base table directly for these columns
+  // is blocked by privilege for the `authenticated` role — see
+  // 20260624000001_profiles_safe_view.sql.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: profile } = await (supabase as any)
+    .from('profiles_safe')
     .select('*')
     .eq('id', user.id)
     .single()

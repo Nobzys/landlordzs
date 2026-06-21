@@ -23,8 +23,9 @@ export async function createProperty(
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
+  // profiles_safe (not the base table) — see 20260624000001_profiles_safe_view.sql
   const { data: actor } = await (supabase as any)
-    .from('profiles').select('account_status, role').eq('id', user.id).single()
+    .from('profiles_safe').select('account_status, role').eq('id', user.id).single()
 
   if (!actor || !(PROPERTY_CREATOR_ROLES as readonly string[]).includes(actor.role)) {
     return { error: 'Your account type is not permitted to create property listings.' }
@@ -74,8 +75,9 @@ export async function updateProperty(
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
+  // profiles_safe (not the base table) — see 20260624000001_profiles_safe_view.sql
   const { data: actor } = await (supabase as any)
-    .from('profiles').select('account_status').eq('id', user.id).single()
+    .from('profiles_safe').select('account_status').eq('id', user.id).single()
   if (actor?.account_status !== 'active') {
     return { error: 'Your account must be approved before editing listings.' }
   }
@@ -138,8 +140,9 @@ export async function publishProperty(
   if (authError || !user) return { error: 'Unauthorized' }
 
   if (publish) {
+    // profiles_safe (not the base table) — see 20260624000001_profiles_safe_view.sql
     const { data: actor } = await (supabase as any)
-      .from('profiles').select('account_status').eq('id', user.id).single()
+      .from('profiles_safe').select('account_status').eq('id', user.id).single()
     if (actor?.account_status !== 'active') {
       return { error: 'Your account must be approved before publishing listings.' }
     }

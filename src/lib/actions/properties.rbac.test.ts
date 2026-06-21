@@ -10,7 +10,7 @@ const mockUser = { id: 'user-1' }
 
 function buildSupabaseMock(profile: { account_status: string; role: string } | null) {
   const from = vi.fn((table: string) => {
-    if (table === 'profiles') {
+    if (table === 'profiles_safe') {
       return { select: () => ({ eq: () => ({ single: async () => ({ data: profile }) }) }) }
     }
     if (table === 'properties') {

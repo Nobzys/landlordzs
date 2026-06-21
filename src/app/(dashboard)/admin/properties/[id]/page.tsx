@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
-import { ChevronLeft, UserCheck } from 'lucide-react'
+import { ChevronLeft, UserCheck, Mail, Phone } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { adminAssignAgent } from '@/lib/actions/properties'
 import { PropertyGallery } from '@/components/properties/PropertyGallery'
@@ -27,9 +27,12 @@ const STATUS_BADGE: Record<string, { label: string; variant: 'default' | 'second
   rejected:       { label: 'Rejected',       variant: 'destructive' },
 }
 
-const PROFILE_COLS = 'id, full_name, display_name, avatar_url, phone, is_verified' as const
-
-type AgentRow = { id: string; full_name: string | null; display_name: string | null; email: string }
+// Admin-only: includes email. Sourced from profiles_safe (not the base
+// table) — email is masked from `authenticated` at the column-privilege
+// level (20260624000001_profiles_safe_view.sql); is_admin() in the view
+// un-masks it for an actual admin caller. Used only on this admin-gated
+// page, never on the public property page.
+const ADMIN_PROFILE_COLS = 'id, full_name, display_name, avatar_url, phone, email, is_verified' as const
 
 async function getProperty(id: string): Promise<PropertyWithDetails | null> {
   const supabase = await createClient()
@@ -45,22 +48,29 @@ async function getProperty(id: string): Promise<PropertyWithDetails | null> {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [{ data: owner }, { data: agent }] = await Promise.all([
-    (supabase as any).from('profiles').select(PROFILE_COLS).eq('id', data.owner_id).single() as Promise<{ data: Record<string, any> | null }>,
+    (supabase as any).from('profiles_safe').select(ADMIN_PROFILE_COLS).eq('id', data.owner_id).single() as Promise<{ data: Record<string, any> | null }>,
     data.agent_id
-      ? (supabase as any).from('profiles').select(PROFILE_COLS).eq('id', data.agent_id).single() as Promise<{ data: Record<string, any> | null }>
+      ? (supabase as any).from('profiles_safe').select(ADMIN_PROFILE_COLS).eq('id', data.agent_id).single() as Promise<{ data: Record<string, any> | null }>
       : Promise.resolve({ data: null }),
   ])
 
   return {
     ...data,
-    owner: owner ?? { id: data.owner_id, full_name: null, display_name: null, avatar_url: null, phone: null, is_verified: false },
+    owner: owner ?? { id: data.owner_id, full_name: null, display_name: null, avatar_url: null, phone: null, email: null, is_verified: false },
     agent: agent ?? null,
   } as unknown as PropertyWithDetails
 }
 
+type AgentRow = { id: string; full_name: string | null; display_name: string | null; email: string }
+
 async function getAgents(supabase: Awaited<ReturnType<typeof createClient>>): Promise<AgentRow[]> {
+  // profiles_safe (not the base table): this page is admin-only, but
+  // `email` and `account_status` are masked on the base table for the
+  // `authenticated` role regardless of the caller's own role — see
+  // 20260624000001_profiles_safe_view.sql. is_admin() in the view
+  // un-masks both for an actual admin caller.
   const { data } = await (supabase as any)
-    .from('profiles')
+    .from('profiles_safe')
     .select('id, full_name, display_name, email')
     .eq('role', 'agent')
     .eq('account_status', 'active')
@@ -97,6 +107,34 @@ export default async function AdminPropertyPreviewPage({ params }: AdminProperty
         </LinkButton>
         <h1 className="text-lg font-semibold">Admin Preview</h1>
         <Badge variant={badge.variant}>{badge.label}</Badge>
+      </div>
+
+      {/* Seller contact panel — admin-only, never shown on the public property page */}
+      <div className="rounded-xl border p-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <UserCheck className="h-4 w-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold">Seller</h2>
+          <span className="text-sm text-muted-foreground">
+            — {(property.owner as any)?.full_name ?? (property.owner as any)?.display_name ?? 'Unknown'}
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-4 text-sm">
+          {(property.owner as any)?.email && (
+            <a href={`mailto:${(property.owner as any).email}`} className="flex items-center gap-1.5 text-blue-700 hover:underline">
+              <Mail className="h-3.5 w-3.5" />
+              {(property.owner as any).email}
+            </a>
+          )}
+          {(property.owner as any)?.phone && (
+            <a href={`tel:${(property.owner as any).phone}`} className="flex items-center gap-1.5 text-blue-700 hover:underline">
+              <Phone className="h-3.5 w-3.5" />
+              {(property.owner as any).phone}
+            </a>
+          )}
+          {!(property.owner as any)?.email && !(property.owner as any)?.phone && (
+            <span className="text-muted-foreground">No contact details on file.</span>
+          )}
+        </div>
       </div>
 
       {/* Agent assignment panel */}
