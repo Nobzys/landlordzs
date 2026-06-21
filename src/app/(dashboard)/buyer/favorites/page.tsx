@@ -16,7 +16,7 @@ async function getBuyerMetrics(userId: string) {
 
   const [savedRes, viewingRes, recentFavoritesRes, recentInquiriesRes] = await Promise.all([
     sb.from('property_favorites').select('id', { count: 'exact', head: true }).eq('user_id', userId),
-    sb.from('property_inquiries').select('id', { count: 'exact', head: true }).eq('sender_id', userId).eq('type', 'viewing'),
+    sb.from('property_inquiries').select('id', { count: 'exact', head: true }).eq('sender_id', userId).eq('inquiry_type', 'viewing'),
     sb.from('property_favorites').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', fourteenDaysAgo),
     sb.from('property_inquiries').select('id', { count: 'exact', head: true }).eq('sender_id', userId).gte('created_at', fourteenDaysAgo),
   ])

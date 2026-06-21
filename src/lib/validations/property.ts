@@ -48,11 +48,14 @@ export const propertyCreateSchema = propertyBasicSchema
   .extend({ agent_id: z.string().uuid().optional() })
 
 export const inquirySchema = z.object({
-  name:    z.string().max(100).optional(),
-  email:   z.string().email().optional(),
-  phone:   z.string().regex(/^\+237[6-9]\d{8}$/, 'Invalid Cameroon phone').optional(),
-  message: z.string().min(10, 'Message must be at least 10 characters').max(1000),
-  type:    z.enum(INQUIRY_TYPES),
+  name:         z.string().max(100).optional(),
+  email:        z.string().email().optional(),
+  phone:        z.string().regex(/^\+237[6-9]\d{8}$/, 'Invalid Cameroon phone').optional(),
+  message:      z.string().min(10, 'Message must be at least 10 characters').max(1000),
+  // Matches the property_inquiries.inquiry_type column — was previously
+  // named `type`, which doesn't exist on that table and made every
+  // submission fail with "Could not find the 'type' column".
+  inquiry_type: z.enum(INQUIRY_TYPES),
 })
 
 export const propertySearchSchema = z.object({

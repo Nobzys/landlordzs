@@ -30,15 +30,15 @@ export function PropertyInquiryForm({ propertyId }: PropertyInquiryFormProps) {
   } = useForm<InquiryInput>({
     resolver: zodResolver(inquirySchema),
     defaultValues: {
-      type:    'general',
-      name:    profile?.full_name ?? undefined,
-      email:   profile?.email ?? undefined,
-      phone:   profile?.phone ?? undefined,
-      message: '',
+      inquiry_type: 'general',
+      name:         profile?.full_name ?? undefined,
+      email:        profile?.email ?? undefined,
+      phone:        profile?.phone ?? undefined,
+      message:      '',
     },
   })
 
-  const type = watch('type')
+  const type = watch('inquiry_type')
 
   const onSubmit = async (data: InquiryInput) => {
     const result = await submitInquiry(propertyId, data)
@@ -58,7 +58,7 @@ export function PropertyInquiryForm({ propertyId }: PropertyInquiryFormProps) {
         <Label>Inquiry Type</Label>
         <RadioGroup
           value={type}
-          onValueChange={v => setValue('type', v as InquiryInput['type'])}
+          onValueChange={v => setValue('inquiry_type', v as InquiryInput['inquiry_type'])}
           className="flex gap-4"
         >
           {(['general', 'viewing', 'offer'] as const).map(t => (
