@@ -79,14 +79,20 @@ export function PublicProfileView({ data, viewerId }: PublicProfileViewProps) {
 
         {data.bio && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{data.bio}</p>}
 
-        {/* Service areas (agent / professional roles) */}
-        {serviceAreas.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {serviceAreas.map((area: string) => (
-              <Badge key={area} variant="secondary" className="text-xs capitalize">{area}</Badge>
-            ))}
-          </div>
-        )}
+       {/* Service areas (agent / professional roles) */}
+{(serviceAreas?.length ?? 0) > 0 && (
+  <div className="flex flex-wrap gap-2">
+    {(serviceAreas ?? []).map((area: string) => (
+      <Badge
+        key={area}
+        variant="secondary"
+        className="text-xs capitalize"
+      >
+        {area}
+      </Badge>
+    ))}
+  </div>
+)}
         </div>
       </div>
 
@@ -116,21 +122,25 @@ export function PublicProfileView({ data, viewerId }: PublicProfileViewProps) {
       </div>
 
       {/* Specializations / certifications */}
-      {specialties.length > 0 && (
+     {(specialties?.length ?? 0) > 0 && (
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-base">Services Offered</CardTitle></CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {specialties.map((s: string) => (
+             {(specialties ?? []).map((s: string) => (
                 <Badge key={s} variant="secondary" className="text-xs capitalize">{s.replace(/_/g, ' ')}</Badge>
               ))}
             </div>
-            {ext.license_number && (
-              <p className="text-xs text-muted-foreground mt-3">
-                License #{ext.license_number}
-                {ext.license_verified && <span className="text-emerald-600 font-medium"> · Verified</span>}
-              </p>
-            )}
+           {ext?.license_number && (
+  <p className="text-xs text-muted-foreground mt-3">
+    License #: {ext.license_number}
+    {ext.license_verified && (
+      <span className="text-emerald-600 font-medium">
+        • Verified
+      </span>
+    )}
+  </p>
+)}
           </CardContent>
         </Card>
       )}

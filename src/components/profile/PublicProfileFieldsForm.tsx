@@ -11,8 +11,8 @@ import { updatePublicProfileDetails } from '@/lib/actions/profile'
 interface PublicProfileFieldsFormProps {
   companyName: string | null
   yearsExperience: number | null
-  specialties: string[]
-  serviceAreas: string[]
+  specialties: string[] | null
+  serviceAreas: string[] | null
   websiteUrl: string | null
 }
 
@@ -21,8 +21,12 @@ export function PublicProfileFieldsForm({
 }: PublicProfileFieldsFormProps) {
   const [company, setCompany] = useState(companyName ?? '')
   const [years, setYears] = useState(yearsExperience?.toString() ?? '')
-  const [specialtiesText, setSpecialtiesText] = useState(specialties.join(', '))
-  const [areasText, setAreasText] = useState(serviceAreas.join(', '))
+ const [specialtiesText, setSpecialtiesText] = useState(
+  (specialties ?? []).join(", ")
+)
+const [areasText, setAreasText] = useState(
+  (serviceAreas ?? []).join(", ")
+)
   const [website, setWebsite] = useState(websiteUrl ?? '')
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
