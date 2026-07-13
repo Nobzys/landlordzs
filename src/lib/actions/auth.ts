@@ -601,31 +601,32 @@ export async function completeProfessionalProfile(
 
 export async function completeOnboarding(): Promise<ActionResult<{ redirectTo: string }>> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error: authErr } = await supabase.auth.getUser()
+  console.log('[TRACE:completeOnboarding] auth.getUser =>', { userId: user?.id ?? null, authErr: authErr?.message ?? null })
   if (!user) return { error: 'Not authenticated.' }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any)
+  const { error, count } = await (supabase as any)
     .from('profiles')
-    .update({ onboarding_completed: true })
+    .update({ onboarding_completed: true }, { count: 'exact' })
     .eq('id', user.id)
 
+  console.log('[TRACE:completeOnboarding] UPDATE onboarding_completed =>', { userId: user.id, rowsAffected: count ?? 'unknown', error: error?.message ?? null, errorCode: error?.code ?? null })
   if (error) return { error: error.message }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: profile } = await (supabase as any)
+  const { data: profile, error: fetchErr } = await (supabase as any)
     .from('profiles')
-    .select('role')
+    .select('role, onboarding_completed, account_status')
     .eq('id', user.id)
-    .single() as { data: { role: string } | null }
+    .single() as { data: { role: string; onboarding_completed: boolean; account_status: string } | null; error: unknown }
+
+  console.log('[TRACE:completeOnboarding] re-fetch profile =>', { profile, fetchErr })
+  const redirectTo = ROLE_DASHBOARDS[(profile?.role ?? 'buyer') as UserRole] ?? '/account'
+  console.log('[TRACE:completeOnboarding] returning redirectTo =>', redirectTo)
 
   revalidatePath('/', 'layout')
-  return {
-    success: true,
-    data: {
-      redirectTo: ROLE_DASHBOARDS[(profile?.role ?? 'buyer') as UserRole] ?? '/account',
-    },
-  }
+  return { success: true, data: { redirectTo } }
 }
 
 // â”€â”€â”€ Update Password (from Account settings) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -833,7 +834,7 @@ export async function adminApproveProfessional(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (adminClient as any)
     .from('profiles')
-    .update({ account_status: 'active' })
+    .update({ account_status: 'active', is_verified: true })
     .eq('id', targetUserId)
 
   // Set verified flag on role-specific table
@@ -848,6 +849,12 @@ export async function adminApproveProfessional(
     await (adminClient as any)
       .from('professional_profiles')
       .update({ is_verified: true, license_verified: true })
+      .eq('id', targetUserId)
+  } else if (target?.role === 'vendor') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (adminClient as any)
+      .from('vendor_profiles')
+      .update({ is_verified: true })
       .eq('id', targetUserId)
   }
 
