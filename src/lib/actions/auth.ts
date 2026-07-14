@@ -797,6 +797,15 @@ export async function submitKycDocuments(data: {
   })
 
   if (error) return { error: error.message }
+
+  // Reset account_status so the resubmission appears in the admin pending queue
+  // (RLS profiles_update_own WITH CHECK explicitly allows 'pending_verification')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any)
+    .from('profiles')
+    .update({ account_status: 'pending_verification' })
+    .eq('id', user.id)
+
   return { success: true }
 }
 
