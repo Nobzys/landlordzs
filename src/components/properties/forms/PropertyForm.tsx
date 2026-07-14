@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils/cn'
 const STEPS = ['Basic Info', 'Details', 'Media', 'Amenities', 'Review'] as const
 type Step = 0 | 1 | 2 | 3 | 4
 
-const LISTING_TYPES  = [{ value: 'sale', label: 'For Sale' }, { value: 'rent', label: 'For Rent' }, { value: 'shortlet', label: 'Shortlet' }]
+const LISTING_TYPES  = [{ value: 'sale', label: 'For Sale' }, { value: 'rent', label: 'For Rent' }, { value: 'short_term', label: 'Shortlet' }]
 const PROPERTY_TYPES = [
   { value: 'apartment', label: 'Apartment' }, { value: 'villa', label: 'Villa' },
   { value: 'house', label: 'House' }, { value: 'studio', label: 'Studio' },

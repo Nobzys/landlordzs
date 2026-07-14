@@ -43,7 +43,7 @@ export function PropertyFilters({ className }: { className?: string }) {
     <div className={cn('flex items-center gap-3 flex-wrap', className)}>
       {/* Listing type pills */}
       <div className="flex gap-2">
-        {(['sale', 'rent', 'shortlet'] as const).map(t => (
+        {(['sale', 'rent', 'short_term'] as const).map(t => (
           <Button
             key={t}
             variant={filters.listing_type === t ? 'default' : 'outline'}

@@ -14,11 +14,11 @@ interface PropertyCardProps {
   className?: string
 }
 
-const LISTING_TYPE_LABELS = { sale: 'For Sale', rent: 'For Rent', shortlet: 'Shortlet' } as const
+const LISTING_TYPE_LABELS = { sale: 'For Sale', rent: 'For Rent', short_term: 'Shortlet' } as const
 const LISTING_TYPE_COLORS = {
-  sale:     'bg-blue-600 text-white',
-  rent:     'bg-emerald-600 text-white',
-  shortlet: 'bg-amber-500 text-white',
+  sale:       'bg-blue-600 text-white',
+  rent:       'bg-emerald-600 text-white',
+  short_term: 'bg-amber-500 text-white',
 } as const
 
 export function PropertyCard({ property, className }: PropertyCardProps) {

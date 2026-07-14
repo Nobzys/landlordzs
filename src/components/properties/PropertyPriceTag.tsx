@@ -11,9 +11,9 @@ interface PropertyPriceTagProps {
 }
 
 const LISTING_SUFFIX: Record<DbListingType, string> = {
-  sale:     '',
-  rent:     '/mo',
-  shortlet: '/night',
+  sale:       '',
+  rent:       '/mo',
+  short_term: '/night',
 }
 
 export function PropertyPriceTag({

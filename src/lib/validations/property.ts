@@ -1,6 +1,6 @@
 ﻿import { z } from 'zod'
 
-const LISTING_TYPES  = ['sale', 'rent', 'shortlet'] as const
+const LISTING_TYPES  = ['sale', 'rent', 'short_term'] as const
 const PROPERTY_TYPES = ['villa','apartment','studio','duplex','penthouse','house','commercial_space','office','warehouse','shop','land','farm','hotel'] as const
 const LAND_TITLES    = ['titre_foncier','bail_emphyteotique','concession','none'] as const
 const CITIES         = ['yaounde','douala','buea','bamenda','limbe','kribi','bafoussam','ngaoundere','maroua','bertoua','ebolowa','kumba'] as const
