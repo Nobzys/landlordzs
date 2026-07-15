@@ -14,6 +14,12 @@ const ROLE_PERMISSIONS: Record<UserRole, Set<string>> = {
     'forum:moderate', 'forum:post', 'forum:comment',
     'service:create', 'service:edit', 'job:post', 'tender:post',
   ]),
+  moderator: new Set([
+    'user:manage', 'user:suspend',
+    'report:review',
+    'property:verify',
+    'forum:moderate', 'forum:post', 'forum:comment',
+  ]),
   buyer: new Set([
     'property:favorite', 'property:inquire',
     'product:purchase', 'cart:manage',

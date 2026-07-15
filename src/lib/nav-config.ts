@@ -64,4 +64,12 @@ export const ROLE_NAV: Record<UserRole, NavItem[]> = {
     { label: 'Settings',       href: '/admin/settings',         icon: 'Settings' },
     { label: 'My Profile',     href: '/account/profile',        icon: 'User' },
   ],
+  moderator: [
+    { label: 'Overview',      href: '/admin',               icon: 'LayoutDashboard', exact: true },
+    { label: 'Users',         href: '/admin/users',         icon: 'Users' },
+    { label: 'Properties',    href: '/admin/properties',    icon: 'Building2' },
+    { label: 'Professionals', href: '/admin/professionals', icon: 'ShieldCheck' },
+    { label: 'Reports',       href: '/admin/reports',       icon: 'Flag' },
+    { label: 'My Profile',    href: '/account/profile',     icon: 'User' },
+  ],
 }

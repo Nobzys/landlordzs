@@ -12,6 +12,7 @@ import { adminApproveProfessional, adminRejectProfessional } from '@/lib/actions
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatRelative } from '@/lib/utils/format'
+import { STORAGE_BUCKETS } from '@/lib/utils/constants'
 import { ROLE_LABELS } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
 
@@ -64,7 +65,7 @@ export default async function AdminProfessionalsPage({
   searchParams: Promise<SearchParams>
 }) {
   const profile = await getServerProfile()
-  if (!profile || profile.role !== 'admin') redirect('/login')
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'moderator')) redirect('/login')
 
   const params = await searchParams
   const tab: AccountStatus =
@@ -119,7 +120,7 @@ export default async function AdminProfessionalsPage({
 
         const toUrl = async (path: string | null) => {
           if (!path) return null
-          const { data } = await supabaseStorage.from('verification-documents-v2').createSignedUrl(path, 3600)
+          const { data } = await supabaseStorage.from(STORAGE_BUCKETS.VERIFY_DOCS).createSignedUrl(path, 3600)
           return data?.signedUrl ?? null
         }
 

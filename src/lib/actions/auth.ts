@@ -663,7 +663,6 @@ export async function adminAssignRole(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated.' }
 
-  // Verify caller is admin
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: callerProfile } = await (supabase as any)
     .from('profiles')
@@ -671,8 +670,26 @@ export async function adminAssignRole(
     .eq('id', user.id)
     .single() as { data: { role: string } | null }
 
-  if (callerProfile?.role !== 'admin') {
+  const callerRole = callerProfile?.role
+  if (callerRole !== 'admin' && callerRole !== 'moderator') {
     return { error: 'Insufficient permissions.' }
+  }
+
+  if (callerRole === 'moderator') {
+    // Moderators may not assign admin role (privilege escalation)
+    if (newRole === 'admin') {
+      return { error: 'Moderators cannot assign the admin role.' }
+    }
+    // Moderators may not modify admin accounts
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: targetProfile } = await (supabase as any)
+      .from('profiles')
+      .select('role')
+      .eq('id', targetUserId)
+      .single() as { data: { role: string } | null }
+    if (targetProfile?.role === 'admin') {
+      return { error: 'Moderators cannot modify administrator accounts.' }
+    }
   }
 
   const adminClient = createAdminClient()
@@ -705,8 +722,21 @@ export async function adminSuspendAccount(
     .eq('id', user.id)
     .single() as { data: { role: string } | null }
 
-  if (callerProfile?.role !== 'admin') {
+  const callerRole = callerProfile?.role
+  if (callerRole !== 'admin' && callerRole !== 'moderator') {
     return { error: 'Insufficient permissions.' }
+  }
+
+  if (callerRole === 'moderator') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: targetProfile } = await (supabase as any)
+      .from('profiles')
+      .select('role')
+      .eq('id', targetUserId)
+      .single() as { data: { role: string } | null }
+    if (targetProfile?.role === 'admin') {
+      return { error: 'Moderators cannot suspend administrator accounts.' }
+    }
   }
 
   const adminClient = createAdminClient()
@@ -757,8 +787,21 @@ export async function adminActivateAccount(
     .eq('id', user.id)
     .single() as { data: { role: string } | null }
 
-  if (callerProfile?.role !== 'admin') {
+  const callerRole = callerProfile?.role
+  if (callerRole !== 'admin' && callerRole !== 'moderator') {
     return { error: 'Insufficient permissions.' }
+  }
+
+  if (callerRole === 'moderator') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: targetProfile } = await (supabase as any)
+      .from('profiles')
+      .select('role')
+      .eq('id', targetUserId)
+      .single() as { data: { role: string } | null }
+    if (targetProfile?.role === 'admin') {
+      return { error: 'Moderators cannot modify administrator accounts.' }
+    }
   }
 
   const adminClient = createAdminClient()

@@ -61,7 +61,7 @@ export default async function AdminReportsPage({
   searchParams: Promise<SearchParams>
 }) {
   const profile = await getServerProfile()
-  if (!profile || profile.role !== 'admin') redirect('/login')
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'moderator')) redirect('/login')
 
   const params = await searchParams
   const tab: ReportStatus =

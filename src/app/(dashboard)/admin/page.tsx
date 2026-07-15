@@ -69,7 +69,7 @@ const ACTIVITY_CONFIG: Record<string, { label: string; Icon: typeof UserPlus; co
 
 export default async function AdminPage() {
   const profile = await getServerProfile()
-  if (!profile || profile.role !== 'admin') redirect('/login')
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'moderator')) redirect('/login')
 
   const supabase = await createClient()
 

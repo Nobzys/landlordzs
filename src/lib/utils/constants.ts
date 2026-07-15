@@ -41,7 +41,7 @@ export const ROLE_PROTECTED_PREFIXES: Record<string, UserRole[]> = {
   '/engineer':   ['engineer'],
   '/architect':  ['architect'],
   '/lawyer':     ['lawyer'],
-  '/admin':      ['admin'],
+  '/admin':      ['admin', 'moderator'],
 }
 
 // Roles permitted to create property listings. Enforced at the server-action
@@ -75,7 +75,7 @@ export const STORAGE_BUCKETS = {
   PROPERTY_IMAGES:   'property-images',
   PROPERTY_VIDEOS:   'property-videos',
   USER_AVATARS:      'user-avatars',
-  VERIFY_DOCS:       'verification-documents-v2',
+  VERIFY_DOCS:       'verification-documents',
   MARKETPLACE:       'marketplace-products',
   PORTFOLIOS:        'service-portfolios',
   FORUM_IMAGES:      'forum-images',

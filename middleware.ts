@@ -3,13 +3,30 @@ import { createMiddlewareClient } from '@/lib/supabase/middleware'
 import { ROLE_DASHBOARDS, PUBLIC_ROUTES, AUTH_ROUTES, ROLE_PROTECTED_PREFIXES } from '@/lib/utils/constants'
 import type { UserRole } from '@/types/auth'
 
-export async function middleware(request: NextRequest) {
-  const { supabase, response } = await createMiddlewareClient(request)
+// Copies any Set-Cookie headers from `refreshed` (the post-getUser response)
+// onto a redirect response so rotated tokens are never silently discarded.
+function redirectWithCookies(url: URL | string, refreshed: NextResponse): NextResponse {
+  const redirect = NextResponse.redirect(url)
+  refreshed.cookies.getAll().forEach(({ name, value, ...opts }) =>
+    redirect.cookies.set(name, value, opts as Parameters<typeof redirect.cookies.set>[2])
+  )
+  return redirect
+}
 
-  // Always refresh session so it doesn't expire
+export async function middleware(request: NextRequest) {
+  const { supabase, getResponse } = await createMiddlewareClient(request)
+
+  // Always refresh session so it doesn't expire.
+  // getResponse() is called AFTER this so we always get the version that
+  // setAll() may have updated with fresh session cookies.
   const {
     data: { user },
   } = await supabase.auth.getUser()
+
+  // Bind response here so every branch below gets the post-refresh version.
+  // If setAll() ran during getUser() (token rotation), this is response_v2
+  // with the new cookies; otherwise it is response_v1 unchanged.
+  let response = getResponse()
 
   const { pathname } = request.nextUrl
 
@@ -48,7 +65,7 @@ export async function middleware(request: NextRequest) {
         ? '/onboarding'
         : (ROLE_DASHBOARDS[(profile?.role ?? 'buyer') as UserRole] ?? '/account')
 
-      return NextResponse.redirect(new URL(dest, request.url))
+      return redirectWithCookies(new URL(dest, request.url), response)
     }
     return response
   }
@@ -71,13 +88,13 @@ export async function middleware(request: NextRequest) {
     // No profile row yet (new user or table not yet seeded).
     // Don't sign out — send them to onboarding to create it.
     if (!pathname.startsWith('/onboarding')) {
-      return NextResponse.redirect(new URL('/onboarding', request.url))
+      return redirectWithCookies(new URL('/onboarding', request.url), response)
     }
     return response
   }
 
-  // ── Account suspended / banned ────────────────────────────────────────────
-  if (profile.account_status === 'suspended' || profile.account_status === 'banned') {
+  // ── Account suspended / banned / deactivated ─────────────────────────────
+  if (['suspended', 'banned', 'deactivated'].includes(profile.account_status)) {
     await supabase.auth.signOut()
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('error', 'account_suspended')
@@ -92,7 +109,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/')
 
   if (!profile.onboarding_completed && !onboardingBypass) {
-    return NextResponse.redirect(new URL('/onboarding', request.url))
+    return redirectWithCookies(new URL('/onboarding', request.url), response)
   }
 
   // ── Role-based dashboard protection ──────────────────────────────────────
@@ -112,7 +129,7 @@ export async function middleware(request: NextRequest) {
 
     // Wrong role — redirect to their own dashboard
     const ownDashboard = ROLE_DASHBOARDS[userRole] ?? '/account'
-    return NextResponse.redirect(new URL(ownDashboard, request.url))
+    return redirectWithCookies(new URL(ownDashboard, request.url), response)
   }
 
   return response

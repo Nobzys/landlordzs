@@ -37,7 +37,7 @@ type VerificationRow = {
 
 export default async function AdminPropertiesPage() {
   const profile = await getServerProfile()
-  if (!profile || profile.role !== 'admin') redirect('/login')
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'moderator')) redirect('/login')
 
   const supabase = await createClient()
 

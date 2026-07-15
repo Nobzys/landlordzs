@@ -42,7 +42,11 @@ export function LoginForm() {
         setServerError(result.error)
         return
       }
-      const dest = redirectTo ?? result?.data?.redirectTo ?? '/account'
+      // The server computes the canonical role dashboard (e.g. /admin for moderator).
+      // Only honour ?redirectTo= from the URL if it is reachable under that prefix;
+      // stale/invalid paths like /moderator would otherwise cause a 404 after login.
+      const roleDest = result?.data?.redirectTo ?? '/account'
+      const dest = redirectTo && redirectTo.startsWith(roleDest) ? redirectTo : roleDest
       router.push(dest)
       router.refresh()
     })

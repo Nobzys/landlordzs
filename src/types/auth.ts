@@ -4,6 +4,7 @@ import type { User } from '@supabase/supabase-js'
 
 export type UserRole =
   | 'admin'
+  | 'moderator'
   | 'buyer'
   | 'seller'
   | 'agent'
@@ -18,6 +19,7 @@ export type AccountStatus =
   | 'suspended'
   | 'banned'
   | 'pending_verification'
+  | 'deactivated'
 
 export type CameroonCity =
   | 'yaounde'
@@ -75,6 +77,7 @@ export interface ActionResult<T = undefined> {
 
 export const ROLE_DASHBOARDS: Record<UserRole, string> = {
   admin:      '/admin',
+  moderator:  '/admin',
   buyer:      '/buyer/favorites',
   seller:     '/seller/listings',
   agent:      '/agent/commissions',
@@ -87,6 +90,7 @@ export const ROLE_DASHBOARDS: Record<UserRole, string> = {
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   admin:      'Administrator',
+  moderator:  'Moderator',
   buyer:      'Property Buyer',
   seller:     'Property Seller',
   agent:      'Real Estate Agent',
@@ -99,6 +103,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 
 export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   admin:      'Platform administrator with full access',
+  moderator:  'Platform moderator — review content and user reports',
   buyer:      'Search, favorite, and inquire about properties',
   seller:     'List your properties for sale or rent',
   agent:      'Represent clients and earn commissions on sales',

@@ -29,5 +29,9 @@ export async function createMiddlewareClient(request: NextRequest) {
     }
   )
 
-  return { supabase, response }
+  // Return a getter so callers always read the latest response value.
+  // setAll() is called during supabase.auth.getUser() (token refresh), which
+  // reassigns the local `response` variable. Returning the value directly would
+  // capture the pre-refresh snapshot; the getter returns whatever is current.
+  return { supabase, getResponse: () => response }
 }

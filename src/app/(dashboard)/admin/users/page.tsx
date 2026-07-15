@@ -15,7 +15,13 @@ export const metadata: Metadata = { title: 'User Management' }
 
 const ALL_ROLES: UserRole[] = [
   'buyer', 'seller', 'agent', 'vendor',
-  'contractor', 'engineer', 'architect', 'lawyer', 'admin',
+  'contractor', 'engineer', 'architect', 'lawyer', 'admin', 'moderator',
+]
+
+// Roles a moderator may assign — excludes admin (privilege escalation)
+const MODERATOR_ASSIGNABLE_ROLES: UserRole[] = [
+  'buyer', 'seller', 'agent', 'vendor',
+  'contractor', 'engineer', 'architect', 'lawyer', 'moderator',
 ]
 
 const STATUS_OPTIONS = ['active', 'suspended', 'banned', 'pending_verification']
@@ -37,7 +43,7 @@ export default async function AdminUsersPage({
   searchParams: Promise<SearchParams>
 }) {
   const profile = await getServerProfile()
-  if (!profile || profile.role !== 'admin') redirect('/login')
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'moderator')) redirect('/login')
 
   const params = await searchParams
   const roleFilter   = ALL_ROLES.includes(params.role as UserRole) ? params.role : undefined
@@ -153,14 +159,18 @@ export default async function AdminUsersPage({
           <div className="divide-y">
             {users.map((u) => (
               <div key={u.id} className="flex items-center gap-3 px-4 py-3 flex-wrap sm:flex-nowrap">
-                {/* Avatar */}
+                {/* Avatar + Identity — clickable link to detail page */}
+                <Link
+                  href={`/admin/users/${u.id}`}
+                  className="flex items-center gap-3 flex-1 min-w-0 group"
+                >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
                   {getInitial(u.full_name, u.display_name, u.email)}
                 </div>
 
                 {/* Identity */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">
+                  <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
                     {u.full_name?.trim() || u.display_name?.trim() || 'Unnamed'}
                     {u.is_verified && (
                       <span className="ml-1.5 text-blue-600 text-xs">✓</span>
@@ -168,6 +178,7 @@ export default async function AdminUsersPage({
                   </p>
                   <p className="text-xs text-muted-foreground truncate">{u.email?.trim() || 'No email'}</p>
                 </div>
+                </Link>
 
                 {/* Badges */}
                 <div className="flex items-center gap-2 shrink-0">
@@ -190,65 +201,73 @@ export default async function AdminUsersPage({
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                  {/* Role assignment */}
-                  {u.id !== profile.id && (() => {
-                    const userId = u.id
-                    return (
-                      <form
-                        action={async (fd: FormData) => {
-                          'use server'
-                          const role = fd.get('role') as string
-                          if (!role) return
-                          await adminAssignRole(userId, role as import('@/types/auth').UserRole)
-                        }}
-                        className="flex items-center gap-1"
-                      >
-                        <select
-                          name="role"
-                          defaultValue={u.role}
-                          className="rounded-md border px-2 py-1 text-xs bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-                        >
-                          {ALL_ROLES.map((r) => (
-                            <option key={r} value={r}>{ROLE_LABELS[r]}</option>
-                          ))}
-                        </select>
-                        <Button type="submit" variant="outline" size="sm" className="text-xs px-2">
-                          Assign
-                        </Button>
-                      </form>
-                    )
-                  })()}
+                  {/* Moderators see no controls on admin accounts */}
+                  {profile.role === 'moderator' && u.role === 'admin' ? null : (
+                    <>
+                      {/* Role assignment */}
+                      {u.id !== profile.id && (() => {
+                        const userId = u.id
+                        const assignableRoles = profile.role === 'moderator'
+                          ? MODERATOR_ASSIGNABLE_ROLES
+                          : ALL_ROLES
+                        return (
+                          <form
+                            action={async (fd: FormData) => {
+                              'use server'
+                              const role = fd.get('role') as string
+                              if (!role) return
+                              await adminAssignRole(userId, role as import('@/types/auth').UserRole)
+                            }}
+                            className="flex items-center gap-1"
+                          >
+                            <select
+                              name="role"
+                              defaultValue={u.role}
+                              className="rounded-md border px-2 py-1 text-xs bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                            >
+                              {assignableRoles.map((r) => (
+                                <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                              ))}
+                            </select>
+                            <Button type="submit" variant="outline" size="sm" className="text-xs px-2">
+                              Assign
+                            </Button>
+                          </form>
+                        )
+                      })()}
 
-                  {/* Suspend / Activate */}
-                  {u.account_status === 'suspended' ? (
-                    <form action={async () => {
-                      'use server'
-                      await adminActivateAccount(u.id)
-                    }}>
-                      <Button
-                        type="submit"
-                        variant="outline"
-                        size="sm"
-                        className="text-green-600 border-green-200 hover:bg-green-50"
-                      >
-                        Activate
-                      </Button>
-                    </form>
-                  ) : u.id !== profile.id ? (
-                    <form action={async () => {
-                      'use server'
-                      await adminSuspendAccount(u.id, 'Admin action')
-                    }}>
-                      <Button
-                        type="submit"
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 border-red-200 hover:bg-red-50"
-                      >
-                        Suspend
-                      </Button>
-                    </form>
-                  ) : null}
+                      {/* Suspend / Activate */}
+                      {u.account_status === 'suspended' ? (
+                        <form action={async () => {
+                          'use server'
+                          await adminActivateAccount(u.id)
+                        }}>
+                          <Button
+                            type="submit"
+                            variant="outline"
+                            size="sm"
+                            className="text-green-600 border-green-200 hover:bg-green-50"
+                          >
+                            Activate
+                          </Button>
+                        </form>
+                      ) : u.id !== profile.id ? (
+                        <form action={async () => {
+                          'use server'
+                          await adminSuspendAccount(u.id, 'Admin action')
+                        }}>
+                          <Button
+                            type="submit"
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            Suspend
+                          </Button>
+                        </form>
+                      ) : null}
+                    </>
+                  )}
                 </div>
               </div>
             ))}
