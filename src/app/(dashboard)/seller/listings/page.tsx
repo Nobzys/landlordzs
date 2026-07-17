@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { Plus, Eye, Edit, Trash2, ToggleRight, ShieldCheck } from 'lucide-react'
+import { Plus, Eye, Edit, ToggleRight, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LinkButton } from '@/components/ui/link-button'
 import { Badge } from '@/components/ui/badge'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
-import { deleteProperty, publishProperty, requestVerification } from '@/lib/actions/properties'
+import { publishProperty, requestVerification } from '@/lib/actions/properties'
+import { DeletePropertyButton } from '@/components/seller/DeletePropertyButton'
 import { requireActiveProfile } from '@/lib/utils/account-status'
 import { formatXAFShort, formatDate } from '@/lib/utils/format'
 import type { PropertyRow } from '@/types/database'
@@ -114,14 +115,7 @@ export default async function SellerListingsPage() {
                     </form>
                   )}
 
-                  <form action={async () => {
-                    'use server'
-                    await deleteProperty(p.id)
-                  }}>
-                    <Button variant="ghost" size="icon" type="submit" title="Delete" className="text-destructive hover:text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </form>
+                  <DeletePropertyButton propertyId={p.id} />
                 </div>
               </div>
             )
