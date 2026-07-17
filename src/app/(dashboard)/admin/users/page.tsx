@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Users, ChevronLeft } from 'lucide-react'
+import { Users, ChevronLeft, Search } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { adminSuspendAccount, adminActivateAccount, adminAssignRole } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
@@ -33,7 +33,7 @@ const STATUS_COLOR: Record<string, string> = {
   pending_verification: 'bg-yellow-100 text-yellow-700',
 }
 
-interface SearchParams { role?: string; status?: string; page?: string }
+interface SearchParams { role?: string; status?: string; page?: string; q?: string }
 
 const PAGE_SIZE = 25
 
@@ -48,6 +48,7 @@ export default async function AdminUsersPage({
   const params = await searchParams
   const roleFilter   = ALL_ROLES.includes(params.role as UserRole) ? params.role : undefined
   const statusFilter = STATUS_OPTIONS.includes(params.status ?? '') ? params.status : undefined
+  const q    = params.q?.trim() || undefined
   const page = Math.max(1, parseInt(params.page ?? '1', 10))
   const from = (page - 1) * PAGE_SIZE
   const to   = from + PAGE_SIZE - 1
@@ -62,6 +63,7 @@ export default async function AdminUsersPage({
 
   if (roleFilter)   query = query.eq('role',           roleFilter)
   if (statusFilter) query = query.eq('account_status', statusFilter)
+  if (q)            query = query.or(`email.ilike.%${q}%,full_name.ilike.%${q}%`)
 
   const { data: rawUsers, count } = await (query as unknown as Promise<{
     data: ProfileRow[] | null
@@ -73,10 +75,11 @@ export default async function AdminUsersPage({
 
   function buildUrl(overrides: Partial<SearchParams>) {
     const p = new URLSearchParams()
-    const merged = { role: roleFilter, status: statusFilter, page: String(page), ...overrides }
+    const merged = { role: roleFilter, status: statusFilter, page: String(page), q, ...overrides }
     if (merged.role)   p.set('role',   merged.role)
     if (merged.status) p.set('status', merged.status)
     if (merged.page && merged.page !== '1') p.set('page', merged.page)
+    if (merged.q)      p.set('q',      merged.q)
     const qs = p.toString()
     return `/admin/users${qs ? `?${qs}` : ''}`
   }
@@ -94,10 +97,37 @@ export default async function AdminUsersPage({
           </div>
           <div>
             <h1 className="text-2xl font-bold">User Management</h1>
-            <p className="text-sm text-muted-foreground">{count ?? 0} users total</p>
+            <p className="text-sm text-muted-foreground">
+              {q
+                ? `${count ?? 0} result${(count ?? 0) !== 1 ? 's' : ''} for "${q}"`
+                : `${count ?? 0} users total`}
+            </p>
           </div>
         </div>
       </div>
+
+      {/* Search */}
+      <form method="GET" action="/admin/users" className="flex gap-2">
+        {roleFilter   && <input type="hidden" name="role"   value={roleFilter} />}
+        {statusFilter && <input type="hidden" name="status" value={statusFilter} />}
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <input
+            type="text"
+            name="q"
+            defaultValue={q ?? ''}
+            placeholder="Search by name or email…"
+            className="w-full rounded-md border pl-9 pr-3 py-2 text-sm bg-background
+              placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+        <Button type="submit" variant="outline" size="sm">Search</Button>
+        {q && (
+          <Button asChild variant="ghost" size="sm">
+            <Link href={buildUrl({ q: undefined, page: '1' })}>Clear</Link>
+          </Button>
+        )}
+      </form>
 
       {/* Role filters */}
       <div className="flex flex-wrap gap-2">
@@ -275,7 +305,9 @@ export default async function AdminUsersPage({
         ) : (
           <div className="text-center py-12 text-muted-foreground">
             <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />
-            <p className="text-sm">No users found matching the current filters.</p>
+            <p className="text-sm">
+              {q ? `No users found matching "${q}".` : 'No users found matching the current filters.'}
+            </p>
           </div>
         )}
       </div>
