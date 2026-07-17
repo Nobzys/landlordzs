@@ -701,7 +701,17 @@ export async function adminAssignRole(
 
   if (error) return { error: error.message }
 
-  revalidatePath('/admin/users')
+  // Log admin action
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from('admin_logs').insert({
+    actor_id:    user.id,
+    action:      'assign_role',
+    target_type: 'profile',
+    target_id:   targetUserId,
+    new_data:    { role: newRole },
+  })
+
+  revalidatePath('/admin/users', 'layout')
   return { success: true }
 }
 
@@ -767,7 +777,7 @@ export async function adminSuspendAccount(
     created_by: user.id,
   })
 
-  revalidatePath('/admin/users')
+  revalidatePath('/admin/users', 'layout')
   return { success: true }
 }
 
@@ -813,7 +823,16 @@ export async function adminActivateAccount(
 
   if (error) return { error: error.message }
 
-  revalidatePath('/admin/users')
+  // Log admin action
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from('admin_logs').insert({
+    actor_id:    user.id,
+    action:      'activate_account',
+    target_type: 'profile',
+    target_id:   targetUserId,
+  })
+
+  revalidatePath('/admin/users', 'layout')
   return { success: true }
 }
 
