@@ -18,7 +18,7 @@ import type { UserRole } from '@/types/auth'
 
 export const metadata: Metadata = { title: 'Account Verification — Admin' }
 
-const STATUS_TABS = ['pending', 'active', 'suspended'] as const
+const STATUS_TABS = ['pending', 'active', 'suspended', 'rejected'] as const
 type AccountStatus = (typeof STATUS_TABS)[number]
 
 const ACCOUNT_COLOR: Record<string, string> = {
@@ -79,6 +79,7 @@ export default async function AdminProfessionalsPage({
   const statusFilter =
     tab === 'pending'   ? 'pending_verification' :
     tab === 'active'    ? 'active' :
+    tab === 'rejected'  ? 'pending_verification' :
     'suspended'
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -109,11 +110,11 @@ export default async function AdminProfessionalsPage({
     agent_profiles: Array.isArray(p.agent_profiles)
       ? (p.agent_profiles[0] ?? null)
       : p.agent_profiles,
-  }))
+  })).filter((p) => tab !== 'rejected' || p.kyc_records[0]?.status === 'rejected')
 
   // Generate signed URLs for the pending tab (worth the cost for reviewable docs)
   const supabaseStorage = adminClient.storage
-  const withUrls = tab === 'pending'
+  const withUrls = (tab === 'pending' || tab === 'rejected')
     ? await Promise.all(professionals.map(async (p) => {
         const kyc = p.kyc_records[0]
         if (!kyc) return { ...p, signedUrls: { front: null, back: null, cert: null } }
@@ -175,7 +176,7 @@ export default async function AdminProfessionalsPage({
                 : 'hover:bg-accent'
             }`}
           >
-            {s === 'pending' ? 'Pending Verification' : s === 'active' ? 'Approved' : 'Suspended'}
+            {s === 'pending' ? 'Pending Verification' : s === 'active' ? 'Approved' : s === 'suspended' ? 'Suspended' : 'Rejected'}
             {s === 'pending' && (pendingCount ?? 0) > 0 && (
               <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
                 {(pendingCount as number) > 9 ? '9+' : pendingCount}
@@ -190,7 +191,7 @@ export default async function AdminProfessionalsPage({
         <div className="rounded-xl border text-center py-16">
           <CheckCircle2 className="h-10 w-10 mx-auto mb-3 text-emerald-500 opacity-60" />
           <p className="text-sm font-medium text-muted-foreground capitalize">
-            No {tab === 'pending' ? 'pending verifications' : tab === 'active' ? 'approved professionals' : 'suspended accounts'}
+            No {tab === 'pending' ? 'pending verifications' : tab === 'active' ? 'approved professionals' : tab === 'suspended' ? 'suspended accounts' : 'rejected professionals'}
           </p>
         </div>
       ) : (
@@ -247,7 +248,7 @@ export default async function AdminProfessionalsPage({
                 </div>
 
                 {/* Documents row */}
-                {latestKyc && tab === 'pending' && (
+                {latestKyc && (tab === 'pending' || tab === 'rejected') && (
                   <div className="flex flex-wrap gap-2 pt-1">
                     {p.signedUrls.front && (
                       <a href={p.signedUrls.front} target="_blank" rel="noopener noreferrer"
