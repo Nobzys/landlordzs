@@ -1058,6 +1058,17 @@ export async function adminRequestMoreInfo(
   if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions.' }
 
   const adminClient = createAdminClient()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: kyc } = await (adminClient as any)
+    .from('kyc_records')
+    .select('id')
+    .eq('id', kycId)
+    .in('status', ['pending', 'needs_more_info'])
+    .single() as { data: { id: string } | null }
+
+  if (!kyc) return { error: 'This verification is not in an actionable state.' }
+
   const now = new Date().toISOString()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

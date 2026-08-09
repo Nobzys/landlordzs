@@ -3,7 +3,7 @@ import { AlertCircle, Clock, ShieldCheck, ShieldX, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export interface KycRecord {
-  status:            'pending' | 'approved' | 'rejected'
+  status:            'pending' | 'approved' | 'rejected' | 'needs_more_info'
   review_notes:      string | null
   national_id_front: string | null
   national_id_back:  string | null
@@ -73,6 +73,28 @@ export function VerificationBanner({
             <p className="text-xs text-blue-600 mt-1">Missing: {missingDocs.join(', ')}</p>
           )}
         </div>
+      </div>
+    )
+  }
+
+  if (kyc.status === 'needs_more_info') {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+        <div className="flex items-start gap-2.5">
+          <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-amber-800">Additional information required</p>
+            {kyc.review_notes && (
+              <p className="text-xs text-amber-700 mt-0.5">{kyc.review_notes}</p>
+            )}
+            <p className="text-xs text-amber-600 mt-1">
+              Please provide the requested information or documents to continue the review.
+            </p>
+          </div>
+        </div>
+        <Button asChild size="sm" className="bg-amber-600 hover:bg-amber-700 text-white">
+          <Link href="/account/verification">Update Documents</Link>
+        </Button>
       </div>
     )
   }

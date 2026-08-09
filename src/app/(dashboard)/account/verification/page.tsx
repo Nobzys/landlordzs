@@ -56,6 +56,33 @@ export default async function VerificationPage() {
     )
   }
 
+  if (kyc?.status === 'needs_more_info') {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-8 space-y-6">
+        <div className="flex items-center gap-3">
+          <Button asChild variant="ghost" size="icon" className="-ml-2">
+            <Link href="/account/profile"><ChevronLeft className="h-4 w-4" /></Link>
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Additional Information Required</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Our team needs more information before we can complete your verification
+            </p>
+          </div>
+        </div>
+
+        {kyc.review_notes && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <p className="text-sm font-semibold text-amber-800">Message from reviewer</p>
+            <p className="text-sm text-amber-700 mt-1">{kyc.review_notes}</p>
+          </div>
+        )}
+
+        <KycResubmitForm profile={profile} />
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-xl mx-auto px-4 py-8 space-y-6">
       <div className="flex items-center gap-3">
