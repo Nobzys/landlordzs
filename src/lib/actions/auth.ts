@@ -874,7 +874,8 @@ export async function submitKycDocuments(data: {
 // ─── Admin: Approve Professional ──────────────────────────────────────────────
 
 export async function adminApproveProfessional(
-  targetUserId: string
+  targetUserId: string,
+  kycId: string
 ): Promise<ActionResult> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -890,6 +891,17 @@ export async function adminApproveProfessional(
   if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions.' }
 
   const adminClient = createAdminClient()
+
+  // Guard: only act on pending or needs_more_info records (by specific kycId)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: kyc } = await (adminClient as any)
+    .from('kyc_records')
+    .select('id')
+    .eq('id', kycId)
+    .in('status', ['pending', 'needs_more_info'])
+    .single() as { data: { id: string } | null }
+
+  if (!kyc) return { error: 'This verification is not in an actionable state.' }
 
   // Get target role to update the right table
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -929,26 +941,25 @@ export async function adminApproveProfessional(
       .eq('id', targetUserId)
   }
 
-  // Mark latest pending KYC record as approved
+  // Mark this specific KYC record as approved
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: kyc } = await (adminClient as any)
+  await (adminClient as any)
     .from('kyc_records')
-    .select('id')
-    .eq('user_id', targetUserId)
-    .eq('status', 'pending')
-    .order('submitted_at', { ascending: false })
-    .limit(1)
-    .single() as { data: { id: string } | null }
+    .update({ status: 'approved', reviewed_by: user.id, reviewed_at: now })
+    .eq('id', kycId)
 
-  if (kyc) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (adminClient as any)
-      .from('kyc_records')
-      .update({ status: 'approved', reviewed_by: user.id, reviewed_at: now })
-      .eq('id', kyc.id)
-  }
+  // Log admin action
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from('admin_logs').insert({
+    actor_id:    user.id,
+    action:      'approve_verification',
+    target_type: 'kyc_record',
+    target_id:   kycId,
+    new_data:    { target_user_id: targetUserId },
+  })
 
   revalidatePath('/admin/professionals')
+  revalidatePath('/admin/verifications', 'layout')
   return { success: true }
 }
 
@@ -956,8 +967,83 @@ export async function adminApproveProfessional(
 
 export async function adminRejectProfessional(
   targetUserId: string,
-  reason: string
+  reason: string,
+  kycId: string
 ): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: callerProfile } = await (supabase as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single() as { data: { role: string } | null }
+
+  if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions.' }
+
+  const adminClient = createAdminClient()
+
+  // Guard: only act on pending or needs_more_info records (by specific kycId)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: kyc } = await (adminClient as any)
+    .from('kyc_records')
+    .select('id')
+    .eq('id', kycId)
+    .in('status', ['pending', 'needs_more_info'])
+    .single() as { data: { id: string } | null }
+
+  if (!kyc) return { error: 'This verification is not in an actionable state.' }
+
+  const effectiveReason = reason || 'Documents did not meet requirements.'
+  const now = new Date().toISOString()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (adminClient as any)
+    .from('kyc_records')
+    .update({
+      status:       'rejected',
+      review_notes: effectiveReason,
+      reviewed_by:  user.id,
+      reviewed_at:  now,
+    })
+    .eq('id', kycId)
+
+  // Store user-visible rejection reason
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (adminClient as any).from('account_notices').insert({
+    user_id:    targetUserId,
+    type:       'rejection',
+    reason:     effectiveReason,
+    created_by: user.id,
+  })
+
+  // Log admin action
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from('admin_logs').insert({
+    actor_id:    user.id,
+    action:      'reject_verification',
+    target_type: 'kyc_record',
+    target_id:   kycId,
+    new_data:    { reason: effectiveReason, target_user_id: targetUserId },
+  })
+
+  // account_status stays pending_verification so the professional can resubmit
+  revalidatePath('/admin/professionals')
+  revalidatePath('/admin/verifications', 'layout')
+  return { success: true }
+}
+
+// ─── Admin: Request More Info on KYC ──────────────────────────────────────────
+
+export async function adminRequestMoreInfo(
+  kycId: string,
+  targetUserId: string,
+  message: string
+): Promise<ActionResult> {
+  if (!message?.trim()) return { error: 'A message is required.' }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated.' }
@@ -975,41 +1061,29 @@ export async function adminRejectProfessional(
   const now = new Date().toISOString()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: kyc } = await (adminClient as any)
+  const { error } = await (adminClient as any)
     .from('kyc_records')
-    .select('id')
-    .eq('user_id', targetUserId)
-    .eq('status', 'pending')
-    .order('submitted_at', { ascending: false })
-    .limit(1)
-    .single() as { data: { id: string } | null }
+    .update({
+      status:       'needs_more_info',
+      review_notes: message.trim(),
+      reviewed_by:  user.id,
+      reviewed_at:  now,
+    })
+    .eq('id', kycId)
 
-  const effectiveReason = reason || 'Documents did not meet requirements.'
+  if (error) return { error: error.message }
 
-  if (kyc) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (adminClient as any)
-      .from('kyc_records')
-      .update({
-        status:       'rejected',
-        review_notes: effectiveReason,
-        reviewed_by:  user.id,
-        reviewed_at:  now,
-      })
-      .eq('id', kyc.id)
-  }
-
-  // Store user-visible rejection reason
+  // Log admin action
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (adminClient as any).from('account_notices').insert({
-    user_id:    targetUserId,
-    type:       'rejection',
-    reason:     effectiveReason,
-    created_by: user.id,
+  await (supabase as any).from('admin_logs').insert({
+    actor_id:    user.id,
+    action:      'request_more_info',
+    target_type: 'kyc_record',
+    target_id:   kycId,
+    new_data:    { message: message.trim(), target_user_id: targetUserId },
   })
 
-  // account_status stays pending_verification so they can resubmit
-  revalidatePath('/admin/professionals')
+  revalidatePath('/admin/verifications', 'layout')
   return { success: true }
 }
 

@@ -237,6 +237,12 @@ export default async function AdminProfessionalsPage({
                             Submitted {formatRelative(latestKyc.submitted_at)}
                           </p>
                         )}
+                        <Link
+                          href={`/admin/verifications/${latestKyc.id}`}
+                          className="inline-flex items-center gap-0.5 text-xs text-primary hover:underline"
+                        >
+                          View full request →
+                        </Link>
                       </>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
@@ -285,7 +291,7 @@ export default async function AdminProfessionalsPage({
                     {/* Approve */}
                     <form action={async () => {
                       'use server'
-                      await adminApproveProfessional(userId)
+                      await adminApproveProfessional(userId, latestKyc?.id ?? '')
                     }}>
                       <Button
                         type="submit"
@@ -302,7 +308,7 @@ export default async function AdminProfessionalsPage({
                       action={async (fd: FormData) => {
                         'use server'
                         const reason = (fd.get('reason') as string | null)?.trim() || 'Documents did not meet requirements.'
-                        await adminRejectProfessional(userId, reason)
+                        await adminRejectProfessional(userId, reason, latestKyc?.id ?? '')
                       }}
                       className="flex flex-1 gap-2"
                     >

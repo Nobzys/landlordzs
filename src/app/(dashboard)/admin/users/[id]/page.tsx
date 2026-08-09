@@ -288,11 +288,18 @@ export default async function AdminUserDetailPage({
             <h3 className="font-semibold flex items-center gap-2">
               <FileText className="h-4 w-4" /> Verification (KYC)
             </h3>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-              KYC_COLOR[kyc.status] ?? 'bg-gray-100 text-gray-700'
-            }`}>
-              {kyc.status}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                KYC_COLOR[kyc.status] ?? 'bg-gray-100 text-gray-700'
+              }`}>
+                {kyc.status}
+              </span>
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/admin/verifications/${kyc.id}`}>
+                  Review Verification →
+                </Link>
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
