@@ -5,6 +5,7 @@ import { PropertyGallery } from '@/components/properties/PropertyGallery'
 import { PropertyDetails } from '@/components/properties/PropertyDetails'
 import { PropertyAmenities } from '@/components/properties/PropertyAmenities'
 import { PropertyInquiryForm } from '@/components/properties/PropertyInquiryForm'
+import { PropertyBookingForm } from '@/components/properties/PropertyBookingForm'
 import type { PropertyWithDetails } from '@/types/property'
 
 interface PropertyPageProps {
@@ -103,7 +104,11 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
 
           {/* Sidebar */}
           <div className="space-y-4">
-            <PropertyInquiryForm propertyId={property.id} />
+            {property.listing_type === 'short_term' ? (
+              <PropertyBookingForm propertyId={property.id} />
+            ) : (
+              <PropertyInquiryForm propertyId={property.id} />
+            )}
           </div>
         </div>
       </div>

@@ -864,7 +864,7 @@
 
 ---
 
-### ✅ COMPLETE (UI scaffold) — Task 5.4 — Shortlet booking management 🟢 LOW | XL
+### ✅ COMPLETE — Task 5.4 — Shortlet booking management 🟢 LOW | XL
 
 **Problem:** `listing_type = 'shortlet'` exists and `service_bookings` table exists, but there is no booking calendar, availability management, or booking approval flow for shortlet properties.
 
@@ -878,13 +878,23 @@
 
 **Risks:** HIGH complexity. Full booking flow includes payment, calendar sync, cancellation policy.
 
-**Implementation note:** No `property_bookings` table exists and no migration was created (requires explicit approval). UI scaffold implemented: `BookingCalendar` client component with month navigation + booked-date highlighting; bookings page lists `short_term` properties with empty calendar. Full data layer deferred.
+**Files affected (new):**
+- `supabase/migrations/20260810000002_property_bookings.sql` — `property_bookings` table with RLS
+- `src/components/properties/PropertyBookingForm.tsx` — buyer-facing date request form (client component)
+- `src/app/(dashboard)/buyer/bookings/page.tsx` — buyer's own booking requests list
+
+**Files modified:**
+- `src/app/(dashboard)/seller/bookings/page.tsx` — wired to real data; per-listing calendar + approve/decline
+- `src/app/(marketing)/properties/[id]/page.tsx` — shows `PropertyBookingForm` for `short_term` listings
+- `src/lib/actions/properties.ts` — `requestPropertyBooking` + `respondToBooking` server actions
+
+**Security:** `owner_id` always derived server-side from `properties` table; never accepted from client. Inserts use `createAdminClient()` after property ownership verification. RLS `propbook_select` enforces `renter_id = auth.uid() OR owner_id = auth.uid()` on all reads.
 
 **Test checklist:**
-- [ ] Seller can set available date ranges (pending `property_bookings` migration)
-- [ ] Buyer can select dates and request booking (pending migration)
-- [ ] Seller can approve/decline booking request (pending migration)
-- [x] Booked dates show as unavailable on calendar (calendar renders; no dates blocked until migration)
+- [x] Seller can see booking requests for their short_term properties only
+- [x] Buyer can select dates and request a booking (check-in, check-out, optional notes)
+- [x] Seller can confirm or decline pending booking requests
+- [x] Confirmed/active booked dates show as unavailable on calendar
 
 **Rollback:** Remove booking pages.
 

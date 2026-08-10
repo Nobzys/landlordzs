@@ -465,6 +465,99 @@ export async function toggleSearchAlert(id: string, alertEmail: boolean): Promis
   return { success: true }
 }
 
+// ─── Buyer: request a short-term property booking ────────────────────────────
+
+export async function requestPropertyBooking(
+  propertyId: string,
+  checkIn: string,
+  checkOut: string,
+  notes?: string,
+): Promise<ActionResult<{ id: string }>> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'You must be signed in to request a booking.' }
+
+  // Basic date validation
+  const inDate  = new Date(checkIn)
+  const outDate = new Date(checkOut)
+  const today   = new Date(); today.setHours(0, 0, 0, 0)
+  if (isNaN(inDate.getTime()) || isNaN(outDate.getTime())) return { error: 'Invalid dates.' }
+  if (inDate < today)   return { error: 'Check-in date must be today or in the future.' }
+  if (outDate <= inDate) return { error: 'Check-out must be after check-in.' }
+
+  // Verify property exists, is short_term, and is bookable — user-scoped client
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: property } = await (supabase as any)
+    .from('properties')
+    .select('id, owner_id, listing_type, status')
+    .eq('id', propertyId)
+    .single() as { data: { id: string; owner_id: string; listing_type: string; status: string } | null }
+
+  if (!property) return { error: 'Property not found.' }
+  if (property.listing_type !== 'short_term') return { error: 'This property does not accept booking requests.' }
+  if (!['active', 'under_offer'].includes(property.status)) return { error: 'This property is not currently available.' }
+  if (property.owner_id === user.id) return { error: 'You cannot book your own property.' }
+
+  // Insert via admin client — owner_id derived from DB, never from client input
+  const adminClient = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: booking, error } = await (adminClient as any)
+    .from('property_bookings')
+    .insert({
+      property_id:    propertyId,
+      renter_id:      user.id,
+      owner_id:       property.owner_id,
+      check_in_date:  checkIn,
+      check_out_date: checkOut,
+      notes:          notes?.trim() || null,
+      status:         'pending',
+    })
+    .select('id')
+    .single() as { data: { id: string } | null; error: { message: string } | null }
+
+  if (error || !booking) return { error: error?.message ?? 'Failed to create booking request.' }
+
+  revalidatePath('/seller/bookings')
+  revalidatePath('/buyer/bookings')
+  return { success: true, data: { id: booking.id } }
+}
+
+// ─── Seller: approve or decline a booking request ────────────────────────────
+
+export async function respondToBooking(
+  bookingId: string,
+  action: 'confirmed' | 'cancelled',
+): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  // Verify ownership via user-scoped select (propbook_select RLS allows owner)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: booking } = await (supabase as any)
+    .from('property_bookings')
+    .select('id, owner_id, status')
+    .eq('id', bookingId)
+    .single() as { data: { id: string; owner_id: string; status: string } | null }
+
+  if (!booking || booking.owner_id !== user.id) return { error: 'Booking not found or access denied.' }
+  if (booking.status !== 'pending') return { error: 'Only pending bookings can be updated.' }
+
+  // Update via admin client — propbook_owner_update policy allows owner updates via user-scoped too,
+  // but using admin client for consistency with the established pattern.
+  const adminClient = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (adminClient as any)
+    .from('property_bookings')
+    .update({ status: action })
+    .eq('id', bookingId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/seller/bookings')
+  return { success: true }
+}
+
 // ─── Seller: reply to inquiry ─────────────────────────────────────────────────
 
 export async function replyToInquiry(inquiryId: string): Promise<ActionResult> {
