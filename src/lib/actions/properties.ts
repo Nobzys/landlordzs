@@ -464,3 +464,37 @@ export async function toggleSearchAlert(id: string, alertEmail: boolean): Promis
   revalidatePath('/buyer/saved-searches')
   return { success: true }
 }
+
+// ─── Seller: reply to inquiry ─────────────────────────────────────────────────
+
+export async function replyToInquiry(inquiryId: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  // Verify the inquiry belongs to one of the seller's properties (user-scoped select)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: inquiry } = await (supabase as any)
+    .from('property_inquiries')
+    .select('id, properties(owner_id)')
+    .eq('id', inquiryId)
+    .single() as { data: { id: string; properties: { owner_id: string } | null } | null }
+
+  if (!inquiry || inquiry.properties?.owner_id !== user.id) {
+    return { error: 'Inquiry not found or access denied.' }
+  }
+
+  // No UPDATE RLS policy exists on property_inquiries; use admin client after ownership verified
+  const adminClient = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (adminClient as any)
+    .from('property_inquiries')
+    .update({ replied_at: new Date().toISOString(), is_read: true })
+    .eq('id', inquiryId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath(`/seller/inquiries/${inquiryId}`)
+  revalidatePath('/seller/inquiries')
+  return { success: true }
+}
