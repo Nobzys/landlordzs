@@ -3,12 +3,13 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import {
   ChevronLeft, User, Mail, Phone, MapPin, Calendar,
-  Shield, ShieldCheck, FileText, Activity, Clock, Settings, MessageSquare,
+  Shield, ShieldCheck, FileText, Activity, Clock, Settings, MessageSquare, Eye,
 } from 'lucide-react'
 import { getServerProfile } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { adminReviewAppeal } from '@/lib/actions/auth'
 import UserActionButtons from '@/components/admin/UserActionButtons'
+import { LinkButton } from '@/components/ui/link-button'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ROLE_LABELS } from '@/types/auth'
@@ -66,6 +67,12 @@ type AppealRow = {
   message: string
   status: string
   created_at: string
+}
+
+type ImpersonationLog = {
+  id: string
+  started_at: string
+  ended_at: string | null
 }
 
 type AgentProfile = {
@@ -195,6 +202,14 @@ export default async function AdminUserDetailPage({
     .select('id,notice_id,message,status,created_at')
     .eq('user_id', id)
     .order('created_at', { ascending: false })) as { data: AppealRow[] | null }
+
+  // ── Admin preview history for this user ───────────────────────────────────
+  const { data: impersonationLogs } = (await admin
+    .from('admin_impersonation_logs')
+    .select('id,started_at,ended_at')
+    .eq('target_user_id', id)
+    .order('started_at', { ascending: false })
+    .limit(5)) as { data: ImpersonationLog[] | null }
 
   // ── Signed URLs for KYC documents ─────────────────────────────────────────
   const kyc = kycRecords?.[0] ?? null
@@ -419,9 +434,16 @@ export default async function AdminUserDetailPage({
 
       {/* Admin Actions */}
       <section className="rounded-xl border p-6 space-y-4">
-        <h3 className="font-semibold flex items-center gap-2">
-          <Settings className="h-4 w-4" /> Admin Actions
-        </h3>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Settings className="h-4 w-4" /> Admin Actions
+          </h3>
+          {callerProfile.role === 'admin' && (
+            <LinkButton href={`/admin/users/${user.id}/preview`} variant="outline" size="sm">
+              <Eye className="h-3.5 w-3.5 mr-1.5" /> View as User
+            </LinkButton>
+          )}
+        </div>
         <UserActionButtons
           userId={user.id}
           currentStatus={user.account_status ?? 'unknown'}
@@ -514,6 +536,25 @@ export default async function AdminUserDetailPage({
           <p className="text-sm text-muted-foreground">No appeals submitted by this user.</p>
         )}
       </section>
+
+      {/* Admin preview history */}
+      {impersonationLogs && impersonationLogs.length > 0 && (
+        <section className="rounded-xl border p-6 space-y-3">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Eye className="h-4 w-4" /> Admin Preview History
+          </h3>
+          <div className="divide-y">
+            {impersonationLogs.map((log) => (
+              <div key={log.id} className="py-2 flex items-center justify-between gap-4">
+                <p className="text-sm">Previewed {formatRelative(log.started_at)}</p>
+                <p className="text-xs text-muted-foreground shrink-0">
+                  {log.ended_at ? `Ended ${formatRelative(log.ended_at)}` : 'In progress'}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Recent activity */}
       <section className="rounded-xl border p-6 space-y-3">

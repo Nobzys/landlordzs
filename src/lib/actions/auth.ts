@@ -1181,3 +1181,63 @@ export async function adminReviewAppeal(
   revalidatePath('/admin/users', 'layout')
   return { success: true }
 }
+
+// ─── Admin User Preview (read-only, no session swap) ─────────────────────────
+
+export async function startUserPreview(
+  targetUserId: string,
+): Promise<ActionResult<{ logId: string }>> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: callerProfile } = await (supabase as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single() as { data: { role: string } | null }
+
+  if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions.' }
+
+  const ip = await getClientIp()
+  const adminClient = createAdminClient()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (adminClient as any)
+    .from('admin_impersonation_logs')
+    .insert({ admin_id: user.id, target_user_id: targetUserId, ip_address: ip })
+    .select('id')
+    .single() as { data: { id: string } | null; error: { message: string } | null }
+
+  if (error || !data) return { error: error?.message ?? 'Could not start preview.' }
+  return { success: true, data: { logId: data.id } }
+}
+
+export async function endUserPreview(
+  logId: string,
+): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: callerProfile } = await (supabase as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single() as { data: { role: string } | null }
+
+  if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions.' }
+
+  const adminClient = createAdminClient()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (adminClient as any)
+    .from('admin_impersonation_logs')
+    .update({ ended_at: new Date().toISOString() })
+    .eq('id', logId)
+    .eq('admin_id', user.id)
+
+  return { success: true }
+}
