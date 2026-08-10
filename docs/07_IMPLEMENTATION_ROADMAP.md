@@ -450,7 +450,7 @@
 
 **Dependencies:** Phase 1 ✅ complete (Tasks 1.1, 1.2, 1.5, 1.7 all confirmed done as of 2026-07-17).
 
-**Progress:** 6/8 tasks complete — Tasks 3.1 ✅, 3.2 ✅, 3.3 ✅, 3.4 ✅, 3.5 ✅, 3.6 ✅. Remaining: 3.7, 3.8.
+**Progress:** 7/8 tasks complete — Tasks 3.1 ✅, 3.2 ✅, 3.3 ✅, 3.4 ✅, 3.5 ✅, 3.6 ✅, 3.7 ✅. Remaining: 3.8.
 
 ---
 
@@ -646,7 +646,9 @@
 
 ---
 
-### Task 3.7 — Admin "View as User" preview 🟢 LOW | L
+### Task 3.7 — Admin "View as User" preview 🟢 LOW | L ✅ COMPLETED
+
+**Status:** ✅ Completed — commit f917675 (2026-08-10)
 
 **Problem:** Admins have no way to preview what a user sees in their dashboard. Debugging user-reported issues requires impersonating the user's perspective without actually switching sessions.
 
