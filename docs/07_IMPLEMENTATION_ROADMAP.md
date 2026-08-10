@@ -450,7 +450,7 @@
 
 **Dependencies:** Phase 1 ✅ complete (Tasks 1.1, 1.2, 1.5, 1.7 all confirmed done as of 2026-07-17).
 
-**Progress:** 7/8 tasks complete — Tasks 3.1 ✅, 3.2 ✅, 3.3 ✅, 3.4 ✅, 3.5 ✅, 3.6 ✅, 3.7 ✅. Remaining: 3.8.
+**Progress:** 8/8 tasks complete — Tasks 3.1 ✅, 3.2 ✅, 3.3 ✅, 3.4 ✅, 3.5 ✅, 3.6 ✅, 3.7 ✅, 3.8 ✅. Phase 3 complete.
 
 ---
 
@@ -677,7 +677,9 @@
 
 ---
 
-### Task 3.8 — Admin announcements UI 🟢 LOW | M
+### Task 3.8 — Admin announcements UI 🟢 LOW | M ✅ COMPLETED
+
+**Status:** ✅ Completed — commit 69c14f9 (2026-08-10)
 
 **Problem:** The `announcements` table exists with `target_roles` and `is_active` fields, but there is no UI to create or manage announcements. Admins cannot post platform-wide notices.
 
