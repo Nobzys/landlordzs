@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Users, ChevronLeft, Search } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { adminSuspendAccount, adminActivateAccount, adminAssignRole } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -73,6 +74,16 @@ export default async function AdminUsersPage({
   const users = rawUsers ?? []
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE)
 
+  let pendingAppealsCount = 0
+  if (profile.role === 'admin') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { count: appealCount } = await (createAdminClient() as any)
+      .from('account_appeals')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending')
+    pendingAppealsCount = appealCount ?? 0
+  }
+
   function buildUrl(overrides: Partial<SearchParams>) {
     const p = new URLSearchParams()
     const merged = { role: roleFilter, status: statusFilter, page: String(page), q, ...overrides }
@@ -102,6 +113,11 @@ export default async function AdminUsersPage({
                 ? `${count ?? 0} result${(count ?? 0) !== 1 ? 's' : ''} for "${q}"`
                 : `${count ?? 0} users total`}
             </p>
+            {pendingAppealsCount > 0 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                {pendingAppealsCount} pending appeal{pendingAppealsCount !== 1 ? 's' : ''}
+              </span>
+            )}
           </div>
         </div>
       </div>

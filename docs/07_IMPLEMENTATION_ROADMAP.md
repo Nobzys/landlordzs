@@ -450,11 +450,13 @@
 
 **Dependencies:** Phase 1 ✅ complete (Tasks 1.1, 1.2, 1.5, 1.7 all confirmed done as of 2026-07-17).
 
-**Progress:** 2/8 tasks complete — Tasks 3.5 ✅, 3.6 ✅ (both 2026-07-17). Remaining: 3.1, 3.2, 3.3, 3.4, 3.7, 3.8.
+**Progress:** 6/8 tasks complete — Tasks 3.1 ✅, 3.2 ✅, 3.3 ✅, 3.4 ✅, 3.5 ✅, 3.6 ✅. Remaining: 3.7, 3.8.
 
 ---
 
-### Task 3.1 — Admin user detail action buttons 🔴 HIGH | M
+### Task 3.1 — Admin user detail action buttons 🔴 HIGH | M ✅ COMPLETED
+
+**Status:** ✅ Completed — commit `530b0de` (2026-07-17)
 
 **Problem:** `/admin/users/[id]` page exists as read-only. There are no action buttons for Suspend, Activate, Assign Role, Verify Manually, or Reset Password on the detail page. The existing server actions (`adminSuspendAccount`, `adminActivateAccount`, `adminAssignRole`) are only accessible from the users list page.
 
@@ -484,7 +486,9 @@
 
 ---
 
-### Task 3.2 — Admin verification centre 🔴 HIGH | XL
+### Task 3.2 — Admin verification centre 🔴 HIGH | XL ✅ COMPLETED
+
+**Status:** ✅ Completed — commits `9fd866c`, `cd9a440` (2026-08-09)
 
 **Problem:** There is no unified verification centre. KYC review is split: `/admin/professionals` (professionals only), sellers and vendors cannot be approved, document viewer is broken (Task 1.1 prerequisite). This is the most critical missing admin feature.
 
@@ -530,7 +534,9 @@
 
 ---
 
-### Task 3.3 — Admin audit log page 🟡 MEDIUM | M
+### Task 3.3 — Admin audit log page 🟡 MEDIUM | M ✅ COMPLETED
+
+**Status:** ✅ Completed — commit `97d4e95` (2026-08-09)
 
 **Problem:** `admin_logs` and `activity_logs` tables are written but never surfaced to admins. There is no `/admin/logs` or `/admin/audit` page.
 
@@ -558,7 +564,9 @@
 
 ---
 
-### Task 3.4 — Admin appeal management 🟡 MEDIUM | M
+### Task 3.4 — Admin appeal management 🟡 MEDIUM | M ✅ COMPLETED
+
+**Status:** ✅ Completed — commit pending (2026-08-10)
 
 **Problem:** Users can submit appeals via `/account/suspended` and `/account/pending`, but admins have no UI to view or respond to those appeals. The `account_appeals` table has rows but no admin interface.
 

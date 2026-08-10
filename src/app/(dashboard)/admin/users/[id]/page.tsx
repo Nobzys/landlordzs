@@ -3,10 +3,11 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import {
   ChevronLeft, User, Mail, Phone, MapPin, Calendar,
-  Shield, ShieldCheck, FileText, Activity, Clock, Settings,
+  Shield, ShieldCheck, FileText, Activity, Clock, Settings, MessageSquare,
 } from 'lucide-react'
 import { getServerProfile } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { adminReviewAppeal } from '@/lib/actions/auth'
 import UserActionButtons from '@/components/admin/UserActionButtons'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -56,6 +57,14 @@ type AdminLog = {
   id: string
   action: string
   actor_id: string | null
+  created_at: string
+}
+
+type AppealRow = {
+  id: string
+  notice_id: string | null
+  message: string
+  status: string
   created_at: string
 }
 
@@ -179,6 +188,13 @@ export default async function AdminUserDetailPage({
     .eq('target_id', id)
     .order('created_at', { ascending: false })
     .limit(10)) as { data: AdminLog[] | null }
+
+  // ── Appeals submitted by this user ────────────────────────────────────────
+  const { data: appeals } = (await admin
+    .from('account_appeals')
+    .select('id,notice_id,message,status,created_at')
+    .eq('user_id', id)
+    .order('created_at', { ascending: false })) as { data: AppealRow[] | null }
 
   // ── Signed URLs for KYC documents ─────────────────────────────────────────
   const kyc = kycRecords?.[0] ?? null
@@ -435,6 +451,67 @@ export default async function AdminUserDetailPage({
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">No admin actions recorded for this user.</p>
+        )}
+      </section>
+
+      {/* Appeals */}
+      <section className="rounded-xl border p-6 space-y-3">
+        <h3 className="font-semibold flex items-center gap-2">
+          <MessageSquare className="h-4 w-4" /> Appeals
+        </h3>
+        {appeals && appeals.length > 0 ? (
+          <div className="divide-y">
+            {appeals.map((appeal) => {
+              const isPending = appeal.status === 'pending'
+              return (
+                <div key={appeal.id} className="py-3 space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm">{appeal.message}</p>
+                    <span className={`shrink-0 inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                      isPending
+                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                    }`}>
+                      {appeal.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{formatRelative(appeal.created_at)}</p>
+                  {isPending && callerProfile.role === 'admin' && (
+                    <div className="flex gap-2 pt-1">
+                      <form action={async () => {
+                        'use server'
+                        await adminReviewAppeal(appeal.id, 'approve')
+                      }}>
+                        <Button
+                          type="submit"
+                          size="sm"
+                          variant="outline"
+                          className="text-green-600 border-green-200 hover:bg-green-50"
+                        >
+                          Approve
+                        </Button>
+                      </form>
+                      <form action={async () => {
+                        'use server'
+                        await adminReviewAppeal(appeal.id, 'dismiss')
+                      }}>
+                        <Button
+                          type="submit"
+                          size="sm"
+                          variant="ghost"
+                          className="text-muted-foreground"
+                        >
+                          Dismiss
+                        </Button>
+                      </form>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">No appeals submitted by this user.</p>
         )}
       </section>
 

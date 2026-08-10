@@ -1120,3 +1120,64 @@ export async function submitAppeal(
   if (error) return { error: error.message }
   return { success: true }
 }
+
+// ─── Admin Review Appeal ──────────────────────────────────────────────────────
+
+export async function adminReviewAppeal(
+  appealId: string,
+  action: 'approve' | 'dismiss',
+): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: callerProfile } = await (supabase as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single() as { data: { role: string } | null }
+
+  if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions.' }
+
+  const adminClient = createAdminClient()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: appeal } = await (adminClient as any)
+    .from('account_appeals')
+    .select('id, user_id, status')
+    .eq('id', appealId)
+    .single() as { data: { id: string; user_id: string; status: string } | null }
+
+  if (!appeal) return { error: 'Appeal not found.' }
+  if (appeal.status === 'reviewed') return { error: 'This appeal has already been reviewed.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: updateErr } = await (adminClient as any)
+    .from('account_appeals')
+    .update({ status: 'reviewed' })
+    .eq('id', appealId)
+
+  if (updateErr) return { error: updateErr.message }
+
+  if (action === 'approve') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (adminClient as any)
+      .from('profiles')
+      .update({ account_status: 'active' })
+      .eq('id', appeal.user_id)
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from('admin_logs').insert({
+    actor_id:    user.id,
+    action:      action === 'approve' ? 'approve_appeal' : 'dismiss_appeal',
+    target_type: 'account_appeal',
+    target_id:   appealId,
+    new_data:    { user_id: appeal.user_id },
+  })
+
+  revalidatePath(`/admin/users/${appeal.user_id}`)
+  revalidatePath('/admin/users', 'layout')
+  return { success: true }
+}
