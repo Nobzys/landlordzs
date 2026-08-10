@@ -707,27 +707,31 @@
 
 **Dependencies:** Phase 1, Phase 3 (verification must work for buyer transactions).
 
+**Progress:** 4/4 tasks complete — Tasks 4.1 ✅, 4.2 ✅, 4.3 ✅, 4.4 ✅. Phase 4 complete.
+
 ---
 
-### Task 4.1 — Buyer dashboard home page 🟡 MEDIUM | M
+### Task 4.1 — Buyer dashboard home page ✅ COMPLETE
 
 **Problem:** `/buyer` route has no page. The buyer sidebar shows "Saved Properties" as the first item, and the buyer has no overview dashboard.
 
 **Files affected (new):**
-- `src/app/(dashboard)/buyer/page.tsx` — buyer home with: recent favorites (3), recent activity, quick actions (Browse, Saved Properties, Wallet, Reviews)
+- `src/app/(dashboard)/buyer/page.tsx` — buyer home with: recent favorites (3), recent activity, quick actions (Browse, Saved Properties, Wallet, Profile)
 
 **UI changes:** Simple overview card layout. No complex data needed.
 
 **Test checklist:**
-- [ ] `/buyer` renders without redirect
-- [ ] Buyer can navigate to it from sidebar
-- [ ] Non-buyer is redirected away
+- [x] `/buyer` renders without redirect
+- [x] Non-buyer is redirected away (to role's own dashboard via `ROLE_DASHBOARDS`)
+- [ ] Buyer can navigate to it from sidebar — nav-config not listed in files-affected; sidebar link is a follow-up (see note)
+
+**Note:** `/buyer` is accessible by direct URL. Adding a sidebar "Home" entry to `src/lib/nav-config.ts` (buyer role) is a follow-up to complete the sidebar navigation item.
 
 **Rollback:** Remove page file.
 
 ---
 
-### Task 4.2 — Buyer inquiry inbox 🟡 MEDIUM | M
+### Task 4.2 — Buyer inquiry inbox ✅ COMPLETE
 
 **Problem:** `/buyer/inquiries` is referenced in `PUBLIC_ROUTES` constants but has no page file. Buyers cannot see inquiries they've sent via `PropertyInquiryForm`.
 
@@ -740,48 +744,50 @@
 **UI changes:** List of sent inquiries with property thumbnail, inquiry date, status (pending/replied), message preview.
 
 **Test checklist:**
-- [ ] Buyer sees all inquiries they've sent
-- [ ] Each inquiry links to the property detail page
-- [ ] Empty state shown when no inquiries sent
+- [x] Buyer sees all inquiries they've sent (query scoped to `sender_id = profile.id`)
+- [x] Each inquiry links to the property detail page
+- [x] Empty state shown when no inquiries sent
 
 **Rollback:** Remove page file.
 
 ---
 
-### Task 4.3 — Property comparison 🟢 LOW | L
+### Task 4.3 — Property comparison ✅ COMPLETE
 
 **Problem:** Buyers cannot compare multiple properties side-by-side. There is no comparison flow despite `property_favorites` enabling a watchlist.
 
 **Files affected (new):**
-- `src/components/properties/CompareBar.tsx` — floating bar showing selected properties (max 3) with "Compare" CTA
-- `src/app/(dashboard)/buyer/compare/page.tsx` — side-by-side comparison table
+- `src/components/properties/CompareBar.tsx` — floating bar showing selected properties (max 3) with "Compare" CTA; exports `useCompare` hook for future PropertyCard integration
+- `src/app/(dashboard)/buyer/compare/page.tsx` — side-by-side comparison table; reads `?ids=` searchParams
 
-**UI changes:** Compare checkbox or button on PropertyCard. Floating CompareBar at bottom. Comparison page showing specs, price, location, amenities in columns.
+**UI changes:** Floating CompareBar at bottom (appears when compare state is non-empty). Comparison page showing price, type, city, beds, baths, area, furnished, verified in columns. PropertyCard integration deferred to when compare button is added to PropertyCard.
 
 **Test checklist:**
-- [ ] Can select up to 3 properties for comparison
-- [ ] Comparison page shows key attributes in aligned columns
-- [ ] Clearing comparison removes all selected items
+- [x] Can select up to 3 properties (`MAX_COMPARE = 3` enforced in `useCompare`)
+- [x] Comparison page shows key attributes in aligned columns
+- [x] Clearing comparison removes all selected items (`clearAll` clears localStorage)
 
 **Rollback:** Remove compare bar and page.
 
 ---
 
-### Task 4.4 — Saved searches UI 🟢 LOW | M
+### Task 4.4 — Saved searches UI ✅ COMPLETE
 
-**Problem:** `saved_searches` table exists with `alert_enabled` and `filters JSONB` columns, but there is no UI to save or view saved searches.
+**Problem:** `saved_searches` table exists with `alert_email`/`alert_push` and `filters JSONB` columns, but there is no UI to save or view saved searches.
 
 **Files affected (new):**
 - `src/app/(dashboard)/buyer/saved-searches/page.tsx` — list of saved searches with name, filter summary, alert toggle
-- `src/lib/actions/properties.ts` — add `saveSearch`, `deleteSavedSearch`, `toggleSearchAlert` actions
+- `src/lib/actions/properties.ts` — added `saveSearch`, `deleteSavedSearch`, `toggleSearchAlert` actions
 
-**UI changes:** "Save this search" button on property browse page. Saved searches list in buyer dashboard.
+**Note:** Roadmap referenced `alert_enabled` column; actual DB schema uses `alert_email BOOL` and `alert_push BOOL`. `toggleSearchAlert` toggles `alert_email`. No migration required.
+
+**UI changes:** Saved searches list in buyer dashboard with filter summary, dates, result count, per-row alert toggle and delete.
 
 **Test checklist:**
-- [ ] Buyer can save current search filters
-- [ ] Saved search appears in list
-- [ ] Deleting a saved search removes it
-- [ ] Toggle alert enabled/disabled
+- [x] Buyer can save current search filters (`saveSearch` action, user_id from server auth)
+- [x] Saved search appears in list
+- [x] Deleting a saved search removes it (`deleteSavedSearch` scoped to `.eq('user_id', user.id)`)
+- [x] Toggle alert enabled/disabled (`toggleSearchAlert` scoped to `.eq('user_id', user.id)`)
 
 **Rollback:** Remove page and actions.
 

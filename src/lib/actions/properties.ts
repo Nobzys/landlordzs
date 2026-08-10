@@ -405,3 +405,62 @@ export async function adminAssignAgent(
   revalidatePath(`/properties/${propertyId}`)
   return { success: true }
 }
+
+// ─── Saved searches ───────────────────────────────────────────────────────────
+
+export async function saveSearch(
+  name: string,
+  filters: Record<string, unknown>,
+): Promise<ActionResult<{ id: string }>> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('saved_searches')
+    .insert({ user_id: user.id, name: name.trim(), filters })
+    .select('id')
+    .single() as { data: { id: string } | null; error: { message: string } | null }
+
+  if (error || !data) return { error: error?.message ?? 'Could not save search.' }
+
+  revalidatePath('/buyer/saved-searches')
+  return { success: true, data: { id: data.id } }
+}
+
+export async function deleteSavedSearch(id: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from('saved_searches')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/buyer/saved-searches')
+  return { success: true }
+}
+
+export async function toggleSearchAlert(id: string, alertEmail: boolean): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from('saved_searches')
+    .update({ alert_email: !alertEmail })
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/buyer/saved-searches')
+  return { success: true }
+}
