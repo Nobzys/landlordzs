@@ -91,6 +91,31 @@ export async function uploadAvatar(file: File, userId: string): Promise<UploadRe
   return { path, url: getPublicUrl(STORAGE_BUCKETS.USER_AVATARS, path) }
 }
 
+export async function uploadProductImage(
+  productId: string,
+  file: File,
+  userId: string
+): Promise<UploadResult> {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    throw new Error('File must be JPEG, PNG, or WebP')
+  }
+  if (file.size > MAX_IMAGE_SIZE) {
+    throw new Error('Image must be smaller than 10 MB')
+  }
+
+  const ext  = file.name.split('.').pop()
+  const path = `${userId}/${productId}/${uuidv4()}.${ext}`
+
+  const supabase = createClient()
+  const { error } = await supabase.storage
+    .from(STORAGE_BUCKETS.MARKETPLACE)
+    .upload(path, file, { cacheControl: '3600', upsert: false })
+
+  if (error) throw new Error(error.message)
+
+  return { path, url: getPublicUrl(STORAGE_BUCKETS.MARKETPLACE, path) }
+}
+
 export async function uploadViaApi(
   bucket: string,
   resourceId: string,

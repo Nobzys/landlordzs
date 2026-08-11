@@ -80,7 +80,7 @@ export const ROLE_DASHBOARDS: Record<UserRole, string> = {
   moderator:  '/admin',
   buyer:      '/buyer/favorites',
   seller:     '/seller/listings',
-  agent:      '/agent/commissions',
+  agent:      '/agent',
   vendor:     '/vendor',
   contractor: '/contractor',
   engineer:   '/engineer',

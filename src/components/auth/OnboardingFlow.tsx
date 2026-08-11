@@ -38,7 +38,6 @@ export function OnboardingFlow({ profile }: OnboardingFlowProps) {
 
   const handleFinish = (redirectTo: string) => {
     router.push(redirectTo)
-    router.refresh()
   }
 
   return (
