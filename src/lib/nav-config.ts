@@ -21,9 +21,12 @@ export const ROLE_NAV: Record<UserRole, NavItem[]> = {
     { label: 'Wallet',       href: '/account/wallet',      icon: 'Wallet' },
   ],
   agent: [
+    { label: 'Dashboard',    href: '/agent',               icon: 'LayoutDashboard', exact: true },
     { label: 'Commissions',  href: '/agent/commissions',   icon: 'TrendingUp' },
+    { label: 'My Agency',    href: '/agent/agency',        icon: 'Building2' },
+    { label: 'Clients',      href: '/agent/clients',       icon: 'Users' },
     { label: 'My Listings',  href: '/seller/listings',     icon: 'Building2' },
-    { label: 'New Listing',  href: '/seller/listings/new', icon: 'Plus',       exact: true },
+    { label: 'New Listing',  href: '/seller/listings/new', icon: 'Plus',            exact: true },
     { label: 'My Profile',   href: '/account/profile',     icon: 'User' },
     { label: 'Wallet',       href: '/account/wallet',      icon: 'Wallet' },
   ],

@@ -1241,3 +1241,141 @@ export async function endUserPreview(
 
   return { success: true }
 }
+
+// ─── Agency: Create ────────────────────────────────────────────────────────────
+
+type AgencyInput = {
+  name:           string
+  city?:          string
+  phone?:         string
+  email?:         string
+  license_number?: string
+  description?:   string
+}
+
+export async function createAgency(data: AgencyInput): Promise<ActionResult<{ id: string; slug: string }>> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: p } = await (supabase as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single() as { data: { role: string } | null }
+  if (p?.role !== 'agent') return { error: 'Only agents can create an agency.' }
+
+  const name = data.name.trim()
+  if (!name) return { error: 'Agency name is required.' }
+
+  // Generate unique slug from name
+  const { slugify } = await import('@/lib/utils/format')
+  const baseSlug = slugify(name)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { count } = await (supabase as any)
+    .from('agencies')
+    .select('id', { count: 'exact', head: true })
+    .like('slug', `${baseSlug}%`) as { count: number | null }
+  const slug = count && count > 0 ? `${baseSlug}-${count}` : baseSlug
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: agency, error } = await (supabase as any)
+    .from('agencies')
+    .insert({
+      owner_id:       user.id,
+      name,
+      slug,
+      city:           data.city   || null,
+      phone:          data.phone  || null,
+      email:          data.email  || null,
+      license_number: data.license_number || null,
+      description:    data.description   || null,
+    })
+    .select('id, slug')
+    .single() as { data: { id: string; slug: string } | null; error: unknown }
+
+  if (error || !agency) {
+    const msg = (error as { message?: string })?.message ?? 'Failed to create agency.'
+    if (msg.includes('unique') || msg.includes('slug')) return { error: 'An agency with a similar name already exists.' }
+    return { error: msg }
+  }
+
+  // Link agent_profile to this agency (upsert — row may not exist yet)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any)
+    .from('agent_profiles')
+    .upsert({ id: user.id, agency_id: agency.id }, { onConflict: 'id' })
+
+  revalidatePath('/agent/agency')
+  return { success: true, data: agency }
+}
+
+// ─── Agency: Update ────────────────────────────────────────────────────────────
+
+export async function updateAgency(agencyId: string, data: AgencyInput): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  const name = data.name.trim()
+  if (!name) return { error: 'Agency name is required.' }
+
+  // RLS agencies_update: owner_id = auth.uid() — user-scoped client is sufficient
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from('agencies')
+    .update({
+      name,
+      city:           data.city   || null,
+      phone:          data.phone  || null,
+      email:          data.email  || null,
+      license_number: data.license_number || null,
+      description:    data.description   || null,
+    })
+    .eq('id', agencyId)
+    .eq('owner_id', user.id) as { error: unknown }
+
+  if (error) return { error: (error as { message?: string })?.message ?? 'Failed to update agency.' }
+
+  revalidatePath('/agent/agency')
+  return { success: true }
+}
+
+// ─── Agency: Join ──────────────────────────────────────────────────────────────
+
+export async function joinAgency(slug: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: p } = await (supabase as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single() as { data: { role: string } | null }
+  if (p?.role !== 'agent') return { error: 'Only agents can join an agency.' }
+
+  // Find the agency by slug (agencies_select RLS: is_active OR owner_id = auth.uid())
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: agency } = await (supabase as any)
+    .from('agencies')
+    .select('id, is_active')
+    .eq('slug', slug.trim())
+    .maybeSingle() as { data: { id: string; is_active: boolean } | null }
+
+  if (!agency) return { error: 'Agency not found. Check the slug and try again.' }
+  if (!agency.is_active) return { error: 'This agency is not currently active.' }
+
+  // Upsert agent_profile linking to agency (agent_prof_own policy: id = auth.uid())
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from('agent_profiles')
+    .upsert({ id: user.id, agency_id: agency.id }, { onConflict: 'id' }) as { error: unknown }
+
+  if (error) return { error: (error as { message?: string })?.message ?? 'Failed to join agency.' }
+
+  revalidatePath('/agent/agency')
+  return { success: true }
+}

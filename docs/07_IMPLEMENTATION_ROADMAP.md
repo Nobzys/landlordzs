@@ -900,15 +900,17 @@
 
 ---
 
-## Phase 6 — Agent Dashboard Completion
+## Phase 6 — Agent Dashboard Completion ✅ COMPLETE
 
 **Objective:** Give agents a complete workflow for managing listings, clients, and commissions.
 
 **Dependencies:** Phase 1, Phase 3, Phase 5 (agents share seller listing pages).
 
+**Completed:** 2026-08-11 — commit `feat(agent): complete Phase 6 agent dashboard`
+
 ---
 
-### Task 6.1 — Agent dashboard home 🟡 MEDIUM | M
+### Task 6.1 — Agent dashboard home 🟡 MEDIUM | M ✅
 
 **Problem:** `/agent` has no index page. The TrendingUp nav item goes nowhere.
 
@@ -918,46 +920,47 @@
 **Database changes:** None.
 
 **Test checklist:**
-- [ ] Agent home renders with correct stats
-- [ ] Commission totals are accurate
+- [x] Agent home renders with correct stats
+- [x] Commission totals are accurate
 
 **Rollback:** Remove page.
 
 ---
 
-### Task 6.2 — Agency management 🟡 MEDIUM | L
+### Task 6.2 — Agency management 🟡 MEDIUM | L ✅
 
 **Problem:** `agencies` table and `agent_profiles.agency_id` FK exist. Agents can belong to an agency, but there is no UI to create an agency, join an agency, or view agency-level stats.
 
 **Files affected (new):**
-- `src/app/(dashboard)/agent/agency/page.tsx` — agency profile view/edit
-- `src/lib/actions/auth.ts` — add `createAgency`, `joinAgency`, `updateAgency` actions
+- `src/app/(dashboard)/agent/agency/page.tsx` — agency profile view/edit (server component + AgencyForms client component)
+- `src/components/agent/AgencyForms.tsx` — create/join/update forms
+- `src/lib/actions/auth.ts` — added `createAgency`, `joinAgency`, `updateAgency` actions
 
-**Database changes:** None (table exists).
+**Database changes:** None (table exists). RLS `agencies_insert` (owner_id = auth.uid()) and `agent_prof_own` (id = auth.uid()) allow user-scoped writes.
 
-**UI changes:** Agency name, logo, license, agents list. Create agency form. Join agency by code/link.
+**UI changes:** Agency info card, owner/member badge, create/join tab switcher, update form for owners.
 
 **Test checklist:**
-- [ ] Agent can create an agency
-- [ ] Agent can update agency details
-- [ ] Agency is associated with agent's profile
+- [x] Agent can create an agency
+- [x] Agent can update agency details
+- [x] Agency is associated with agent's profile
 
-**Rollback:** Remove agency pages.
+**Rollback:** Remove agency pages and the three actions from auth.ts.
 
 ---
 
-### Task 6.3 — Client management 🟢 LOW | M
+### Task 6.3 — Client management 🟢 LOW | M ✅
 
 **Problem:** Agents need to track the buyers they are representing. No client management page exists.
 
 **Files affected (new):**
-- `src/app/(dashboard)/agent/clients/page.tsx` — client list with their inquiries and viewing requests
+- `src/app/(dashboard)/agent/clients/page.tsx` — client list aggregated from property_inquiries on agent-owned listings
 
-**UI changes:** Client cards with name, phone, listings they've inquired about.
+**UI changes:** Client cards with name, email, phone, inquiry count, properties inquired about. Scoped to `owner_id = profile.id` to satisfy propinq_select RLS.
 
 **Test checklist:**
-- [ ] Agent sees buyers who have sent inquiries on their listings
-- [ ] Clicking a client shows their inquiry history
+- [x] Agent sees buyers who have sent inquiries on their listings
+- [x] Clicking a client shows their inquiry history
 
 **Rollback:** Remove page.
 
