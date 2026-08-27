@@ -132,6 +132,31 @@ export async function uploadViaApi(
   return { url: data.url as string, path: data.path as string }
 }
 
+export async function uploadPortfolioImage(
+  portfolioId: string,
+  file: File,
+  userId: string
+): Promise<UploadResult> {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    throw new Error('File must be JPEG, PNG, or WebP')
+  }
+  if (file.size > 25 * 1024 * 1024) {
+    throw new Error('Image must be smaller than 25 MB')
+  }
+
+  const ext  = file.name.split('.').pop()
+  const path = `${userId}/${portfolioId}/${uuidv4()}.${ext}`
+
+  const supabase = createClient()
+  const { error } = await supabase.storage
+    .from(STORAGE_BUCKETS.PORTFOLIOS)
+    .upload(path, file, { cacheControl: '3600', upsert: false })
+
+  if (error) throw new Error(error.message)
+
+  return { path, url: getPublicUrl(STORAGE_BUCKETS.PORTFOLIOS, path) }
+}
+
 export async function deleteStorageFile(bucket: string, path: string): Promise<void> {
   const supabase = createClient()
   const { error } = await supabase.storage.from(bucket).remove([path])
