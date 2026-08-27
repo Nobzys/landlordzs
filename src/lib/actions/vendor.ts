@@ -229,6 +229,75 @@ export async function addProductImage(
   return { success: true, data: { id: image.id } }
 }
 
+// ─── Update order status ─────────────────────────────────────────────────────
+
+// Forward-only transition map — a vendor may only advance an order, never reverse it.
+const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+  pending:    ['confirmed'],
+  confirmed:  ['processing'],
+  processing: ['shipped'],
+  shipped:    ['delivered'],
+}
+
+export async function updateOrderStatus(
+  orderId: string,
+  newStatus: string
+): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: profile } = await (supabase as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single() as { data: { role: string } | null }
+
+  if (!profile || profile.role !== 'vendor') return { error: 'Vendor account required' }
+
+  // Fetch current order — ownership enforced by vendor_id = user.id
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: order } = await (supabase as any)
+    .from('orders')
+    .select('id, status')
+    .eq('id', orderId)
+    .eq('vendor_id', user.id)
+    .single() as { data: { id: string; status: string } | null }
+
+  if (!order) return { error: 'Order not found or access denied' }
+
+  // Validate forward-only transition
+  const allowed = ALLOWED_TRANSITIONS[order.status] ?? []
+  if (!allowed.includes(newStatus)) {
+    return { error: `Cannot move order from '${order.status}' to '${newStatus}'.` }
+  }
+
+  // Set the corresponding timestamp for the new status
+  const timestamps: Record<string, string> = {
+    confirmed:  'confirmed_at',
+    shipped:    'shipped_at',
+    delivered:  'delivered_at',
+  }
+  const tsField = timestamps[newStatus]
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from('orders')
+    .update({
+      status: newStatus,
+      ...(tsField ? { [tsField]: new Date().toISOString() } : {}),
+    })
+    .eq('id', orderId)
+    .eq('vendor_id', user.id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/vendor/orders')
+  revalidatePath(`/vendor/orders/${orderId}`)
+  return { success: true }
+}
+
 export async function removeProductImage(
   imageId: string,
   productId: string

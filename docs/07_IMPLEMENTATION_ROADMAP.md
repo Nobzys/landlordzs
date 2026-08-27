@@ -974,7 +974,7 @@
 
 ---
 
-### Task 7.1 — Product management CRUD 🔴 HIGH | XL
+### Task 7.1 — Product management CRUD ✅ COMPLETE
 
 **Problem:** Vendors have no UI to create, edit, or delete products. The `products`, `product_categories`, `product_images`, `product_variants` tables all exist but have zero UI coverage.
 
@@ -994,13 +994,21 @@
 
 **Risks:** MEDIUM. Image upload to `marketplace-products` bucket requires confirming RLS allows vendor write. Multi-image upload pattern follows existing `ImageUpload` component.
 
+**Status:** ✅ Completed — commit `1475173` (2026-08-11)
+
+**Implementation notes:**
+- ProductForm placed at `src/components/vendor/ProductForm.tsx` (not properties/forms — semantic correctness)
+- `uploadProductImage()` added to `storage.ts` for direct Supabase client upload; `/api/upload` ALLOWED_BUCKETS not modified
+- Create flow: stages files, uploads after `createProduct()` returns productId
+- Edit flow: `ProductImageUpload` component handles immediate add/remove with storage cleanup
+
 **Test checklist:**
-- [ ] Vendor can create a product with images
-- [ ] Product appears in vendor's product list
-- [ ] Vendor can edit product details
-- [ ] Vendor can toggle availability
-- [ ] Vendor cannot edit another vendor's product (RLS check)
-- [ ] Product images upload to `marketplace-products` bucket
+- [x] Vendor can create a product with images
+- [x] Product appears in vendor's product list
+- [x] Vendor can edit product details
+- [x] Vendor can toggle availability
+- [x] Vendor cannot edit another vendor's product (RLS: vendor_id = auth.uid())
+- [x] Product images upload to `marketplace-products` bucket
 
 **Rollback:** Remove new pages and action file.
 
