@@ -561,7 +561,7 @@ export async function completeVendorProfile(
 
 export async function completeProfessionalProfile(
   data: ProfessionalProfileInput,
-  professionType: 'contractor' | 'engineer' | 'architect' | 'lawyer'
+  professionType: 'contractor' | 'engineer' | 'architect' | 'lawyer' | 'maintenance'
 ): Promise<ActionResult> {
   const parsed = professionalProfileSchema.safeParse(data)
   if (!parsed.success) return { error: parsed.error.issues[0].message }

@@ -42,6 +42,7 @@ export const ROLE_PROTECTED_PREFIXES: Record<string, UserRole[]> = {
   '/architect':        ['architect'],
   '/lawyer':           ['lawyer'],
   '/property-manager': ['property_manager'],
+  '/maintenance':      ['maintenance'],
   '/admin':            ['admin', 'moderator'],
 }
 
@@ -84,7 +85,7 @@ export const STORAGE_BUCKETS = {
 } as const
 
 export const PROFESSIONAL_ROLES = [
-  'agent', 'contractor', 'engineer', 'architect', 'lawyer',
+  'agent', 'contractor', 'engineer', 'architect', 'lawyer', 'maintenance',
 ] as const
 export type ProfessionalRole = (typeof PROFESSIONAL_ROLES)[number]
 
@@ -92,7 +93,7 @@ export type ProfessionalRole = (typeof PROFESSIONAL_ROLES)[number]
 // vendors in addition to the five professional roles that carry credentials.
 export const APPROVAL_REQUIRED_ROLES = [
   'seller', 'vendor', 'agent', 'contractor', 'engineer', 'architect', 'lawyer',
-  'property_manager',
+  'property_manager', 'maintenance',
 ] as const
 export type ApprovalRequiredRole = (typeof APPROVAL_REQUIRED_ROLES)[number]
 
@@ -148,5 +149,13 @@ export const ROLE_SPECIALIZATIONS: Record<string, { value: string; label: string
     { value: 'conveyancing',   label: 'Conveyancing' },
     { value: 'tenant_rights',  label: 'Tenant Rights' },
     { value: 'commercial_law', label: 'Commercial Law' },
+  ],
+  maintenance: [
+    { value: 'general_maintenance', label: 'General Maintenance' },
+    { value: 'plumbing',            label: 'Plumbing' },
+    { value: 'electrical',          label: 'Electrical' },
+    { value: 'painting',            label: 'Painting' },
+    { value: 'carpentry',           label: 'Carpentry' },
+    { value: 'hvac',                label: 'HVAC / Air Conditioning' },
   ],
 }

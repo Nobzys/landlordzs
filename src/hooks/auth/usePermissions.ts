@@ -86,6 +86,13 @@ const ROLE_PERMISSIONS: Record<UserRole, Set<string>> = {
     'review:respond',
     'forum:post', 'forum:comment',
   ]),
+  maintenance: new Set([
+    'service:create', 'service:edit',
+    'job:apply',
+    'review:respond',
+    'message:send',
+    'forum:post', 'forum:comment',
+  ]),
 }
 
 export function usePermissions() {
