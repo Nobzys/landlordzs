@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { Plus, Eye, Edit, ToggleRight, ShieldCheck } from 'lucide-react'
+import { Plus, Eye, Edit, ToggleRight, ShieldCheck, KeyRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LinkButton } from '@/components/ui/link-button'
 import { Badge } from '@/components/ui/badge'
@@ -93,6 +93,9 @@ export default async function SellerListingsPage() {
                   </LinkButton>
                   <LinkButton variant="ghost" size="icon" title="Edit" href={`/seller/listings/${p.id}/edit`}>
                     <Edit className="h-4 w-4" />
+                  </LinkButton>
+                  <LinkButton variant="ghost" size="icon" title="Property Manager" href={`/seller/listings/${p.id}/manager`}>
+                    <KeyRound className="h-4 w-4" />
                   </LinkButton>
 
                   <form action={async () => {
