@@ -68,11 +68,12 @@ export const ROLE_NAV: Record<UserRole, NavItem[]> = {
     { label: 'Wallet',      href: '/account/wallet',      icon: 'Wallet' },
   ],
   property_manager: [
-    { label: 'Dashboard',     href: '/property-manager',            icon: 'KeyRound',  exact: true },
-    { label: 'My Properties', href: '/property-manager/properties', icon: 'Building2' },
-    { label: 'Tenants',       href: '/property-manager/tenants',    icon: 'Users' },
-    { label: 'My Profile',    href: '/account/profile',             icon: 'User' },
-    { label: 'Wallet',        href: '/account/wallet',              icon: 'Wallet' },
+    { label: 'Dashboard',     href: '/property-manager',                 icon: 'KeyRound',      exact: true },
+    { label: 'My Properties', href: '/property-manager/properties',      icon: 'Building2' },
+    { label: 'Tenants',       href: '/property-manager/tenants',         icon: 'Users' },
+    { label: 'Work Orders',   href: '/property-manager/work-orders',     icon: 'Wrench' },
+    { label: 'My Profile',    href: '/account/profile',                  icon: 'User' },
+    { label: 'Wallet',        href: '/account/wallet',                   icon: 'Wallet' },
   ],
   maintenance: [
     { label: 'Dashboard',   href: '/maintenance',          icon: 'Wrench',        exact: true },
