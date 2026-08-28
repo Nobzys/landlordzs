@@ -60,9 +60,11 @@ export const ROLE_NAV: Record<UserRole, NavItem[]> = {
     { label: 'Wallet',      href: '/account/wallet',         icon: 'Wallet' },
   ],
   lawyer: [
-    { label: 'Dashboard',  href: '/lawyer',           icon: 'Scale',  exact: true },
-    { label: 'My Profile', href: '/account/profile',  icon: 'User' },
-    { label: 'Wallet',     href: '/account/wallet',   icon: 'Wallet' },
+    { label: 'Dashboard',   href: '/lawyer',              icon: 'Scale',         exact: true },
+    { label: 'My Requests', href: '/lawyer/requests',     icon: 'ClipboardList' },
+    { label: 'Portfolio',   href: '/lawyer/portfolio',    icon: 'FolderOpen' },
+    { label: 'My Profile',  href: '/account/profile',     icon: 'User' },
+    { label: 'Wallet',      href: '/account/wallet',      icon: 'Wallet' },
   ],
   admin: [
     { label: 'Overview',       href: '/admin',                  icon: 'LayoutDashboard', exact: true },
