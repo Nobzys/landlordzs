@@ -13,6 +13,7 @@ export type UserRole =
   | 'engineer'
   | 'architect'
   | 'lawyer'
+  | 'property_manager'
 
 export type AccountStatus =
   | 'active'
@@ -76,48 +77,52 @@ export interface ActionResult<T = undefined> {
 // ─── Role metadata ────────────────────────────────────────────────────────────
 
 export const ROLE_DASHBOARDS: Record<UserRole, string> = {
-  admin:      '/admin',
-  moderator:  '/admin',
-  buyer:      '/buyer/favorites',
-  seller:     '/seller/listings',
-  agent:      '/agent',
-  vendor:     '/vendor',
-  contractor: '/contractor',
-  engineer:   '/engineer',
-  architect:  '/architect',
-  lawyer:     '/lawyer',
+  admin:            '/admin',
+  moderator:        '/admin',
+  buyer:            '/buyer/favorites',
+  seller:           '/seller/listings',
+  agent:            '/agent',
+  vendor:           '/vendor',
+  contractor:       '/contractor',
+  engineer:         '/engineer',
+  architect:        '/architect',
+  lawyer:           '/lawyer',
+  property_manager: '/property-manager',
 }
 
 export const ROLE_LABELS: Record<UserRole, string> = {
-  admin:      'Administrator',
-  moderator:  'Moderator',
-  buyer:      'Property Buyer',
-  seller:     'Property Seller',
-  agent:      'Real Estate Agent',
-  vendor:     'Material Vendor',
-  contractor: 'Contractor',
-  engineer:   'Engineer',
-  architect:  'Architect',
-  lawyer:     'Lawyer',
+  admin:            'Administrator',
+  moderator:        'Moderator',
+  buyer:            'Property Buyer',
+  seller:           'Property Seller',
+  agent:            'Real Estate Agent',
+  vendor:           'Material Vendor',
+  contractor:       'Contractor',
+  engineer:         'Engineer',
+  architect:        'Architect',
+  lawyer:           'Lawyer',
+  property_manager: 'Property Manager',
 }
 
 export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
-  admin:      'Platform administrator with full access',
-  moderator:  'Platform moderator — review content and user reports',
-  buyer:      'Search, favorite, and inquire about properties',
-  seller:     'List your properties for sale or rent',
-  agent:      'Represent clients and earn commissions on sales',
-  vendor:     'Sell building materials and construction supplies',
-  contractor: 'Offer construction and renovation services',
-  engineer:   'Provide civil and structural engineering consultancy',
-  architect:  'Offer architectural design and planning services',
-  lawyer:     'Handle property law, conveyancing, and land disputes',
+  admin:            'Platform administrator with full access',
+  moderator:        'Platform moderator — review content and user reports',
+  buyer:            'Search, favorite, and inquire about properties',
+  seller:           'List your properties for sale or rent',
+  agent:            'Represent clients and earn commissions on sales',
+  vendor:           'Sell building materials and construction supplies',
+  contractor:       'Offer construction and renovation services',
+  engineer:         'Provide civil and structural engineering consultancy',
+  architect:        'Offer architectural design and planning services',
+  lawyer:           'Handle property law, conveyancing, and land disputes',
+  property_manager: 'Manage rental properties on behalf of landlords — tenant screening, rent collection, maintenance coordination',
 }
 
 // Roles available during self-registration (admin assigned separately)
 export const REGISTERABLE_ROLES = [
   'buyer', 'seller', 'agent', 'vendor',
   'contractor', 'engineer', 'architect', 'lawyer',
+  'property_manager',
 ] as const satisfies Readonly<UserRole[]>
 
 export type RegisterableRole = (typeof REGISTERABLE_ROLES)[number]

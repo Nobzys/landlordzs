@@ -19,6 +19,7 @@ import {
   agentProfileSchema,
   vendorProfileSchema,
   professionalProfileSchema,
+  propertyManagerProfileSchema,
 } from '@/lib/validations/auth'
 import { ROLE_DASHBOARDS, APP_URL, APPROVAL_REQUIRED_ROLES } from '@/lib/utils/constants'
 import type { ActionResult } from '@/types/auth'
@@ -37,6 +38,7 @@ import type {
   AgentProfileInput,
   VendorProfileInput,
   ProfessionalProfileInput,
+  PropertyManagerProfileInput,
 } from '@/lib/validations/auth'
 
 const PASSWORD_RESET_RATE_LIMIT       = 3
@@ -580,6 +582,39 @@ export async function completeProfessionalProfile(
       license_number:   parsed.data.license_number ?? null,
       service_areas:    parsed.data.service_areas ?? [],
       is_available:     true,
+    },
+    { onConflict: 'id' }
+  )
+
+  if (error) return { error: error.message }
+
+  // Mark account as pending verification — lifted to active on admin approval
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any)
+    .from('profiles')
+    .update({ account_status: 'pending_verification' })
+    .eq('id', user.id)
+
+  return { success: true }
+}
+
+// ─── Complete Property Manager Profile (Onboarding Step 2) ──────────────────
+
+export async function completePropertyManagerProfile(
+  data: PropertyManagerProfileInput
+): Promise<ActionResult> {
+  const parsed = propertyManagerProfileSchema.safeParse(data)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from('property_manager_profiles').upsert(
+    {
+      id:             user.id,
+      license_number: parsed.data.license_number || null,
     },
     { onConflict: 'id' }
   )

@@ -8,15 +8,18 @@ import {
   completeAgentProfile,
   completeVendorProfile,
   completeProfessionalProfile,
+  completePropertyManagerProfile,
   completeOnboarding,
 } from '@/lib/actions/auth'
 import {
   agentProfileSchema,
   vendorProfileSchema,
   professionalProfileSchema,
+  propertyManagerProfileSchema,
   type AgentProfileInput,
   type VendorProfileInput,
   type ProfessionalProfileInput,
+  type PropertyManagerProfileInput,
 } from '@/lib/validations/auth'
 import { ROLE_SPECIALIZATIONS, ROLE_LABELS, CAMEROON_CITIES } from '@/lib/utils/constants'
 import { Button } from '@/components/ui/button'
@@ -46,6 +49,8 @@ export function RoleProfileStep({ role, isProfessional, onNext, onFinish, onErro
     case 'architect':
     case 'lawyer':
       return <ProfessionalStep role={role} onNext={onNext} onError={onError} />
+    case 'property_manager':
+      return <PropertyManagerStep onFinish={onFinish} onError={onError} />
     default:
       return <SkipStep onFinish={onFinish} onError={onError} />
   }
@@ -277,6 +282,48 @@ function ProfessionalStep({
         />
 
         <SubmitButton isPending={isPending} label="Continue" />
+      </form>
+    </Form>
+  )
+}
+
+// ─── Property Manager ─────────────────────────────────────────────────────────
+
+function PropertyManagerStep({
+  onFinish, onError,
+}: { onFinish: (r: string) => void; onError: (m: string) => void }) {
+  const [isPending, startTransition] = useTransition()
+
+  const form = useForm<PropertyManagerProfileInput>({
+    resolver:      zodResolver(propertyManagerProfileSchema),
+    defaultValues: { license_number: '' },
+  })
+
+  const onSubmit = (data: PropertyManagerProfileInput) => {
+    startTransition(async () => {
+      const r1 = await completePropertyManagerProfile(data)
+      if (r1?.error) { onError(r1.error); return }
+      const r2 = await completeOnboarding()
+      if (r2?.error) { onError(r2.error); return }
+      onFinish(r2.data?.redirectTo ?? '/property-manager')
+    })
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <FormField control={form.control} name="license_number" render={({ field }) => (
+          <FormItem>
+            <FormLabel>Property management license number</FormLabel>
+            <FormControl>
+              <Input placeholder="e.g. PM-2024-0001" disabled={isPending} {...field} />
+            </FormControl>
+            <FormDescription>Optional — your official license or company registration number.</FormDescription>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <SubmitButton isPending={isPending} label="Finish Setup" />
       </form>
     </Form>
   )

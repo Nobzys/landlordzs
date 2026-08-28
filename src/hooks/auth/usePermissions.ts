@@ -81,6 +81,11 @@ const ROLE_PERMISSIONS: Record<UserRole, Set<string>> = {
     'message:send',
     'forum:post', 'forum:comment',
   ]),
+  property_manager: new Set([
+    'message:send',
+    'review:respond',
+    'forum:post', 'forum:comment',
+  ]),
 }
 
 export function usePermissions() {

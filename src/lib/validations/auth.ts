@@ -35,7 +35,7 @@ export const registerSchema = z
     password: passwordSchema,
     confirm_password: z.string(),
     role: z.enum(
-      ['buyer', 'seller', 'agent', 'vendor', 'contractor', 'engineer', 'architect', 'lawyer'] as const,
+      ['buyer', 'seller', 'agent', 'vendor', 'contractor', 'engineer', 'architect', 'lawyer', 'property_manager'] as const,
       { error: 'Please select your account type' }
     ),
   })
@@ -202,3 +202,9 @@ export type ProfessionalProfileInput = z.infer<typeof professionalProfileSchema>
 // Seller and buyer have no extra role profile (preferences added later in account)
 export const sellerProfileSchema  = z.object({})
 export const buyerProfileSchema   = z.object({})
+
+export const propertyManagerProfileSchema = z.object({
+  license_number: z.string().max(100).optional().or(z.literal('')),
+})
+
+export type PropertyManagerProfileInput = z.infer<typeof propertyManagerProfileSchema>

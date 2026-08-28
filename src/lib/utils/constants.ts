@@ -33,15 +33,16 @@ export const AUTH_ROUTES = [
 ]
 
 export const ROLE_PROTECTED_PREFIXES: Record<string, UserRole[]> = {
-  '/buyer':      ['buyer'],
-  '/seller':     ['seller', 'agent'],
-  '/agent':      ['agent'],
-  '/vendor':     ['vendor'],
-  '/contractor': ['contractor'],
-  '/engineer':   ['engineer'],
-  '/architect':  ['architect'],
-  '/lawyer':     ['lawyer'],
-  '/admin':      ['admin', 'moderator'],
+  '/buyer':            ['buyer'],
+  '/seller':           ['seller', 'agent'],
+  '/agent':            ['agent'],
+  '/vendor':           ['vendor'],
+  '/contractor':       ['contractor'],
+  '/engineer':         ['engineer'],
+  '/architect':        ['architect'],
+  '/lawyer':           ['lawyer'],
+  '/property-manager': ['property_manager'],
+  '/admin':            ['admin', 'moderator'],
 }
 
 // Roles permitted to create property listings. Enforced at the server-action
@@ -91,6 +92,7 @@ export type ProfessionalRole = (typeof PROFESSIONAL_ROLES)[number]
 // vendors in addition to the five professional roles that carry credentials.
 export const APPROVAL_REQUIRED_ROLES = [
   'seller', 'vendor', 'agent', 'contractor', 'engineer', 'architect', 'lawyer',
+  'property_manager',
 ] as const
 export type ApprovalRequiredRole = (typeof APPROVAL_REQUIRED_ROLES)[number]
 
