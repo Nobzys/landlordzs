@@ -49,6 +49,7 @@ export function RoleProfileStep({ role, isProfessional, onNext, onFinish, onErro
     case 'architect':
     case 'lawyer':
     case 'maintenance':
+    case 'cleaning_services':
       return <ProfessionalStep role={role} onNext={onNext} onError={onError} />
     case 'property_manager':
       return <PropertyManagerStep onFinish={onFinish} onError={onError} />
@@ -199,16 +200,17 @@ function VendorStep({ onFinish, onError }: { onFinish: (r: string) => void; onEr
 // ─── Professional (contractor / engineer / architect / lawyer) ────────────────
 
 const LICENSE_LABEL: Record<string, string> = {
-  contractor:  'Registration number',
-  engineer:    'Professional registration number',
-  architect:   'Order of Architects number',
-  lawyer:      'Bar association number',
-  maintenance: 'Professional registration number',
+  contractor:        'Registration number',
+  engineer:          'Professional registration number',
+  architect:         'Order of Architects number',
+  lawyer:            'Bar association number',
+  maintenance:       'Professional registration number',
+  cleaning_services: 'Business registration number',
 }
 
 function ProfessionalStep({
   role, onNext, onError,
-}: { role: 'contractor' | 'engineer' | 'architect' | 'lawyer' | 'maintenance'; onNext: () => void; onError: (m: string) => void }) {
+}: { role: 'contractor' | 'engineer' | 'architect' | 'lawyer' | 'maintenance' | 'cleaning_services'; onNext: () => void; onError: (m: string) => void }) {
   const [isPending, startTransition] = useTransition()
   const specializations = ROLE_SPECIALIZATIONS[role] ?? []
 

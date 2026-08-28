@@ -93,6 +93,13 @@ const ROLE_PERMISSIONS: Record<UserRole, Set<string>> = {
     'message:send',
     'forum:post', 'forum:comment',
   ]),
+  cleaning_services: new Set([
+    'service:create', 'service:edit',
+    'job:apply',
+    'review:respond',
+    'message:send',
+    'forum:post', 'forum:comment',
+  ]),
 }
 
 export function usePermissions() {

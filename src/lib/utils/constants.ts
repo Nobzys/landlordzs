@@ -41,9 +41,10 @@ export const ROLE_PROTECTED_PREFIXES: Record<string, UserRole[]> = {
   '/engineer':         ['engineer'],
   '/architect':        ['architect'],
   '/lawyer':           ['lawyer'],
-  '/property-manager': ['property_manager'],
-  '/maintenance':      ['maintenance'],
-  '/admin':            ['admin', 'moderator'],
+  '/property-manager':  ['property_manager'],
+  '/maintenance':       ['maintenance'],
+  '/cleaning-services': ['cleaning_services'],
+  '/admin':             ['admin', 'moderator'],
 }
 
 // Roles permitted to create property listings. Enforced at the server-action
@@ -86,7 +87,7 @@ export const STORAGE_BUCKETS = {
 } as const
 
 export const PROFESSIONAL_ROLES = [
-  'agent', 'contractor', 'engineer', 'architect', 'lawyer', 'maintenance',
+  'agent', 'contractor', 'engineer', 'architect', 'lawyer', 'maintenance', 'cleaning_services',
 ] as const
 export type ProfessionalRole = (typeof PROFESSIONAL_ROLES)[number]
 
@@ -94,7 +95,7 @@ export type ProfessionalRole = (typeof PROFESSIONAL_ROLES)[number]
 // vendors in addition to the five professional roles that carry credentials.
 export const APPROVAL_REQUIRED_ROLES = [
   'seller', 'vendor', 'agent', 'contractor', 'engineer', 'architect', 'lawyer',
-  'property_manager', 'maintenance',
+  'property_manager', 'maintenance', 'cleaning_services',
 ] as const
 export type ApprovalRequiredRole = (typeof APPROVAL_REQUIRED_ROLES)[number]
 
@@ -158,5 +159,13 @@ export const ROLE_SPECIALIZATIONS: Record<string, { value: string; label: string
     { value: 'painting',            label: 'Painting' },
     { value: 'carpentry',           label: 'Carpentry' },
     { value: 'hvac',                label: 'HVAC / Air Conditioning' },
+  ],
+  cleaning_services: [
+    { value: 'residential_cleaning',    label: 'Residential Cleaning' },
+    { value: 'commercial_cleaning',     label: 'Commercial Cleaning' },
+    { value: 'deep_cleaning',           label: 'Deep Cleaning' },
+    { value: 'post_construction',       label: 'Post-Construction Cleaning' },
+    { value: 'move_in_move_out',        label: 'Move-In / Move-Out Cleaning' },
+    { value: 'carpet_upholstery',       label: 'Carpet & Upholstery Cleaning' },
   ],
 }

@@ -5,7 +5,7 @@ import { ROLE_LABELS, ROLE_DESCRIPTIONS, REGISTERABLE_ROLES } from '@/lib/utils/
 import type { RegisterableRole } from '@/types/auth'
 import {
   Home, Building2, Users, ShoppingBag,
-  HardHat, Wrench, Ruler, Scale, KeyRound, Hammer,
+  HardHat, Wrench, Ruler, Scale, KeyRound, Hammer, Sparkles,
 } from 'lucide-react'
 
 const ROLE_ICONS: Record<RegisterableRole, React.ReactNode> = {
@@ -17,8 +17,9 @@ const ROLE_ICONS: Record<RegisterableRole, React.ReactNode> = {
   engineer:         <Wrench      size={24} />,
   architect:        <Ruler       size={24} />,
   lawyer:           <Scale       size={24} />,
-  property_manager: <KeyRound    size={24} />,
-  maintenance:      <Hammer      size={24} />,
+  property_manager:  <KeyRound  size={24} />,
+  maintenance:       <Hammer    size={24} />,
+  cleaning_services: <Sparkles  size={24} />,
 }
 
 interface RoleSelectorProps {

@@ -81,6 +81,11 @@ export const ROLE_NAV: Record<UserRole, NavItem[]> = {
     { label: 'My Profile',  href: '/account/profile',      icon: 'User' },
     { label: 'Wallet',      href: '/account/wallet',       icon: 'Wallet' },
   ],
+  cleaning_services: [
+    { label: 'Dashboard',  href: '/cleaning-services', icon: 'Sparkles', exact: true },
+    { label: 'My Profile', href: '/account/profile',   icon: 'User' },
+    { label: 'Wallet',     href: '/account/wallet',    icon: 'Wallet' },
+  ],
   admin: [
     { label: 'Overview',       href: '/admin',                  icon: 'LayoutDashboard', exact: true },
     { label: 'Users',          href: '/admin/users',            icon: 'Users' },
