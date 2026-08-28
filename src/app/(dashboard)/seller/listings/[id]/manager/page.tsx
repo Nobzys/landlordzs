@@ -5,6 +5,7 @@ import { getServerProfile, createClient } from '@/lib/supabase/server'
 import { requireActiveProfile } from '@/lib/utils/account-status'
 import { getPropertyAssignments, cancelAssignmentRequest, endPropertyAssignment } from '@/lib/actions/assignments'
 import { AssignmentRequestForm } from '@/components/property-manager/AssignmentRequestForm'
+import { LinkButton } from '@/components/ui/link-button'
 import { formatDate } from '@/lib/utils/format'
 
 export const metadata: Metadata = { title: 'Manage Property Manager' }
@@ -50,7 +51,7 @@ export default async function SellerListingManagerPage({ params }: Props) {
       {/* Header */}
       <div className="flex items-start gap-3">
         <KeyRound className="h-7 w-7 text-primary mt-0.5" />
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold">Property Manager</h1>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Building2 className="h-3.5 w-3.5" />
@@ -59,6 +60,13 @@ export default async function SellerListingManagerPage({ params }: Props) {
             <span>{property.city}</span>
           </div>
         </div>
+        <LinkButton
+          variant="outline"
+          size="sm"
+          href={`/seller/listings/${propertyId}/leases`}
+        >
+          View Leases
+        </LinkButton>
       </div>
 
       {/* State: Active assignment */}
