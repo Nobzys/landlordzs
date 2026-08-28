@@ -157,6 +157,33 @@ export async function uploadPortfolioImage(
   return { path, url: getPublicUrl(STORAGE_BUCKETS.PORTFOLIOS, path) }
 }
 
+export async function uploadMaintenancePhoto(
+  workOrderId: string,
+  workerId: string,
+  file: File,
+): Promise<UploadResult> {
+  const ALLOWED = ['image/jpeg', 'image/png', 'image/webp']
+  if (!ALLOWED.includes(file.type)) {
+    throw new Error('Photo must be JPEG, PNG, or WebP')
+  }
+  if (file.size > MAX_IMAGE_SIZE) {
+    throw new Error('Photo must be smaller than 10 MB')
+  }
+
+  const ext  = file.name.split('.').pop()
+  // Path convention enforced by storage RLS: {work_order_id}/{worker_user_id}/{uuid}.ext
+  const path = `${workOrderId}/${workerId}/${uuidv4()}.${ext}`
+
+  const supabase = createClient()
+  const { error } = await supabase.storage
+    .from(STORAGE_BUCKETS.MAINTENANCE_PHOTOS)
+    .upload(path, file, { cacheControl: '3600', upsert: false })
+
+  if (error) throw new Error(error.message)
+
+  return { path, url: '' }
+}
+
 export async function deleteStorageFile(bucket: string, path: string): Promise<void> {
   const supabase = createClient()
   const { error } = await supabase.storage.from(bucket).remove([path])

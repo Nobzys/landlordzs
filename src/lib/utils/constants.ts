@@ -74,14 +74,15 @@ export const CAMEROON_PHONE_PREFIX = '+237'
 // ─── Storage ──────────────────────────────────────────────────────────────────
 
 export const STORAGE_BUCKETS = {
-  PROPERTY_IMAGES:   'property-images',
-  PROPERTY_VIDEOS:   'property-videos',
-  USER_AVATARS:      'user-avatars',
-  VERIFY_DOCS:       'verification-documents',
-  MARKETPLACE:       'marketplace-products',
-  PORTFOLIOS:        'service-portfolios',
-  FORUM_IMAGES:      'forum-images',
-  CHAT_ATTACHMENTS:  'chat-attachments',
+  PROPERTY_IMAGES:    'property-images',
+  PROPERTY_VIDEOS:    'property-videos',
+  USER_AVATARS:       'user-avatars',
+  VERIFY_DOCS:        'verification-documents',
+  MARKETPLACE:        'marketplace-products',
+  PORTFOLIOS:         'service-portfolios',
+  FORUM_IMAGES:       'forum-images',
+  CHAT_ATTACHMENTS:   'chat-attachments',
+  MAINTENANCE_PHOTOS: 'maintenance-photos',
 } as const
 
 export const PROFESSIONAL_ROLES = [
