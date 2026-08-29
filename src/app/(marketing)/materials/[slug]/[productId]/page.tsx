@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { LinkButton } from '@/components/ui/link-button'
 import { formatXAF } from '@/lib/utils/format'
 import { CAMEROON_CITIES } from '@/lib/utils/constants'
+import { addToCart as _addToCart } from '@/lib/actions/orders'
 
 interface PageProps {
   params:      Promise<{ slug: string; productId: string }>
@@ -114,6 +115,11 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
   const specs = product.specifications
     ? Object.entries(product.specifications).filter(([, v]) => v != null && v !== '')
     : []
+
+  async function addToCart(formData: FormData) {
+    'use server'
+    await _addToCart(formData)
+  }
 
   return (
     <main className="min-h-screen bg-background">
@@ -245,7 +251,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
               )}
             </div>
 
-            {/* Add to Cart — stub pending Task 15.2 */}
+            {/* Add to Cart */}
             {!profile ? (
               <LinkButton
                 href={`/login?redirect=/materials/${slug}/${productId}`}
@@ -253,14 +259,40 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
               >
                 Sign in to purchase
               </LinkButton>
-            ) : (
+            ) : isOutOfStock ? (
               <button
                 disabled
-                className="w-full rounded-md bg-primary/50 text-primary-foreground px-4 py-2.5 text-sm font-medium cursor-not-allowed"
-                title="Cart coming soon"
+                className="w-full rounded-md bg-muted text-muted-foreground px-4 py-2.5 text-sm font-medium cursor-not-allowed"
               >
-                Add to Cart — Coming Soon
+                Out of Stock
               </button>
+            ) : (
+              <form action={addToCart} className="space-y-3">
+                <input type="hidden" name="productId" value={product.id} />
+                <div className="flex items-center gap-3">
+                  <label htmlFor="quantity" className="text-sm text-muted-foreground shrink-0">
+                    Qty
+                  </label>
+                  <input
+                    id="quantity"
+                    name="quantity"
+                    type="number"
+                    defaultValue={product.min_order_qty}
+                    min={product.min_order_qty}
+                    max={product.max_order_qty ?? product.stock_qty}
+                    className="w-24 rounded-md border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    min {product.min_order_qty} {product.unit}
+                  </span>
+                </div>
+                <button
+                  type="submit"
+                  className="w-full rounded-md bg-primary text-primary-foreground px-4 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors"
+                >
+                  Add to Cart
+                </button>
+              </form>
             )}
 
             {/* Tags */}

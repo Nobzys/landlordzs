@@ -10,7 +10,8 @@ export interface NavItem {
 export const ROLE_NAV: Record<UserRole, NavItem[]> = {
   buyer: [
     { label: 'Saved Properties', href: '/buyer/favorites',    icon: 'Heart' },
-    { label: 'Browse',           href: '/properties',          icon: 'Search',  exact: true },
+    { label: 'Browse',           href: '/properties',          icon: 'Search',       exact: true },
+    { label: 'Cart',             href: '/buyer/cart',          icon: 'ShoppingCart' },
     { label: 'My Lease',         href: '/account/leases',      icon: 'FileText' },
     { label: 'My Profile',       href: '/account/profile',     icon: 'User' },
     { label: 'Wallet',           href: '/account/wallet',      icon: 'Wallet' },

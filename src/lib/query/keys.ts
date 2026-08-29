@@ -47,4 +47,9 @@ export const queryKeys = {
     list:    () => [...queryKeys.commissions.all, 'list'] as const,
     summary: () => [...queryKeys.commissions.all, 'summary'] as const,
   },
+  cart: {
+    all:   ['cart'] as const,
+    items: () => [...queryKeys.cart.all, 'items'] as const,
+    count: () => [...queryKeys.cart.all, 'count'] as const,
+  },
 } as const
