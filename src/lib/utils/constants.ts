@@ -18,6 +18,7 @@ export const PUBLIC_ROUTES = [
   '/professionals',
   '/services',
   '/jobs',
+  '/tenders',
   '/community',
   '/about',
   '/contact',
