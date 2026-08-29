@@ -33,7 +33,7 @@ type OrderRow = {
   id:           string
   created_at:   string
   status:       string
-  total_amount: number
+  total:        number
   shipping_city: string | null
   profiles:     { full_name: string | null } | null
   order_items:  { id: string }[]
@@ -55,7 +55,7 @@ export default async function VendorOrdersPage({ searchParams }: VendorOrdersPag
   let query = (supabase as any)
     .from('orders')
     .select(`
-      id, created_at, status, total_amount, shipping_city,
+      id, created_at, status, total, shipping_city,
       profiles:buyer_id(full_name),
       order_items(id)
     `, { count: 'exact' })
@@ -76,7 +76,7 @@ export default async function VendorOrdersPage({ searchParams }: VendorOrdersPag
     id:            row.id,
     created_at:    row.created_at,
     status:        row.status as OrderStatus,
-    total_amount:  row.total_amount,
+    total_amount:  row.total,
     item_count:    row.order_items?.length ?? 0,
     buyer_name:    row.profiles?.full_name ?? null,
     shipping_city: row.shipping_city,

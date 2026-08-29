@@ -1018,6 +1018,8 @@
 
 **Problem:** Vendors have no UI to see or manage orders. The `orders` and `order_items` tables exist and are subscribed to Realtime, but there is no order inbox.
 
+**Status:** ✅ Completed — commit `a77d276` (2026-08-27); column-name fix commit follows.
+
 **Files affected (new):**
 - `src/app/(dashboard)/vendor/orders/page.tsx` — paginated list of orders with status filter
 - `src/app/(dashboard)/vendor/orders/[id]/page.tsx` — order detail: buyer info, items, total, actions (confirm, ship, deliver)
@@ -1031,10 +1033,10 @@
 **Risks:** MEDIUM. Order status transitions must be validated (cannot go backward).
 
 **Test checklist:**
-- [ ] Vendor sees only their own orders
-- [ ] Vendor can move order from confirmed → processing → shipped → delivered
+- [x] Vendor sees only their own orders
+- [x] Vendor can move order from confirmed → processing → shipped → delivered
 - [ ] Buyer receives notification on status change (Phase 17)
-- [ ] RLS prevents vendor from seeing other vendors' orders
+- [x] RLS prevents vendor from seeing other vendors' orders
 
 **Rollback:** Remove pages and action.
 

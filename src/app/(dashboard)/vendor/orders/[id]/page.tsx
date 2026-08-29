@@ -57,7 +57,7 @@ type OrderRow = {
   id:               string
   created_at:       string
   status:           string
-  total_amount:     number
+  total:            number
   notes:            string | null
   shipping_name:    string | null
   shipping_phone:   string | null
@@ -102,7 +102,7 @@ export default async function VendorOrderDetailPage({ params }: OrderDetailPageP
   const { data: order } = await (supabase as any)
     .from('orders')
     .select(`
-      id, created_at, status, total_amount, notes,
+      id, created_at, status, total, notes,
       shipping_name, shipping_phone, shipping_address, shipping_city,
       confirmed_at, shipped_at, delivered_at, cancelled_at,
       profiles:buyer_id(full_name, email),
@@ -204,7 +204,7 @@ export default async function VendorOrderDetailPage({ params }: OrderDetailPageP
             <tfoot>
               <tr className="bg-muted/50">
                 <td colSpan={3} className="px-4 py-3 font-semibold text-right">Order Total</td>
-                <td className="px-4 py-3 font-bold text-right">{formatXAF(order.total_amount)}</td>
+                <td className="px-4 py-3 font-bold text-right">{formatXAF(order.total)}</td>
               </tr>
             </tfoot>
           </table>
