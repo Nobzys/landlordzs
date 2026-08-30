@@ -9,10 +9,9 @@ export function formatXAF(amount: number): string {
 }
 
 export function formatXAFShort(amount: number): string {
-  if (amount >= 1_000_000_000) return `${(amount / 1_000_000_000).toFixed(1)}B XAF`
-  if (amount >= 1_000_000)     return `${(amount / 1_000_000).toFixed(0)}M XAF`
-  if (amount >= 1_000)         return `${(amount / 1_000).toFixed(0)}K XAF`
-  return `${amount} XAF`
+  if (amount >= 1_000_000_000) return `${parseFloat((amount / 1_000_000_000).toFixed(1))}B XAF`
+  if (amount >= 1_000_000)     return `${parseFloat((amount / 1_000_000).toFixed(1))}M XAF`
+  return `${amount.toLocaleString('en-US')} XAF`
 }
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']

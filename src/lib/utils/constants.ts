@@ -22,6 +22,7 @@ export const PUBLIC_ROUTES = [
   '/community',
   '/about',
   '/contact',
+  '/help',
 ]
 
 export const AUTH_ROUTES = [
