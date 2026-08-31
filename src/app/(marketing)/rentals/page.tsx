@@ -117,12 +117,12 @@ export default async function RentalsPage({ searchParams }: PageProps) {
   return (
     <main className="min-h-screen bg-background">
       {/* Hero */}
-      <div className="bg-primary py-12 px-4">
+      <div className="bg-[#1a0505] py-12 px-4">
         <div className="max-w-7xl mx-auto space-y-3">
-          <h1 className="text-3xl font-bold text-primary-foreground">
+          <h1 className="text-3xl font-bold text-white">
             Equipment &amp; Vehicle Rental
           </h1>
-          <p className="text-primary-foreground/80 max-w-xl">
+          <p className="text-white/80 max-w-xl">
             Construction equipment, vehicles, and tools from trusted owners across Cameroon.
           </p>
         </div>
@@ -143,7 +143,7 @@ export default async function RentalsPage({ searchParams }: PageProps) {
                 href={buildHref({ type: opt.value, category: null, page: 1 })}
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   type === opt.value || (!type && opt.value === null)
-                    ? 'bg-primary text-primary-foreground'
+                    ? 'bg-[#B71C1C] text-white'
                     : 'bg-muted text-muted-foreground hover:bg-accent'
                 }`}
               >
@@ -188,7 +188,7 @@ export default async function RentalsPage({ searchParams }: PageProps) {
               href={buildHref({ category: null, page: 1 })}
               className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                 !category
-                  ? 'bg-secondary text-secondary-foreground'
+                  ? 'bg-[#B71C1C] text-white'
                   : 'bg-muted text-muted-foreground hover:bg-accent'
               }`}
             >
@@ -279,7 +279,7 @@ export default async function RentalsPage({ searchParams }: PageProps) {
                     )}
 
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-bold text-primary">
+                      <span className="text-sm font-bold text-[#B71C1C]">
                         {formatXAF(listing.daily_rate)}<span className="font-normal text-muted-foreground text-xs">/day</span>
                       </span>
                       {locLabel && (

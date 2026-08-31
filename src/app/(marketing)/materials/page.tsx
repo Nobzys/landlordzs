@@ -89,12 +89,12 @@ export default async function MaterialsPage({ searchParams }: PageProps) {
   return (
     <main className="min-h-screen bg-background">
       {/* Hero + search */}
-      <div className="bg-primary py-12 px-4">
+      <div className="bg-[#1a0505] py-12 px-4">
         <div className="max-w-7xl mx-auto space-y-4">
-          <h1 className="text-3xl font-bold text-primary-foreground">
+          <h1 className="text-3xl font-bold text-white">
             Building Materials
           </h1>
-          <p className="text-primary-foreground/80 max-w-xl">
+          <p className="text-white/80 max-w-xl">
             Cement, steel, tiles, and construction products from verified vendors across Cameroon.
           </p>
           <form method="GET" action="/materials" className="flex gap-2 max-w-xl">
@@ -108,7 +108,7 @@ export default async function MaterialsPage({ searchParams }: PageProps) {
             {category && <input type="hidden" name="category" value={category} />}
             <button
               type="submit"
-              className="rounded-md bg-primary-foreground text-primary px-4 py-2 text-sm font-medium hover:bg-primary-foreground/90 transition-colors"
+              className="rounded-md bg-white text-[#B71C1C] px-4 py-2 text-sm font-medium hover:bg-white/90 transition-colors"
             >
               Search
             </button>
@@ -124,7 +124,7 @@ export default async function MaterialsPage({ searchParams }: PageProps) {
               href={buildHref({ category: null, page: 1 })}
               className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                 !category
-                  ? 'bg-primary text-primary-foreground'
+                  ? 'bg-[#B71C1C] text-white'
                   : 'bg-muted text-muted-foreground hover:bg-accent'
               }`}
             >
@@ -136,7 +136,7 @@ export default async function MaterialsPage({ searchParams }: PageProps) {
                 href={buildHref({ category: cat.id, page: 1 })}
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   category === cat.id
-                    ? 'bg-primary text-primary-foreground'
+                    ? 'bg-[#B71C1C] text-white'
                     : 'bg-muted text-muted-foreground hover:bg-accent'
                 }`}
               >

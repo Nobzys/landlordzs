@@ -16,7 +16,7 @@ interface PropertyCardProps {
 
 const LISTING_TYPE_LABELS = { sale: 'For Sale', rent: 'For Rent', short_term: 'Shortlet' } as const
 const LISTING_TYPE_COLORS = {
-  sale:       'bg-blue-600 text-white',
+  sale:       'bg-[#B71C1C] text-white',
   rent:       'bg-emerald-600 text-white',
   short_term: 'bg-amber-500 text-white',
 } as const

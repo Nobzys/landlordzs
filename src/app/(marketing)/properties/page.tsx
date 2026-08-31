@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function PropertiesPage() {
   return (
     <main className="min-h-screen bg-background">
-      <div className="bg-blue-700 py-12 px-4">
+      <div className="bg-[#1a0505] py-12 px-4">
         <div className="max-w-7xl mx-auto space-y-4">
           <h1 className="text-3xl font-bold text-white">Find Your Property</h1>
           <PropertySearchBar className="max-w-2xl" />

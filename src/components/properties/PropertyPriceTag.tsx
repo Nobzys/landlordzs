@@ -27,7 +27,7 @@ export function PropertyPriceTag({
   const suffix    = LISTING_SUFFIX[listingType]
 
   return (
-    <span className={cn('font-semibold text-blue-700 dark:text-blue-400', className)}>
+    <span className={cn('font-semibold text-[#B71C1C]', className)}>
       {formatted}
       {suffix && <span className="text-sm font-normal text-muted-foreground">{suffix}</span>}
       {isNegotiable && (

@@ -86,10 +86,10 @@ export default async function TendersPage({ searchParams }: PageProps) {
   return (
     <main className="min-h-screen bg-background">
       {/* Hero */}
-      <div className="bg-primary py-12 px-4">
+      <div className="bg-[#1a0505] py-12 px-4">
         <div className="max-w-5xl mx-auto space-y-3">
-          <h1 className="text-3xl font-bold text-primary-foreground">Tenders Board</h1>
-          <p className="text-primary-foreground/80 max-w-xl">
+          <h1 className="text-3xl font-bold text-white">Tenders Board</h1>
+          <p className="text-white/80 max-w-xl">
             Public tender notices for construction, supply, and service contracts across Cameroon.
           </p>
         </div>

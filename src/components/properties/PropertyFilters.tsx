@@ -93,7 +93,7 @@ export function PropertyFilters({ className }: { className?: string }) {
           <Button variant="outline" size="sm" className="gap-2">
             <Filter className="h-4 w-4" />
             More filters
-            {active && <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />}
+            {active && <span className="h-1.5 w-1.5 rounded-full bg-[#B71C1C]" />}
           </Button>
         </SheetTrigger>
 

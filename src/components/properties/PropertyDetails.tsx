@@ -40,7 +40,7 @@ export function PropertyDetails({ property }: PropertyDetailsProps) {
             {[property.neighborhood, property.city].filter(Boolean).join(', ')}
           </span>
           {property.is_verified && (
-            <Badge variant="secondary" className="ml-2 gap-1 text-blue-700 bg-blue-50">
+            <Badge variant="secondary" className="ml-2 gap-1 text-[#1b5e20] bg-[#e8f5e9]">
               <BadgeCheck className="h-3.5 w-3.5" />
               Verified
             </Badge>
@@ -186,14 +186,14 @@ function ContactCard({
           <p className="font-medium text-sm truncate">
             {person.display_name?.trim() || person.full_name?.trim() || 'Unknown'}
           </p>
-          {person.is_verified && <BadgeCheck className="h-4 w-4 text-blue-600 shrink-0" />}
+          {person.is_verified && <BadgeCheck className="h-4 w-4 text-[#B71C1C] shrink-0" />}
         </div>
         <p className="text-xs text-muted-foreground">{label}</p>
       </div>
       {person.phone && (
         <a
           href={`tel:${person.phone}`}
-          className="text-sm font-medium text-blue-700 hover:underline shrink-0"
+          className="text-sm font-medium text-[#B71C1C] hover:text-[#7f1111] hover:underline shrink-0"
         >
           Call
         </a>

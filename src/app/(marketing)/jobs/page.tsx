@@ -136,10 +136,10 @@ export default async function JobsPage({ searchParams }: PageProps) {
   return (
     <main className="min-h-screen bg-background">
       {/* Hero */}
-      <div className="bg-primary py-12 px-4">
+      <div className="bg-[#1a0505] py-12 px-4">
         <div className="max-w-5xl mx-auto space-y-3">
-          <h1 className="text-3xl font-bold text-primary-foreground">Jobs Board</h1>
-          <p className="text-primary-foreground/80 max-w-xl">
+          <h1 className="text-3xl font-bold text-white">Jobs Board</h1>
+          <p className="text-white/80 max-w-xl">
             Full-time, contract, and freelance opportunities across Cameroon.
           </p>
         </div>
@@ -156,7 +156,7 @@ export default async function JobsPage({ searchParams }: PageProps) {
                 href={buildHref({ type: opt.value, page: 1 })}
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   type === opt.value || (!type && opt.value === null)
-                    ? 'bg-primary text-primary-foreground'
+                    ? 'bg-[#B71C1C] text-white'
                     : 'bg-muted text-muted-foreground hover:bg-accent'
                 }`}
               >
@@ -170,7 +170,7 @@ export default async function JobsPage({ searchParams }: PageProps) {
             href={buildHref({ remote: isRemote ? null : '1', page: 1 })}
             className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
               isRemote
-                ? 'bg-primary text-primary-foreground'
+                ? 'bg-[#B71C1C] text-white'
                 : 'bg-muted text-muted-foreground hover:bg-accent'
             }`}
           >
@@ -235,14 +235,14 @@ export default async function JobsPage({ searchParams }: PageProps) {
                 <Link
                   key={job.id}
                   href={`/jobs/${job.id}`}
-                  className="group block rounded-xl border bg-card hover:border-primary/40 transition-colors p-5"
+                  className="group block rounded-xl border bg-card hover:border-[#B71C1C]/40 transition-colors p-5"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0 space-y-1">
                       {job.category && (
                         <p className="text-xs text-muted-foreground">{job.category}</p>
                       )}
-                      <h2 className="font-semibold leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                      <h2 className="font-semibold leading-snug group-hover:text-[#B71C1C] transition-colors line-clamp-2">
                         {job.title}
                       </h2>
                       <p className="text-sm text-muted-foreground line-clamp-2">{job.description}</p>
