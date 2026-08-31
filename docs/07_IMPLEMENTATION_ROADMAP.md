@@ -1,6 +1,6 @@
 # LANDLORDZS — Implementation Roadmap
 
-> **Generated:** 2026-07-13 — **Last updated:** 2026-07-17  
+> **Generated:** 2026-07-13 — **Last updated:** 2026-08-29  
 > **Mode:** CAUTIOUS IMPLEMENTATION — documentation only. No application code was modified.  
 > **Governing documents:** `00_PROJECT_CONSTITUTION.md` → `01_MASTER_SPECIFICATION.md` → `02_DATABASE_SCHEMA.md` → `03_USER_ROLES.md` → `04_WORKFLOWS.md` → `05_ADMIN_SYSTEM.md` → `06_UI_DESIGN_SYSTEM.md`
 
@@ -54,17 +54,18 @@
 - [Phase 13 — Maintenance Role](#phase-13--maintenance-role)
 - [Phase 14 — Cleaning Services Role](#phase-14--cleaning-services-role)
 - [Phase 15 — Marketplace](#phase-15--marketplace)
-- [Phase 16 — Messaging](#phase-16--messaging)
-- [Phase 17 — Notifications](#phase-17--notifications)
-- [Phase 18 — Reviews Completion](#phase-18--reviews-completion)
-- [Phase 19 — Verification Centre](#phase-19--verification-centre)
-- [Phase 20 — Wallet Completion](#phase-20--wallet-completion)
-- [Phase 21 — Payments Completion](#phase-21--payments-completion)
-- [Phase 22 — Escrow Completion](#phase-22--escrow-completion)
-- [Phase 23 — Analytics](#phase-23--analytics)
-- [Phase 24 — Security Hardening](#phase-24--security-hardening)
-- [Phase 25 — Performance](#phase-25--performance)
-- [Phase 26 — Testing](#phase-26--testing)
+- [Phase 16 — Homepage](#phase-16--homepage)
+- [Phase 17 — Messaging](#phase-17--messaging)
+- [Phase 18 — Notifications](#phase-18--notifications)
+- [Phase 19 — Reviews Completion](#phase-19--reviews-completion)
+- [Phase 20 — Verification Centre](#phase-20--verification-centre)
+- [Phase 21 — Wallet Completion](#phase-21--wallet-completion)
+- [Phase 22 — Payments Completion](#phase-22--payments-completion)
+- [Phase 23 — Escrow Completion](#phase-23--escrow-completion)
+- [Phase 24 — Analytics](#phase-24--analytics)
+- [Phase 25 — Security Hardening](#phase-25--security-hardening)
+- [Phase 26 — Performance](#phase-26--performance)
+- [Phase 27 — Testing](#phase-27--testing)
 
 ---
 
@@ -821,7 +822,7 @@
 - [x] Clicking an inquiry shows full message
 - [x] Seller can submit a reply (via "Mark as replied" — no reply_message column in DB; sellers reply externally by email)
 - [x] Reply updates `property_inquiries.replied_at`
-- [ ] Buyer receives notification on reply (Phase 17 dependency, skip initially)
+- [ ] Buyer receives notification on reply (Phase 18 dependency, skip initially)
 
 **Rollback:** Remove page files and action.
 
@@ -1035,7 +1036,7 @@
 **Test checklist:**
 - [x] Vendor sees only their own orders
 - [x] Vendor can move order from confirmed → processing → shipped → delivered
-- [ ] Buyer receives notification on status change (Phase 17)
+- [ ] Buyer receives notification on status change (Phase 18)
 - [x] RLS prevents vendor from seeing other vendors' orders
 
 **Rollback:** Remove pages and action.
@@ -1046,7 +1047,7 @@
 
 **Objective:** Build the full professional service flow for contractors. The profile setup exists; service listing, request management, quotation, and portfolio are entirely missing.
 
-**Dependencies:** Phase 1, Phase 3 (verification must work for contractors), Phase 18 (reviews unlock after service completion).
+**Dependencies:** Phase 1, Phase 3 (verification must work for contractors), Phase 19 (reviews unlock after service completion).
 
 ---
 
@@ -1113,7 +1114,7 @@
 - [x] Client can accept one quotation (others are auto-declined)
 - [x] Accepted quotation creates a service_contract
 - [x] Client can mark service as completed
-- [x] Completed service unlocks `createReview` _(gate in place: `completeService` sets `service_requests.status = 'completed'`; `/reviews/new` destination is Phase 18 — 404 until then)_
+- [x] Completed service unlocks `createReview` _(gate in place: `completeService` sets `service_requests.status = 'completed'`; `/reviews/new` destination is Phase 19 — 404 until then)_
 - [x] RLS prevents contractors from seeing other contractors' non-public requests
 
 **Rollback:** Remove all service action files and page files. DB tables retain data but are inaccessible from UI.
@@ -1155,7 +1156,7 @@ Same as Task 9.1. Specializations: Residential Design, Commercial Design, Interi
 
 Same as Task 9.1. Specializations: Property Law, Contract Law, Land Disputes, Conveyancing, Tenant Rights, Commercial Law.
 
-**Additional consideration:** Legal document upload (contracts, title deeds) may require a `legal-documents` storage bucket with higher access controls. Review in Phase 24 (Security).
+**Additional consideration:** Legal document upload (contracts, title deeds) may require a `legal-documents` storage bucket with higher access controls. Review in Phase 25 (Security).
 
 ---
 
@@ -1163,7 +1164,7 @@ Same as Task 9.1. Specializations: Property Law, Contract Law, Land Disputes, Co
 
 **Objective:** Add the `property_manager` role to manage properties on behalf of owners, collect rent, and handle tenant relations.
 
-**Dependencies:** Phase 1, Phase 8 (uses service request infrastructure), Phase 22 (wallet/payment for rent collection).
+**Dependencies:** Phase 1, Phase 8 (uses service request infrastructure), Phase 23 (wallet/payment for rent collection).
 
 ---
 
@@ -1259,7 +1260,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 **Objective:** Build the public-facing marketplace (building materials), equipment rental, jobs board, and tenders board. All DB schema is fully defined.
 
-**Dependencies:** Phase 7 (vendors must be able to list products), Phase 8 (service requests infrastructure), Phase 21 (payment for orders).
+**Dependencies:** Phase 7 (vendors must be able to list products), Phase 8 (service requests infrastructure), Phase 22 (payment for orders).
 
 ---
 
@@ -1305,7 +1306,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 **UI changes:** Cart icon in header showing item count. Cart sidebar or page. Checkout form. Order confirmation page.
 
-**Risks:** HIGH. Checkout must create escrow (Phase 22) for payment security. Multi-vendor cart means multiple orders from one checkout (cart items are grouped by vendor).
+**Risks:** HIGH. Checkout must create escrow (Phase 23) for payment security. Multi-vendor cart means multiple orders from one checkout (cart items are grouped by vendor).
 
 **Test checklist:**
 - [ ] Adding product to cart creates/updates cart_items row
@@ -1377,15 +1378,134 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-## Phase 16 — Messaging
+## Phase 16 — Homepage
 
-**Objective:** Build the real-time messaging system. All DB tables, Realtime subscriptions, and storage bucket already exist. This is entirely UI work.
+**Objective:** Build the LANDLORDZS public homepage (`/`) as a fully responsive Next.js page using the brand's Deep Red (`#B71C1C`) colour palette. Design reference: `index.html` at project root (static mockup — do not delete or modify). All existing authenticated-user pages remain on blue (`#3b82f6`); brand migration is a separate future task.
 
-**Dependencies:** Phase 1, Phase 17 (notifications for new messages), Phase 8 (service request conversations).
+**Dependencies:** Phase 1 (auth — required for redirect), Phase 15 (tenders/marketplace — data sources for homepage counters).
+
+**Design reference:** `index.html` + `assets/css/main.css` + `assets/js/nav.js` — visual inspiration only; no assets, code, or Unsplash images copied to production.
+
+**Brand colour (Phase 16 only):** `#B71C1C` (Deep Red). Existing pages: unchanged.
+
+**Routing:** `src/app/page.tsx` redirect (lines 1–18) must be preserved exactly — authenticated users continue to be redirected to their dashboard.
 
 ---
 
-### Task 16.1 — Conversation list and message thread 🔴 HIGH | XXL
+### Task 16.0 — Layout architecture decision gate 🔴 HIGH | XS
+
+**Problem:** Adding `src/app/(marketing)/layout.tsx` would automatically add nav/footer to all existing marketing pages (materials, jobs, rentals, tenders). Phase 16 must not silently alter those pages.
+
+**Recommendation:** Option B — self-contained homepage only. The homepage lives at `src/app/(marketing)/page.tsx` with its own inline nav and footer components. No shared marketing layout is created in Phase 16.
+
+**Decision required before any Phase 16 implementation begins.**
+
+**Test checklist:**
+- [ ] `src/app/(marketing)/layout.tsx` does NOT exist after Phase 16 (or if it does, it renders no nav/footer that wasn't already there)
+- [ ] Existing pages (materials, jobs, rentals, tenders) are visually unchanged after Phase 16 deploy
+
+**Rollback:** Remove `src/app/(marketing)/page.tsx` and any homepage-specific components.
+
+---
+
+### Task 16.1 — Hero section with simplified search 🔴 HIGH | L
+
+**Problem:** No marketing homepage exists. Authenticated users are redirected (correct), but unauthenticated visitors see a blank/redirect page.
+
+**What to build:**
+- Full-width hero with Deep Red gradient (`linear-gradient(135deg, #1a0505 0%, #420e0e 40%, #6d1515 70%, #8b1a1a 100%)`)
+- LANDLORDZS logo lockup: `LANDLORD` in `#222222`, `ZS` in `#B71C1C`
+- Tagline from `index.html`
+- Simplified search: city `<select>` (using `CAMEROON_CITIES` from `src/lib/utils/constants.ts`) + "Search Properties" button → `/properties?city=...`
+- No 7-tab search card, no filter selects beyond city (no search infrastructure exists yet)
+
+**Files to create/modify:**
+- `src/app/(marketing)/page.tsx` — homepage component
+- `src/components/marketing/hero.tsx` — hero + search
+- `src/components/marketing/home-nav.tsx` — inline nav (not shared marketing layout)
+- `src/components/marketing/home-footer.tsx` — inline footer
+
+**Test checklist:**
+- [ ] Unauthenticated visitors see the homepage at `/`
+- [ ] Authenticated users are still redirected to their dashboard (src/app/page.tsx redirect unchanged)
+- [ ] City select populates from `CAMEROON_CITIES`
+- [ ] Search button navigates to `/properties?city=<value>`
+- [ ] Renders correctly on mobile (375px), tablet (768px), desktop (1280px)
+
+**Rollback:** Remove `src/app/(marketing)/page.tsx`; `src/app/page.tsx` redirect remains intact.
+
+---
+
+### Task 16.2 — Trust bar and property category cards 🟡 MEDIUM | M
+
+**Problem:** Homepage needs social-proof elements and Browse-by-Type navigation to drive engagement.
+
+**What to build:**
+- Trust bar: 3–4 stats (Properties Listed, Cities Covered, Verified Agents, Happy Tenants) — values queried from Supabase at render time or hardcoded as initial launch targets
+- Browse by Type: 6 category cards matching `index.html` (For Sale, For Rent, Commercial, Land, Building Materials, Professional Services) — each links to the appropriate listing page
+
+**No Unsplash images.** Category cards use CSS background colours or inline SVG icons only.
+
+**Test checklist:**
+- [ ] 6 category cards render with correct labels and links
+- [ ] Trust bar shows at least 2 real stats (not placeholder 0s)
+- [ ] Cards are responsive (2-col on mobile, 3-col on desktop)
+
+**Rollback:** Remove the section from the homepage component.
+
+---
+
+### Task 16.3 — Featured Properties section 🟡 MEDIUM | M
+
+**Problem:** Homepage needs a real property showcase pulling from Supabase Storage (not Unsplash CDN).
+
+**What to build:**
+- Query 4 most-recently-published `for_sale` or `for_rent` properties with `status = 'active'`
+- Property card: Supabase Storage image (first from `images[]` array) + price in `#B71C1C` + title + city + bedrooms/bathrooms meta
+- "View All Properties" CTA → `/properties`
+
+**No Unsplash URLs in production.** If a property has no image, show a branded placeholder.
+
+**Test checklist:**
+- [ ] 4 property cards render with real DB data
+- [ ] Images load from Supabase Storage (not unsplash.com)
+- [ ] Cards link to `/properties/<id>`
+- [ ] Empty state (no active properties) renders gracefully
+
+**Rollback:** Remove section from homepage component.
+
+---
+
+### Task 16.4 — Secondary sections and dual-CTA 🟢 LOW | M
+
+**Problem:** Homepage needs to surface the marketplace verticals and replace the inapplicable App Store section with a registration CTA.
+
+**What to build:**
+- Section links for: Building Materials → `/materials`, Hire Professionals → `/professionals`, Home Services → `/services`, Rentals → `/rentals`, Jobs & Tenders → `/tenders`
+- Partner logos row (text-only or generic placeholder — no real brand assets unless approved)
+- **Dual registration CTA** (replaces App Download section from `index.html`):
+  - "I'm a Buyer / Tenant" → `/register?role=buyer`
+  - "I'm a Seller / Professional" → `/register?role=seller`
+  - No App Store or Google Play links
+
+**Test checklist:**
+- [ ] All section links resolve to existing routes (no 404s)
+- [ ] Dual CTA buttons render and link correctly
+- [ ] No App Store / Google Play links present
+
+**Rollback:** Remove sections from homepage component.
+
+---
+
+## Phase 17 — Messaging
+
+**Objective:** Build the real-time messaging system. All DB tables, Realtime subscriptions, and storage bucket already exist. This is entirely UI work.
+
+**Dependencies:** Phase 1, Phase 18 (notifications for new messages), Phase 8 (service request conversations).
+
+---
+
+### Task 17.1 — Conversation list and message thread 🔴 HIGH | XXL
 
 **Problem:** `conversations`, `conversation_participants`, `messages`, `message_attachments` tables exist with Realtime enabled. Zero UI coverage. Users cannot message each other despite the infrastructure being complete.
 
@@ -1425,7 +1545,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 16.2 — Context-linked conversations 🟡 MEDIUM | M
+### Task 17.2 — Context-linked conversations 🟡 MEDIUM | M
 
 **Problem:** `conversations.related_entity_type` and `related_entity_id` support linking a conversation to a property or service request. The "Contact Seller" flow on property detail should create or open a conversation rather than just sending an inquiry form.
 
@@ -1442,15 +1562,15 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-## Phase 17 — Notifications
+## Phase 18 — Notifications
 
 **Objective:** Build the in-app notification inbox and wire all platform events to insert notification rows. The `notifications` table and some inserts already exist.
 
-**Dependencies:** Phase 1, Phase 16 (messaging triggers notifications).
+**Dependencies:** Phase 1, Phase 17 (messaging triggers notifications).
 
 ---
 
-### Task 17.1 — Notification inbox page 🔴 HIGH | L
+### Task 18.1 — Notification inbox page 🔴 HIGH | L
 
 **Problem:** `notifications` table exists. Some notifications are written (admin approvals). No notification inbox page exists anywhere in the dashboard. Users have no way to see notifications.
 
@@ -1479,7 +1599,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 17.2 — Wire notification inserts across all events 🟡 MEDIUM | L
+### Task 18.2 — Wire notification inserts across all events 🟡 MEDIUM | L
 
 **Problem:** Most platform events do not insert notification rows. Admin approval does, but: property inquiry received, new message, new quotation, order status change, escrow funded/released, service completed — all missing.
 
@@ -1505,7 +1625,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 17.3 — Notification preferences page 🟢 LOW | M
+### Task 18.3 — Notification preferences page 🟢 LOW | M
 
 **Problem:** `notification_preferences` table exists with email/push/SMS toggles but no UI to manage them.
 
@@ -1518,13 +1638,13 @@ Same pattern as Tasks 12.1 and 13.1.
 **Test checklist:**
 - [ ] User can toggle email notifications
 - [ ] Preferences persist after page reload
-- [ ] Disabling push notifications prevents push sends (Phase 17.4 gate)
+- [ ] Disabling push notifications prevents push sends (Phase 18.4 gate)
 
 **Rollback:** Remove preferences page.
 
 ---
 
-### Task 17.4 — Push notification dispatch 🟢 LOW | L
+### Task 18.4 — Push notification dispatch 🟢 LOW | L
 
 **Problem:** `profiles.expo_push_token` is stored but never used. No push notification dispatch logic exists.
 
@@ -1544,15 +1664,15 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-## Phase 18 — Reviews Completion
+## Phase 19 — Reviews Completion
 
 **Objective:** Complete the review system. The `createReview` action and display components exist, but reviews are currently inoperable because they are gated on `service_requests.status = 'completed'` and that flow has no UI.
 
-**Dependencies:** Phase 8 (service request flow must be built first — this is the hard prerequisite), Phase 17 (review notifications).
+**Dependencies:** Phase 8 (service request flow must be built first — this is the hard prerequisite), Phase 18 (review notifications).
 
 ---
 
-### Task 18.1 — Unlock review flow after service completion 🔴 HIGH | XS
+### Task 19.1 — Unlock review flow after service completion 🔴 HIGH | XS
 
 **Problem:** Once Phase 8 (service request flow) is built, `createReview` already has the correct gate (`service_requests.status = 'completed'`). The `/account/reviews` page already shows pending reviews. This task connects the completed service to the review prompt.
 
@@ -1574,7 +1694,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 18.2 — Review response UI 🟡 MEDIUM | M
+### Task 19.2 — Review response UI 🟡 MEDIUM | M
 
 **Problem:** `review_responses` table exists. Professionals can respond to reviews, but there is no UI for this.
 
@@ -1599,7 +1719,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 18.3 — Reviews on property listings 🟢 LOW | M
+### Task 19.3 — Reviews on property listings 🟢 LOW | M
 
 **Problem:** Properties can theoretically be reviewed (polymorphic reviews table), but there is no review form on property detail pages.
 
@@ -1617,7 +1737,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-## Phase 19 — Verification Centre
+## Phase 20 — Verification Centre
 
 **Objective:** This phase consolidates and completes all verification-related features. Most tasks were already captured in Phase 3 (Task 3.2). This phase adds the user-facing resubmission improvements and document expiry tracking.
 
@@ -1625,7 +1745,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 19.1 — Document expiry tracking 🟡 MEDIUM | M
+### Task 20.1 — Document expiry tracking 🟡 MEDIUM | M
 
 **Problem:** `kyc_records` has an `expires_at` column, but no logic checks if documents are expired. A professional could have approved documents that have since expired without any re-verification prompt.
 
@@ -1646,7 +1766,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 19.2 — Verification history for users 🟢 LOW | M
+### Task 20.2 — Verification history for users 🟢 LOW | M
 
 **Problem:** Users cannot see their own KYC submission history. They only see the current state (VerificationBanner), not the history of submissions and decisions.
 
@@ -1663,15 +1783,15 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-## Phase 20 — Wallet Completion
+## Phase 21 — Wallet Completion
 
 **Objective:** Complete wallet features. Core balance display and top-up exist. Missing: bank transfer option, wallet limits enforcement, Stripe integration.
 
-**Dependencies:** Phase 1, Phase 21 (payments infrastructure).
+**Dependencies:** Phase 1, Phase 22 (payments infrastructure).
 
 ---
 
-### Task 20.1 — Enforce minimum withdrawal in UI 🟡 MEDIUM | XS
+### Task 21.1 — Enforce minimum withdrawal in UI 🟡 MEDIUM | XS
 
 **Problem:** `platform_settings.min_withdrawal_xaf = 5000` exists but is not enforced in the `PayoutRequestForm`. Users can technically submit payout requests below the minimum.
 
@@ -1691,7 +1811,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 20.2 — Stripe payment integration 🟢 LOW | XL
+### Task 21.2 — Stripe payment integration 🟢 LOW | XL
 
 **Problem:** `payment_provider` enum has `'stripe'` but `platform_settings.stripe_enabled = false`. Stripe is not integrated. International buyers cannot pay by card.
 
@@ -1718,15 +1838,15 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-## Phase 21 — Payments Completion
+## Phase 22 — Payments Completion
 
 **Objective:** Harden the payment infrastructure. The MTN MoMo and Orange Money flows exist; this phase adds missing robustness, retry logic, and Stripe.
 
-**Dependencies:** Phase 1, Phase 20 (wallet must work).
+**Dependencies:** Phase 1, Phase 21 (wallet must work).
 
 ---
 
-### Task 21.1 — Payment status polling hardening 🟡 MEDIUM | M
+### Task 22.1 — Payment status polling hardening 🟡 MEDIUM | M
 
 **Problem:** The client polls `/api/payments/status/[id]` to check transaction status. If the webhook never fires (network issue), the transaction stays `pending` indefinitely. No timeout or retry mechanism exists.
 
@@ -1747,7 +1867,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 21.2 — Failed payment retry flow 🟡 MEDIUM | M
+### Task 22.2 — Failed payment retry flow 🟡 MEDIUM | M
 
 **Problem:** If a payment fails, the user has no retry button. They must start a new payment flow.
 
@@ -1766,7 +1886,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 21.3 — Commission auto-payout 🟢 LOW | M
+### Task 22.3 — Commission auto-payout 🟢 LOW | M
 
 **Problem:** Agent commissions are manually approved and paid by admins. There is no auto-payout once escrow releases.
 
@@ -1779,15 +1899,15 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-## Phase 22 — Escrow Completion
+## Phase 23 — Escrow Completion
 
 **Objective:** Complete the escrow system. Core funded/released/disputed flow exists. Missing: admin dispute resolution UI, auto-release cron, milestone creation UI.
 
-**Dependencies:** Phase 1, Phase 21 (payments), Phase 3 (admin tools).
+**Dependencies:** Phase 1, Phase 22 (payments), Phase 3 (admin tools).
 
 ---
 
-### Task 22.1 — Admin dispute resolution 🔴 HIGH | L
+### Task 23.1 — Admin dispute resolution 🔴 HIGH | L
 
 **Problem:** `/admin/escrow` shows disputed escrows but there is no resolution UI. Admins cannot release funds to either party when a dispute exists.
 
@@ -1811,7 +1931,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 22.2 — Escrow auto-release mechanism 🟡 MEDIUM | M
+### Task 23.2 — Escrow auto-release mechanism 🟡 MEDIUM | M
 
 **Problem:** `escrow_accounts.auto_release_at` column and `platform_settings.escrow_auto_release_days = 30` exist but no background job actually auto-releases escrows when the date passes.
 
@@ -1838,7 +1958,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 22.3 — Milestone creation UI 🟡 MEDIUM | L
+### Task 23.3 — Milestone creation UI 🟡 MEDIUM | L
 
 **Problem:** `escrow_milestones` table exists and the detail page shows milestones, but there is no UI to define milestones when creating an escrow.
 
@@ -1858,15 +1978,15 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-## Phase 23 — Analytics
+## Phase 24 — Analytics
 
 **Objective:** Build analytics dashboards for admins and role-specific analytics for agents, vendors, and professionals.
 
-**Dependencies:** Phase 3 (admin system), Phase 7 (vendor products), Phase 8 (service requests), Phase 17 (notification data).
+**Dependencies:** Phase 3 (admin system), Phase 7 (vendor products), Phase 8 (service requests), Phase 18 (notification data).
 
 ---
 
-### Task 23.1 — Admin analytics dashboard 🟡 MEDIUM | L
+### Task 24.1 — Admin analytics dashboard 🟡 MEDIUM | L
 
 **Problem:** Admin sees static metric counts on the dashboard. No time-series data, no trends, no revenue charts.
 
@@ -1889,7 +2009,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 23.2 — Agent commission analytics 🟢 LOW | M
+### Task 24.2 — Agent commission analytics 🟢 LOW | M
 
 **Files affected:**
 - `src/app/(dashboard)/agent/commissions/page.tsx` — add chart showing commission earnings over time
@@ -1900,22 +2020,22 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 23.3 — Vendor sales analytics 🟢 LOW | M
+### Task 24.3 — Vendor sales analytics 🟢 LOW | M
 
 **Files affected:**
 - `src/app/(dashboard)/vendor/page.tsx` — add charts for product views, order conversions, revenue
 
 ---
 
-## Phase 24 — Security Hardening
+## Phase 25 — Security Hardening
 
 **Objective:** Audit and harden the platform's security posture. The existing security is strong but some gaps remain.
 
-**Dependencies:** Phase 1 (all bug fixes), Phase 3 (admin system must be verified before hardening), Phase 26 (tests needed to confirm no regressions).
+**Dependencies:** Phase 1 (all bug fixes), Phase 3 (admin system must be verified before hardening), Phase 27 (tests needed to confirm no regressions).
 
 ---
 
-### Task 24.1 — Rate limiting on server actions 🔴 HIGH | L
+### Task 25.1 — Rate limiting on server actions 🔴 HIGH | L
 
 **Problem:** Only password reset is rate-limited (`password_reset_rate_limits` table). Critical actions like `signUp`, `submitKycDocuments`, `createServiceRequest`, `sendMessage` have no rate limiting.
 
@@ -1939,7 +2059,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 24.2 — Content Security Policy headers 🟡 MEDIUM | M
+### Task 25.2 — Content Security Policy headers 🟡 MEDIUM | M
 
 **Problem:** No `Content-Security-Policy` header is set. XSS attacks via injected scripts are not mitigated at the HTTP layer.
 
@@ -1959,7 +2079,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 24.3 — Audit `createAdminClient()` usage 🔴 HIGH | S
+### Task 25.3 — Audit `createAdminClient()` usage 🔴 HIGH | S
 
 **Problem:** `createAdminClient()` (service-role key) bypasses RLS. Any misuse exposes all data. Every call must be reviewed.
 
@@ -1978,7 +2098,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 24.4 — Input sanitization for rich text fields 🟡 MEDIUM | M
+### Task 25.4 — Input sanitization for rich text fields 🟡 MEDIUM | M
 
 **Problem:** `properties.description`, `service_requests.description`, `forum_posts.content` can contain user-supplied text displayed in the UI. While React prevents XSS by default, verify no `dangerouslySetInnerHTML` is used with unsanitized data.
 
@@ -1994,7 +2114,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 24.5 — Session timeout 🟢 LOW | M
+### Task 25.5 — Session timeout 🟢 LOW | M
 
 **Problem:** No explicit session timeout. If a user leaves a tab open, their session remains indefinitely valid.
 
@@ -2012,7 +2132,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-## Phase 25 — Performance
+## Phase 26 — Performance
 
 **Objective:** Optimize the platform for production-level traffic. The current architecture is correct but has known performance improvement opportunities.
 
@@ -2020,7 +2140,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 25.1 — Incremental Static Regeneration for property listings 🟡 MEDIUM | M
+### Task 26.1 — Incremental Static Regeneration for property listings 🟡 MEDIUM | M
 
 **Problem:** `/properties` and `/properties/[id]` are fully dynamic (server components that run on every request). Properties don't change that frequently — caching them would dramatically reduce DB load.
 
@@ -2039,7 +2159,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 25.2 — N+1 query elimination 🟡 MEDIUM | M
+### Task 26.2 — N+1 query elimination 🟡 MEDIUM | M
 
 **Problem:** Several pages make multiple sequential Supabase queries where a single JOIN would suffice. Most notable: admin users page fetches all profiles then does individual queries per user for role profile data.
 
@@ -2057,7 +2177,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 25.3 — Image optimization 🟡 MEDIUM | M
+### Task 26.3 — Image optimization 🟡 MEDIUM | M
 
 **Problem:** Property images are served from Supabase Storage without any transform pipeline. Large raw images are downloaded by browsers.
 
@@ -2077,7 +2197,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 25.4 — Bundle analysis and lazy imports 🟢 LOW | M
+### Task 26.4 — Bundle analysis and lazy imports 🟢 LOW | M
 
 **Problem:** The app bundle has not been analyzed. Heavy components (PropertyGallery with Dialog, PropertyForm multi-step) may be included in pages that don't need them.
 
@@ -2094,7 +2214,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 25.5 — Database query indexes 🟡 MEDIUM | M
+### Task 26.5 — Database query indexes 🟡 MEDIUM | M
 
 **Problem:** As data grows, queries on large tables without supporting indexes will degrade. Review the most common query patterns.
 
@@ -2117,7 +2237,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-## Phase 26 — Testing
+## Phase 27 — Testing
 
 **Objective:** Build a comprehensive test suite covering server actions, RLS policies, critical user flows, and performance. Some tests already exist (`src/lib/actions/*.test.ts`).
 
@@ -2125,7 +2245,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 26.1 — Expand unit tests for server actions 🔴 HIGH | L
+### Task 27.1 — Expand unit tests for server actions 🔴 HIGH | L
 
 **Problem:** Only 4 test files exist (`confirmEmail.test.ts`, `passwordResetRateLimit.test.ts`, `signUp.test.ts`, `updatePassword.test.ts`). All other server actions are untested.
 
@@ -2147,7 +2267,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 26.2 — RLS policy integration tests 🔴 HIGH | L
+### Task 27.2 — RLS policy integration tests 🔴 HIGH | L
 
 **Problem:** Only `properties.rbac.test.ts` exists for RLS testing. All other table RLS policies are untested.
 
@@ -2171,7 +2291,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 26.3 — E2E tests for critical flows 🔴 HIGH | XL
+### Task 27.3 — E2E tests for critical flows 🔴 HIGH | XL
 
 **Problem:** No E2E test suite exists. Critical user flows (register → onboard → list property → admin approve → buyer inquire → escrow → release) are untested end-to-end.
 
@@ -2197,7 +2317,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 26.4 — Performance tests 🟢 LOW | M
+### Task 27.4 — Performance tests 🟢 LOW | M
 
 **Problem:** No performance benchmarks exist. The platform could be unacceptably slow under load.
 
@@ -2214,7 +2334,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 26.5 — Validate migration history 🔴 HIGH | M
+### Task 27.5 — Validate migration history 🔴 HIGH | M
 
 **Problem:** Remote Supabase project has 29 migrations applied via dashboard that have no local SQL files. `supabase db push` will fail. This blocks all future schema changes.
 
@@ -2253,21 +2373,22 @@ Phase 1 (Bugs)
   │     │     ├── Phase 9 (Engineer)
   │     │     ├── Phase 10 (Architect)
   │     │     └── Phase 11 (Lawyer)
-  │     │           └── Phase 18 (Reviews) ←── requires Phase 8
+  │     │           └── Phase 19 (Reviews) ←── requires Phase 8
   │     └── Phase 12 (Property Manager)
   │           ├── Phase 13 (Maintenance)
   │           └── Phase 14 (Cleaning)
-  ├── Phase 16 (Messaging)
-  ├── Phase 17 (Notifications) ←── requires Phase 16
-  ├── Phase 19 (Verification) ←── merged with Phase 3.2
-  ├── Phase 20 (Wallet)
-  │     └── Phase 21 (Payments)
-  │           └── Phase 22 (Escrow)
-  └── Phase 23 (Analytics) ←── requires Phase 7, 8, 17
+  ├── Phase 16 (Homepage) ←── requires Phase 1, Phase 15
+  ├── Phase 17 (Messaging)
+  ├── Phase 18 (Notifications) ←── requires Phase 17
+  ├── Phase 20 (Verification) ←── merged with Phase 3.2
+  ├── Phase 21 (Wallet)
+  │     └── Phase 22 (Payments)
+  │           └── Phase 23 (Escrow)
+  └── Phase 24 (Analytics) ←── requires Phase 7, 8, 18
 
-Phase 24 (Security) ←── can start after Phase 1
-Phase 25 (Performance) ←── after all features
-Phase 26 (Testing) ←── parallel with all phases; E2E after all critical features
+Phase 25 (Security) ←── can start after Phase 1
+Phase 26 (Performance) ←── after all features
+Phase 27 (Testing) ←── parallel with all phases; E2E after all critical features
 ```
 
 ---
@@ -2281,17 +2402,18 @@ Phase 26 (Testing) ←── parallel with all phases; E2E after all critical fe
 | 🔴 Sprint 1 | Phase 5 | Seller inquiry inbox |
 | 🔴 Sprint 2 | Phase 7 | Vendor product management |
 | 🔴 Sprint 2 | Phase 8 | Service request flow |
-| 🟡 Sprint 3 | Phase 16 | Messaging |
-| 🟡 Sprint 3 | Phase 17 | Notifications |
+| 🟡 Sprint 3 | Phase 16 | Homepage (public marketing page) |
+| 🟡 Sprint 3 | Phase 17 | Messaging |
+| 🟡 Sprint 3 | Phase 18 | Notifications |
 | 🟡 Sprint 4 | Phase 15 | Public marketplace |
-| 🟡 Sprint 4 | Phase 22 | Escrow completion |
+| 🟡 Sprint 4 | Phase 23 | Escrow completion |
 | 🟡 Sprint 5 | Phase 4,5,6 | Dashboard completions |
-| 🟡 Sprint 5 | Phase 23 | Analytics |
+| 🟡 Sprint 5 | Phase 24 | Analytics |
 | 🟢 Sprint 6 | Phase 12,13,14 | New roles |
-| 🟢 Sprint 6 | Phase 20,21 | Wallet/Payments completion |
-| 🟢 Sprint 7 | Phase 24 | Security hardening |
-| 🟢 Sprint 8 | Phase 25 | Performance |
-| 🔴 Ongoing | Phase 26 | Testing (runs parallel with all) |
+| 🟢 Sprint 6 | Phase 21,22 | Wallet/Payments completion |
+| 🟢 Sprint 7 | Phase 25 | Security hardening |
+| 🟢 Sprint 8 | Phase 26 | Performance |
+| 🔴 Ongoing | Phase 27 | Testing (runs parallel with all) |
 
 ---
 
@@ -2299,18 +2421,28 @@ Phase 26 (Testing) ←── parallel with all phases; E2E after all critical fe
 
 | Milestone | Phases | Estimated Duration |
 |-----------|--------|------------------|
-| Platform Stability | 1, 24 (partial), 26 (partial) | 1 week |
+| Platform Stability | 1, 25 (partial), 27 (partial) | 1 week |
 | Core Operations Complete | 3, 5 (inquiry), 7, 8 | 6 weeks |
-| Full Platform (all roles) | 4–14, 16, 17, 18, 19 | 12 weeks |
+| Full Platform (all roles) | 4–14, 16, 17, 18, 19, 20 | 13 weeks |
 | Marketplace Launch | 15 | 4 weeks |
-| Hardened & Optimized | 20, 21, 22, 23, 24, 25, 26 | 6 weeks |
-| **Total estimate** | All 26 phases | **~29 weeks** |
+| Hardened & Optimized | 21, 22, 23, 24, 25, 26, 27 | 6 weeks |
+| **Total estimate** | All 27 phases | **~30 weeks** |
 
 > Estimates assume one senior full-stack developer. A two-developer team would compress the timeline by approximately 35%.
 
 ---
 
 ## Changelog
+
+### 2026-08-29 — Roadmap Restructure
+- **Phase numbering shift** — Inserted new Phase 16 (Homepage) between Phase 15 (Marketplace) and old Phase 16 (Messaging). Old phases 16–26 renumbered to 17–27. No runtime code depends on phase numbers; renumbering is documentation-only.
+- **New Phase 16** — Homepage specification added (Tasks 16.0–16.4): decision gate, hero/search, trust bar/category cards, featured properties, secondary sections/dual-CTA.
+- **Design reference** — `index.html` (static mockup at project root) designated as authoritative visual reference for Phase 16. File is protected — do not delete or modify.
+- **Brand colour decision** — Phase 16 uses `#B71C1C` (Deep Red). All existing authenticated-user pages remain on `#3b82f6` (Blue). Full brand migration = separate future task.
+- **Phase 16 worksheet** — Created `docs/PHASE_16_HOMEPAGE.md` as independent specification for the homepage workstream.
+- **Dependency graph, priority summary, and estimated timeline** — Updated to reflect 27-phase structure. Total estimate revised from ~29 weeks to ~30 weeks.
+- **Test plan** — Updated `docs/08_TEST_PLAN.md` section and phase references (Sections 16→17, 17→18; appendix table MSG→Phase 17, NOTIFY→Phase 18, REVIEW→Phase 19, ANALYTICS→Phase 24, ESCROW→Phase 23).
+- **orders.ts comments** — Updated two Phase 22→23 escrow placeholder comments in `src/lib/actions/orders.ts` (lines 122, 231).
 
 ### 2026-07-17
 - **Task 3.5** ✅ — Added user search to `/admin/users`; `?q=` URL param; `query.or('email.ilike / full_name.ilike')`; search form with Clear link; subtitle and empty state contextualised; role/status/pagination links carry `q` — commit `d87adcd`
