@@ -119,7 +119,7 @@ export async function removeFromCart(formData: FormData) {
 
 // ─── createOrder ─────────────────────────────────────────────────────────────
 // Groups cart items by vendor and creates one order per vendor.
-// Creates a Phase 22 escrow placeholder (status='pending', no payment deducted).
+// Creates a Phase 23 escrow placeholder (status='pending', no payment deducted).
 export async function createOrder(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -228,7 +228,7 @@ export async function createOrder(formData: FormData) {
 
     if (itemsErr) return { error: 'Failed to record order items', orderId: null }
 
-    // Phase 22 escrow placeholder — no funds moved, status stays 'pending'
+    // Phase 23 escrow placeholder — no funds moved, status stays 'pending'
     const platformFeePct = 2.50
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase as any)
