@@ -30,19 +30,18 @@ export default function HomeFooter() {
   return (
     <footer className="bg-[#111111] text-gray-400">
 
-      {/* Partner logos row — text placeholders; no real brand assets approved */}
+      {/* Ecosystem strip — payment rails and real estate industry body */}
       <div className="border-b border-white/10 py-8">
         <div className="max-w-[1280px] mx-auto px-5">
           <p className="text-center text-xs font-bold tracking-widest uppercase text-gray-600 mb-5">
-            Trusted &amp; Partnered With
+            Payment &amp; Real Estate Ecosystem
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
             {[
+              'MTN Mobile Money',
+              'Orange Money',
+              'Cameroon Bank',
               'Cameroon Real Estate Board',
-              'SIC Housing',
-              'MAETUR',
-              'CRÉDIT FONCIER',
-              'SFI CAMEROUN',
             ].map(name => (
               <span
                 key={name}
