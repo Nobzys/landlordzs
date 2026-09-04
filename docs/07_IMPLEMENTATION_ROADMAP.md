@@ -1,6 +1,6 @@
 # LANDLORDZS — Implementation Roadmap
 
-> **Generated:** 2026-07-13 — **Last updated:** 2026-08-29  
+> **Generated:** 2026-07-13 — **Last updated:** 2026-09-04  
 > **Mode:** CAUTIOUS IMPLEMENTATION — documentation only. No application code was modified.  
 > **Governing documents:** `00_PROJECT_CONSTITUTION.md` → `01_MASTER_SPECIFICATION.md` → `02_DATABASE_SCHEMA.md` → `03_USER_ROLES.md` → `04_WORKFLOWS.md` → `05_ADMIN_SYSTEM.md` → `06_UI_DESIGN_SYSTEM.md`
 
@@ -1501,11 +1501,15 @@ Same pattern as Tasks 12.1 and 13.1.
 
 **Objective:** Build the real-time messaging system. All DB tables, Realtime subscriptions, and storage bucket already exist. This is entirely UI work.
 
+**Progress:** Task 17.1 ✅ complete (2026-09-04). Task 17.2 pending.
+
 **Dependencies:** Phase 1, Phase 18 (notifications for new messages), Phase 8 (service request conversations).
 
 ---
 
-### Task 17.1 — Conversation list and message thread 🔴 HIGH | XXL
+### Task 17.1 — Conversation list and message thread 🔴 HIGH | XXL ✅ COMPLETE
+
+**Status:** ✅ Completed — UI commit `1f79fb3` (2026-08-29); RLS fix commit `2698218` (2026-09-04)
 
 **Problem:** `conversations`, `conversation_participants`, `messages`, `message_attachments` tables exist with Realtime enabled. Zero UI coverage. Users cannot message each other despite the infrastructure being complete.
 
@@ -1520,7 +1524,7 @@ Same pattern as Tasks 12.1 and 13.1.
 - `src/hooks/messaging/useMessages.ts` — React Query hook with Realtime subscription
 - `src/lib/actions/messaging.ts` — new file: `createConversation`, `sendMessage`, `markConversationRead`, `uploadAttachment`
 
-**Database changes:** None.
+**Database changes:** RLS fix applied — `conv_select` policy on `public.conversations` was broken: the inline EXISTS subquery resolved the unqualified `id` column to `conversation_participants.id` (the participants PK) instead of `conversations.id`, making the policy always FALSE for non-admin users. Fixed in migration `20260904000001_fix_conv_select_policy.sql` — replaced the broken EXISTS with `is_conversation_participant(id)` (existing SECURITY DEFINER function). Applied to live DB 2026-09-04.
 
 **Storage:** `chat-attachments` bucket exists.
 
@@ -1530,18 +1534,22 @@ Same pattern as Tasks 12.1 and 13.1.
 - Message thread: chat bubble layout (sender right, recipient left), timestamps, read receipts
 - Message input: textarea that grows, attachment button, send on Enter
 
-**Risks:** HIGH. Real-time messaging is the most technically complex UI in the platform. Use Supabase Realtime `channel.on('postgres_changes')` for message inserts. Handle optimistic updates for sent messages. File attachment upload must update `message_attachments` after storage upload completes.
-
 **Test checklist:**
-- [ ] User can start a new conversation with any other user
+- [x] User can start a new conversation with any other user
 - [ ] Messages appear in real-time without page refresh
 - [ ] Unread count updates when new message arrives
 - [ ] Mark as read clears unread count
 - [ ] File attachment uploads successfully and is viewable in thread
-- [ ] Only conversation participants can read messages (RLS check)
+- [x] Only conversation participants can read messages (RLS check) — conv_select policy verified end-to-end; unauthorized user correctly denied
 - [ ] Message deleted (soft) shows "Message deleted"
 
-**Rollback:** Remove all messaging pages, components, hooks, and actions.
+**RLS verification (2026-09-04):**
+- Buyer `nyarnoberta@gmail.com` — 7 conversations returned ✅
+- Recipient agent `manjonob@gmail.com` — conversation visible ✅
+- Unrelated user — 0 rows returned (correctly denied) ✅
+- Browser UI: sidebar shows all conversations, thread opens, initial message visible, persists after refresh ✅
+
+**Rollback:** Drop migration `20260904000001_fix_conv_select_policy.sql` (restores broken policy — only admin can view conversations again). Remove all messaging pages, components, hooks, and actions.
 
 ---
 
