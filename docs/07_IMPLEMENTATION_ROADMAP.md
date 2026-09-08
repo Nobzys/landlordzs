@@ -1592,8 +1592,11 @@ Same pattern as Tasks 12.1 and 13.1.
 **Dependencies:** Phase 1, Phase 17 (messaging triggers notifications).
 
 **Completion summary:**
-- Tasks 18.1 and 18.2 fully implemented. Task 18.3 deferred (LOW priority). Task 18.4 skipped (mobile app not built).
-- TypeScript: zero errors (`npx tsc --noEmit` clean). Build: 95 pages, compiled successfully.
+- Tasks 18.1–18.4 fully implemented (2026-09-08).
+- Task 18.2: payment notifications in fundEscrow/releaseEscrow, service_update in submitQuotation/acceptQuotation, order_update per vendor in createOrder, verification in adminActivateAccount — all fire-and-forget via createAdminClient().
+- Task 18.3: getNotificationPreferences + updateNotificationPreferences server actions; PreferencesForm client component with email/push/SMS toggles; /account/notifications/preferences page.
+- Task 18.4: src/lib/push/expo.ts — Expo Push API client; no-ops while expo_push_token is null (mobile app Phase 12 dependency). Integration with notification insert points deferred until tokens exist.
+- TypeScript: zero errors (`npx tsc --noEmit` clean) after all tasks.
 
 ---
 
