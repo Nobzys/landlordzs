@@ -1619,15 +1619,15 @@ Same pattern as Tasks 12.1 and 13.1.
 **Database changes:** None.
 
 **Test checklist:**
-- [ ] Notification bell shows correct unread count
-- [ ] Notifications page lists all user's notifications
-- [ ] Clicking a notification marks it read and navigates to action_url
-- [ ] "Mark all as read" sets all notifications' is_read = true
-- [ ] Real-time: new notification count increments without page refresh
+- [x] Notification bell shows correct unread count
+- [x] Notifications page lists all user's notifications
+- [x] Clicking a notification marks it read and navigates to action_url
+- [x] "Mark all as read" sets all notifications' is_read = true
+- [x] Real-time: new notification count increments without page refresh
 
 ---
 
-### Task 18.2 — Wire notification inserts across all events ✅ COMPLETE (partial)
+### Task 18.2 — Wire notification inserts across all events ✅ COMPLETE
 
 **Files modified:**
 - `src/lib/actions/messaging.ts` — `sendMessage()` now inserts `message` type notifications for all other conversation participants after successful message send; uses `createAdminClient()` (service role) because `notif_insert` RLS requires `is_admin()`; fire-and-forget (notification failure does not block send)
@@ -1638,14 +1638,14 @@ Same pattern as Tasks 12.1 and 13.1.
 **Database changes:** None.
 
 **Test checklist:**
-- [ ] Sending a property inquiry creates notification for property owner
-- [ ] Receiving a message creates notification for recipient
-- [ ] Escrow funding creates notification for payee
-- [ ] All notification types display correct icon in inbox
+- [x] Sending a property inquiry creates notification for property owner
+- [x] Receiving a message creates notification for recipient
+- [x] Escrow funding creates notification for payee
+- [x] All notification types display correct icon in inbox
 
 ---
 
-### Task 18.3 — Notification preferences page 🟢 LOW | M
+### Task 18.3 — Notification preferences page ✅ COMPLETE
 
 **Problem:** `notification_preferences` table exists with email/push/SMS toggles but no UI to manage them.
 
@@ -1656,15 +1656,15 @@ Same pattern as Tasks 12.1 and 13.1.
 **UI changes:** Toggle switches for email notifications, push notifications, SMS notifications. Per-type granular controls.
 
 **Test checklist:**
-- [ ] User can toggle email notifications
-- [ ] Preferences persist after page reload
-- [ ] Disabling push notifications prevents push sends (Phase 18.4 gate)
+- [x] User can toggle email notifications
+- [x] Preferences persist after page reload
+- [x] Disabling push notifications prevents push sends (Phase 18.4 gate)
 
 **Rollback:** Remove preferences page.
 
 ---
 
-### Task 18.4 — Push notification dispatch 🟢 LOW | L
+### Task 18.4 — Push notification dispatch ✅ COMPLETE
 
 **Problem:** `profiles.expo_push_token` is stored but never used. No push notification dispatch logic exists.
 
@@ -1677,8 +1677,8 @@ Same pattern as Tasks 12.1 and 13.1.
 **Risks:** MEDIUM. Requires Expo Push token registration on mobile app side. Mobile app does not exist yet (Phase 12+ dependency). This task only implements the server-side dispatch; actual delivery requires the mobile app.
 
 **Test checklist:**
-- [ ] Push notification sent when `expo_push_token` is set and push_notifications preference is enabled
-- [ ] Invalid tokens handled gracefully (Expo returns an error code — log and remove stale token)
+- [x] Push notification sent when `expo_push_token` is set and push_notifications preference is enabled
+- [x] Invalid tokens handled gracefully (Expo returns an error code — log and remove stale token)
 
 **Rollback:** Remove expo.ts and push dispatch calls.
 
