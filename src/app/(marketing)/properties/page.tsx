@@ -18,9 +18,15 @@ export default function PropertiesPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-        <PropertyFilters />
-        <PropertyGrid />
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
+          <aside className="w-full lg:w-72 lg:shrink-0 lg:sticky lg:top-4">
+            <PropertyFilters variant="sidebar" />
+          </aside>
+          <div className="flex-1 min-w-0">
+            <PropertyGrid />
+          </div>
+        </div>
       </div>
     </main>
   )
