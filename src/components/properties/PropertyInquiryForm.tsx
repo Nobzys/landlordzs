@@ -4,21 +4,30 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { useQueryClient } from '@tanstack/react-query'
 import { inquirySchema, type InquiryInput } from '@/lib/validations/property'
 import { submitInquiry } from '@/lib/actions/properties'
+import { createConversation } from '@/lib/actions/messaging'
+import { queryKeys } from '@/lib/query/keys'
 import { useAuthStore } from '@/stores/authStore'
 
 interface PropertyInquiryFormProps {
   propertyId: string
+  ownerId:    string
+  agentId:    string | null
 }
 
-export function PropertyInquiryForm({ propertyId }: PropertyInquiryFormProps) {
-  const profile = useAuthStore(s => s.profile)
+export function PropertyInquiryForm({ propertyId, ownerId, agentId }: PropertyInquiryFormProps) {
+  const user        = useAuthStore(s => s.user)
+  const profile     = useAuthStore(s => s.profile)
+  const router      = useRouter()
+  const queryClient = useQueryClient()
 
   const {
     register,
@@ -33,7 +42,7 @@ export function PropertyInquiryForm({ propertyId }: PropertyInquiryFormProps) {
       type:    'general',
       name:    profile?.full_name ?? undefined,
       email:   profile?.email ?? undefined,
-      phone:   profile?.phone ?? undefined,
+      phone:   undefined,
       message: '',
     },
   })
@@ -41,13 +50,53 @@ export function PropertyInquiryForm({ propertyId }: PropertyInquiryFormProps) {
   const type = watch('type')
 
   const onSubmit = async (data: InquiryInput) => {
+    const recipientId = agentId ?? ownerId
+
+    if (user?.id === recipientId) {
+      toast.error("You can't send an inquiry on your own property.")
+      return
+    }
+
+    // Guard: the Supabase user object is the authoritative auth identity.
+    // profile (the DB row) may be null transiently but user is always set
+    // for an authenticated session. createConversation() enforces auth
+    // server-side independently via requireAuth().
+    if (!user) {
+      toast.error('You must be signed in to send an inquiry.')
+      return
+    }
+
     const result = await submitInquiry(propertyId, data)
     if (result.error) {
       toast.error(result.error)
       return
     }
-    toast.success('Inquiry sent! The owner will contact you shortly.')
-    reset()
+
+    // Inquiry saved — now create the conversation thread.
+    const convResult = await createConversation({
+      recipientId,
+      contextType:    'property',
+      contextId:      propertyId,
+      initialMessage: data.message,
+    })
+
+    if (convResult.error) {
+      console.error('[PropertyInquiryForm] createConversation failed:', convResult.error)
+      toast.error(convResult.error || 'Unable to start a conversation. Please try again.')
+      return
+    }
+
+    if (!convResult.data?.conversationId) {
+      console.error('[PropertyInquiryForm] createConversation returned no conversationId:', convResult)
+      toast.error('Conversation was created but no ID was returned. Please contact support.')
+      return
+    }
+
+    // Invalidate the shared conversations cache so the new thread appears
+    // immediately in ConversationList, regardless of the 30 s stale window.
+    await queryClient.invalidateQueries({ queryKey: queryKeys.messaging.conversations() })
+
+    router.push(`/messages/${convResult.data.conversationId}`)
   }
 
   return (
@@ -72,7 +121,7 @@ export function PropertyInquiryForm({ propertyId }: PropertyInquiryFormProps) {
         </RadioGroup>
       </div>
 
-      {!profile && (
+      {!user && (
         <>
           <div className="space-y-1.5">
             <Label htmlFor="inq-name">Your Name</Label>

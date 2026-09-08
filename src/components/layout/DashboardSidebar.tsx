@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   Menu, LogOut,
   Heart, Search, Building2, Plus, TrendingUp, Store,
-  Briefcase, Wrench, Ruler, Scale, LayoutDashboard,
+  Briefcase, Wrench, Ruler, Scale, LayoutDashboard, MessageCircle,
   Users, Wallet, User, ShieldCheck, Flag, Settings, ClipboardList, ScrollText,
   ShoppingCart,
 } from 'lucide-react'
@@ -20,7 +20,7 @@ import type { Profile } from '@/types/auth'
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Heart, Search, Building2, Plus, TrendingUp, Store,
-  Briefcase, Wrench, Ruler, Scale, LayoutDashboard,
+  Briefcase, Wrench, Ruler, Scale, LayoutDashboard, MessageCircle,
   Users, Wallet, User, ShieldCheck, Flag, Settings, ClipboardList, ScrollText,
   ShoppingCart,
 }

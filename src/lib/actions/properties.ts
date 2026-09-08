@@ -279,10 +279,32 @@ export async function submitInquiry(
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Authenticated users don't see the name/email inputs (they're hidden for
+  // logged-in users), so fall back to profile data for the NOT NULL columns.
+  let name  = parsed.data.name  ?? null
+  let email = parsed.data.email ?? null
+
+  if (user && (!name || !email)) {
+    const { data: profile } = await (supabase as any)
+      .from('profiles')
+      .select('full_name, display_name, email')
+      .eq('id', user.id)
+      .single()
+    name  = name  || profile?.display_name || profile?.full_name || user.email || null
+    email = email || profile?.email        || user.email         || null
+  }
+
+  if (!name)  return { error: 'Your display name is required. Please update your profile.' }
+  if (!email) return { error: 'Your email is required. Please update your profile.' }
+
   const { error } = await (supabase as any).from('property_inquiries').insert({
-    property_id: propertyId,
-    sender_id:   user?.id ?? null,
-    ...parsed.data,
+    property_id:  propertyId,
+    sender_id:    user?.id ?? null,
+    name,
+    email,
+    phone:        parsed.data.phone   ?? null,
+    message:      parsed.data.message,
+    inquiry_type: parsed.data.type,
   })
 
   if (error) return { error: error.message }

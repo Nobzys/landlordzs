@@ -6,6 +6,7 @@ import { getServerProfile, createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { QuotationForm } from '@/components/services/QuotationForm'
+import { ContactButton } from '@/components/messaging/ContactButton'
 import { acceptQuotation, completeService, cancelService } from '@/lib/actions/services'
 import { CAMEROON_CITIES } from '@/lib/utils/constants'
 import { revalidatePath } from 'next/cache'
@@ -82,7 +83,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
   // Fetch quotations — only the client sees all; RLS enforces this at DB level
   let quotations: {
     id: string; amount: number; currency: string; timeline_days: number | null
-    proposal: string; status: string; accepted_at: string | null
+    proposal: string; status: string; accepted_at: string | null; provider_id: string
     profiles: { full_name: string; role: string } | null
   }[] = []
 
@@ -90,7 +91,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase as any)
       .from('service_quotations')
-      .select('id, amount, currency, timeline_days, proposal, status, accepted_at, profiles(full_name, role)')
+      .select('id, amount, currency, timeline_days, proposal, status, accepted_at, provider_id, profiles(full_name, role)')
       .eq('request_id', id)
       .order('created_at', { ascending: true })
     quotations = data ?? []
@@ -273,6 +274,14 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                       Accepted on {formatDate(q.accepted_at)}
                     </p>
                   )}
+
+                  <ContactButton
+                    recipientId={q.provider_id}
+                    contextType="service"
+                    contextId={request.id}
+                    label="Message this professional"
+                    placeholder="Ask a question about their quotation…"
+                  />
                 </div>
               ))}
             </div>
@@ -302,6 +311,20 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
               <QuotationForm requestId={request.id} />
             </>
           )}
+        </div>
+      )}
+
+      {/* Professional: message the client before or after submitting a quotation */}
+      {isProfessional && !isClient && profile && (
+        <div className="rounded-xl border bg-card p-6 space-y-4">
+          <h2 className="font-semibold">Have a question?</h2>
+          <ContactButton
+            recipientId={request.client_id}
+            contextType="service"
+            contextId={request.id}
+            label="Message the client"
+            placeholder="Ask about the project before submitting your quotation…"
+          />
         </div>
       )}
 

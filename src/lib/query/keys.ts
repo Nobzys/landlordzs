@@ -52,4 +52,9 @@ export const queryKeys = {
     items: () => [...queryKeys.cart.all, 'items'] as const,
     count: () => [...queryKeys.cart.all, 'count'] as const,
   },
+  messaging: {
+    all:           ['messaging'] as const,
+    conversations: () => [...queryKeys.messaging.all, 'conversations'] as const,
+    messages:      (convId: string) => [...queryKeys.messaging.all, 'messages', convId] as const,
+  },
 } as const

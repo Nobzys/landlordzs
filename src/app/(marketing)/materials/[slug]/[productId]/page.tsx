@@ -9,6 +9,7 @@ import { LinkButton } from '@/components/ui/link-button'
 import { formatXAF } from '@/lib/utils/format'
 import { CAMEROON_CITIES } from '@/lib/utils/constants'
 import { addToCart as _addToCart } from '@/lib/actions/orders'
+import { ContactButton } from '@/components/messaging/ContactButton'
 
 interface PageProps {
   params:      Promise<{ slug: string; productId: string }>
@@ -293,6 +294,17 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                   Add to Cart
                 </button>
               </form>
+            )}
+
+            {/* Contact vendor — shown to any authenticated user who is not the vendor */}
+            {profile && profile.id !== vendor.id && (
+              <ContactButton
+                recipientId={vendor.id}
+                contextType="product"
+                contextId={product.id}
+                label="Ask the vendor"
+                placeholder="Ask about availability, bulk pricing, or delivery…"
+              />
             )}
 
             {/* Tags */}

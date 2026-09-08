@@ -1,3 +1,2 @@
-export function Toaster() {
-  return null
-}
+'use client'
+export { Toaster } from 'sonner'

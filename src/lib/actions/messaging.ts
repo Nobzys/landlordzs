@@ -112,16 +112,24 @@ function attachmentContentType(mimeType: string): 'image' | 'audio' | 'file' {
   return 'file'
 }
 
-// ─── findExistingDirectConversation (internal) ────────────────────────────────
-// Returns the conversation id if a non-archived direct conversation already
-// exists between the two users, so createConversation can return it without
-// creating a duplicate.
+// ─── findExistingConversation (internal) ─────────────────────────────────────
+// Returns the id of an existing non-archived direct conversation between the
+// two users that matches the given context (if any).
+//
+// When contextType + contextId are provided, only a conversation with that
+// exact context qualifies — this keeps separate property/service threads from
+// colliding when the same two users have conversations about multiple entities.
+//
+// When no context is supplied, any existing direct conversation between the two
+// users is returned (original deduplication behaviour for general messaging).
 
-async function findExistingDirectConversation(
+async function findExistingConversation(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sb: any,
   userId: string,
   recipientId: string,
+  contextType?: string | null,
+  contextId?: string | null,
 ): Promise<string | null> {
   const { data: myConvs } = await sb
     .from('conversation_participants')
@@ -144,15 +152,21 @@ async function findExistingDirectConversation(
 
   const sharedIds = (shared as { conversation_id: string }[]).map(r => r.conversation_id)
 
-  const { data: existing } = await sb
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query: any = sb
     .from('conversations')
     .select('id')
     .in('id', sharedIds)
     .eq('type', 'direct')
     .eq('is_archived', false)
-    .limit(1)
-    .maybeSingle()
 
+  // Restrict to the exact context so that property-A and property-B threads
+  // with the same participant pair remain separate conversations.
+  if (contextType && contextId) {
+    query = query.eq('context_type', contextType).eq('context_id', contextId)
+  }
+
+  const { data: existing } = await query.limit(1).maybeSingle()
   return existing?.id ?? null
 }
 
@@ -187,48 +201,49 @@ export async function createConversation(params: {
 
   if (!recipient) return { error: 'Recipient not found' }
 
-  const existing = await findExistingDirectConversation(sb, user.id, params.recipientId)
+  const existing = await findExistingConversation(sb, user.id, params.recipientId, params.contextType, params.contextId)
   if (existing) return { success: true, data: { conversationId: existing } }
 
-  const { data: conversation, error: convError } = await sb
+  // Pre-generate the ID so we avoid INSERT...RETURNING entirely.
+  // conv_select RLS requires participant membership, which only exists after
+  // the participants INSERT — RETURNING would be filtered and return no rows.
+  const conversationId = uuidv4()
+
+  const { error: convError } = await sb
     .from('conversations')
     .insert({
+      id:           conversationId,
       type:         'direct',
       title:        params.title         ?? null,
       context_type: params.contextType   ?? null,
       context_id:   params.contextId     ?? null,
     })
-    .select('id')
-    .single() as { data: { id: string } | null; error: { message: string } | null }
 
-  if (convError || !conversation) {
-    return { error: convError?.message ?? 'Failed to create conversation' }
+  if (convError) {
+    return { error: convError.message ?? 'Failed to create conversation' }
   }
 
   const { error: partError } = await sb
     .from('conversation_participants')
     .insert([
-      { conversation_id: conversation.id, user_id: user.id,            role: 'admin'  },
-      { conversation_id: conversation.id, user_id: params.recipientId, role: 'member' },
+      { conversation_id: conversationId, user_id: user.id,            role: 'admin'  },
+      { conversation_id: conversationId, user_id: params.recipientId, role: 'member' },
     ])
 
   if (partError) {
-    // Without a DELETE RLS policy on conversations, cleanup of the orphaned row
-    // is not possible via the user client. The row is invisible to both parties
-    // (no participant rows exist) so it does not affect UX.
     return { error: partError.message ?? 'Failed to add participants' }
   }
 
   if (params.initialMessage?.trim()) {
     await sb.from('messages').insert({
-      conversation_id: conversation.id,
+      conversation_id: conversationId,
       sender_id:       user.id,
       content:         params.initialMessage.trim(),
       content_type:    'text',
     })
   }
 
-  return { success: true, data: { conversationId: conversation.id } }
+  return { success: true, data: { conversationId } }
 }
 
 // ─── getConversations ──────────────────────────────────────────────────────────
