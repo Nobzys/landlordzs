@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { getNotifications } from '@/lib/actions/notifications'
@@ -10,6 +10,13 @@ import { useAuthStore } from '@/stores/authStore'
 export function useNotifications() {
   const isAuthenticated = useAuthStore(s => s.isAuthenticated())
   const queryClient = useQueryClient()
+
+  // createBrowserClient returns a singleton (same instance for same URL+key).
+  // If two components both call useNotifications(), they share that singleton
+  // and would collide on a fixed channel name — the second .on('postgres_changes')
+  // call throws "cannot add callbacks after subscribed". A per-instance unique
+  // name ensures each hook mount owns its own channel on the shared client.
+  const channelName = useRef(`lzs:notifications:${Math.random().toString(36).slice(2)}`).current
 
   const query = useQuery({
     queryKey: queryKeys.notifications.list(),
@@ -22,7 +29,7 @@ export function useNotifications() {
     if (!isAuthenticated) return
     const supabase = createClient()
     const channel = supabase
-      .channel('lzs:notifications')
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notifications' },
@@ -32,7 +39,7 @@ export function useNotifications() {
       )
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [isAuthenticated, queryClient])
+  }, [isAuthenticated, queryClient, channelName])
 
   const notifications = query.data ?? []
   const unreadCount = notifications.filter(n => !n.is_read).length

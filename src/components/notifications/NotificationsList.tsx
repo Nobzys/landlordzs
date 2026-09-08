@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Bell } from 'lucide-react'
 import { useNotifications } from '@/hooks/notifications/useNotifications'
 import { markAllNotificationsRead } from '@/lib/actions/notifications'
+import { queryKeys } from '@/lib/query/keys'
 import { NotificationItem } from './NotificationItem'
 import { Button } from '@/components/ui/button'
 
@@ -11,6 +13,7 @@ type Filter = 'all' | 'unread'
 
 export function NotificationsList() {
   const { notifications, unreadCount, isLoading } = useNotifications()
+  const queryClient = useQueryClient()
   const [filter, setFilter] = useState<Filter>('all')
   const [isPending, startTransition] = useTransition()
 
@@ -21,6 +24,7 @@ export function NotificationsList() {
   function handleMarkAll() {
     startTransition(async () => {
       await markAllNotificationsRead()
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all })
     })
   }
 
