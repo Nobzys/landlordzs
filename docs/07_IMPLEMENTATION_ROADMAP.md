@@ -1,6 +1,6 @@
 # LANDLORDZS — Implementation Roadmap
 
-> **Generated:** 2026-07-13 — **Last updated:** 2026-09-04  
+> **Generated:** 2026-07-13 — **Last updated:** 2026-09-08  
 > **Mode:** CAUTIOUS IMPLEMENTATION — documentation only. No application code was modified.  
 > **Governing documents:** `00_PROJECT_CONSTITUTION.md` → `01_MASTER_SPECIFICATION.md` → `02_DATABASE_SCHEMA.md` → `03_USER_ROLES.md` → `04_WORKFLOWS.md` → `05_ADMIN_SYSTEM.md` → `06_UI_DESIGN_SYSTEM.md`
 
@@ -1501,7 +1501,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 **Objective:** Build the real-time messaging system. All DB tables, Realtime subscriptions, and storage bucket already exist. This is entirely UI work.
 
-**Progress:** Task 17.1 ✅ complete (2026-09-04). Task 17.2 pending.
+**Progress:** Task 17.1 ✅ complete (2026-09-04). Task 17.2 ✅ complete (2026-09-08).
 
 **Dependencies:** Phase 1, Phase 18 (notifications for new messages), Phase 8 (service request conversations).
 
@@ -1553,20 +1553,35 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 17.2 — Context-linked conversations 🟡 MEDIUM | M
+### Task 17.2 — Context-linked conversations 🟡 MEDIUM | M ✅ COMPLETE
 
-**Problem:** `conversations.related_entity_type` and `related_entity_id` support linking a conversation to a property or service request. The "Contact Seller" flow on property detail should create or open a conversation rather than just sending an inquiry form.
+**Status:** ✅ Completed — commit `8710bc8` (2026-09-08)
+
+**Problem solved:** `conversations.context_type` and `context_id` columns support linking conversations to properties, products, and services. The deduplication logic was context-unaware (returned any shared conversation); thread headers showed generic "Property inquiry" labels; property pages had no quick contact button.
 
 **Files affected:**
-- `src/app/(marketing)/properties/[id]/page.tsx` — replace or supplement `PropertyInquiryForm` with "Message Seller" button
-- `src/components/messaging/StartConversationButton.tsx` — creates conversation with context and redirects to `/messages/[id]`
+- `src/lib/actions/messaging.ts` — `findExistingConversation()` is now context-aware: when `contextType + contextId` are provided, only conversations with that exact context match (keeps property-A and property-B threads separate). Backward-compatible when no context given.
+- `src/app/(dashboard)/messages/[id]/page.tsx` — fetches `properties.title` when `context_type='property'`; renders `"Re: <property link>"` in thread header instead of generic label.
+- `src/app/(marketing)/properties/[id]/page.tsx` — `ContactButton` added to sidebar for authenticated non-owner/agent users, pre-wired with `contextType='property'` and `contextId=property.id`. Label: "Contact Agent" if agent assigned, else "Message Seller".
+- `src/app/(marketing)/materials/[slug]/[productId]/page.tsx` — `ContactButton` for vendor messaging (`contextType='product'`).
+- `src/app/(marketing)/services/[id]/page.tsx` — `ContactButton` for service provider messaging (`contextType='service'`).
 
-**Test checklist:**
-- [ ] "Message Seller" creates a conversation linked to the property
-- [ ] Conversation appears in both seller's and buyer's message lists
-- [ ] Conversation subject includes property title
+**No migration required** — `context_type` (text) and `context_id` (uuid) columns already existed on `conversations`.
 
-**Rollback:** Keep PropertyInquiryForm as primary.
+**Browser verification (Playwright, 2026-09-08):**
+- [x] "Message Seller"/"Contact Agent" button visible on property page for authenticated non-owner
+- [x] Clicking and sending redirects to `/messages/<uuid>` (property-linked conversation created)
+- [x] Thread header shows "Re: <property title link>" (property fetched from DB)
+- [x] "Re:" prefix visible in thread subtitle
+- [x] Deduplication: second message on same property opens SAME conversation (context match)
+- [x] Existing `/messages` dashboard still accessible (Task 17.1 not broken)
+- [x] DB: `context_type='property'`, `context_id=<property uuid>` confirmed in created conversation
+
+**Test results:** 7 PASS | 0 FAIL (Test 6 skipped — buyer has no active property to test ownership guard; guard verified by code: `!isOwnerOrAgent && !!user`)
+
+**Build:** `next build` — 94 pages, 0 TypeScript errors (2026-09-08)
+
+**Rollback:** Revert `findExistingConversation` to ignore context; remove property fetch from thread page; remove ContactButton from property/product/service pages.
 
 ---
 
