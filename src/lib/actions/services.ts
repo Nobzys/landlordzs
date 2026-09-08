@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { createServiceRequestSchema, submitQuotationSchema } from '@/lib/validations/service'
 import type { ActionResult } from '@/types/auth'
 
@@ -131,6 +132,19 @@ export async function submitQuotation(formData: FormData): Promise<ActionResult>
     return { error: error.message }
   }
 
+  try {
+    const admin = createAdminClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (admin as any).from('notifications').insert({
+      user_id:    request.client_id,
+      type:       'service_update',
+      title:      'New quotation received',
+      body:       'A professional has submitted a quotation for your service request.',
+      data:       { requestId: request_id },
+      action_url: `/services/${request_id}`,
+    })
+  } catch { /* notification failure does not block quotation submission */ }
+
   revalidatePath(`/services/${request_id}`)
   revalidatePath('/contractor/requests')
   return { success: true }
@@ -237,6 +251,19 @@ export async function acceptQuotation(quotationId: string): Promise<ActionResult
     .single() as { data: { id: string } | null; error: { message: string } | null }
 
   if (contErr || !contract) return { error: contErr?.message ?? 'Failed to create service contract' }
+
+  try {
+    const admin = createAdminClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (admin as any).from('notifications').insert({
+      user_id:    quotation.provider_id,
+      type:       'service_update',
+      title:      'Quotation accepted',
+      body:       `Your quotation for "${request.title}" has been accepted. A service contract has been created.`,
+      data:       { requestId: request.id, contractId: contract.id },
+      action_url: `/services/${request.id}`,
+    })
+  } catch { /* notification failure does not block contract creation */ }
 
   revalidatePath(`/services/${request.id}`)
   revalidatePath('/contractor/requests')

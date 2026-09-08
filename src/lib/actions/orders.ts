@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import {
   addToCartSchema,
   updateCartQuantitySchema,
@@ -181,6 +182,7 @@ export async function createOrder(formData: FormData) {
 
   const { shipping_name, shipping_phone, shipping_address, shipping_city, notes } = parsed.data
   let firstOrderId: string | null = null
+  const orderNotifications: Array<{ vendorId: string; orderId: string; itemCount: number }> = []
 
   for (const group of groups.values()) {
     const subtotal   = group.items.reduce((s, i) => s + i.unitPrice * i.quantity, 0)
@@ -245,8 +247,24 @@ export async function createOrder(formData: FormData) {
         status:           'pending',
       })
 
+    orderNotifications.push({ vendorId: group.vendorId, orderId: order.id, itemCount: group.items.length })
     if (!firstOrderId) firstOrderId = order.id
   }
+
+  try {
+    const admin = createAdminClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (admin as any).from('notifications').insert(
+      orderNotifications.map(({ vendorId, orderId, itemCount }) => ({
+        user_id:    vendorId,
+        type:       'order_update',
+        title:      'New order received',
+        body:       `You have received a new order with ${itemCount} item${itemCount !== 1 ? 's' : ''}.`,
+        data:       { orderId },
+        action_url: `/vendor/orders/${orderId}`,
+      }))
+    )
+  } catch { /* notification failure does not block order creation */ }
 
   // Clear all cart items after successful checkout
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

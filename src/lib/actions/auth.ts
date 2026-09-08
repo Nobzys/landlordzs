@@ -867,6 +867,18 @@ export async function adminActivateAccount(
     target_id:   targetUserId,
   })
 
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (adminClient as any).from('notifications').insert({
+      user_id:    targetUserId,
+      type:       'verification',
+      title:      'Account reactivated',
+      body:       'Your account has been reactivated. You now have full access to the platform.',
+      data:       {},
+      action_url: '/account/profile',
+    })
+  } catch { /* notification failure does not block account activation */ }
+
   revalidatePath('/admin/users', 'layout')
   return { success: true }
 }

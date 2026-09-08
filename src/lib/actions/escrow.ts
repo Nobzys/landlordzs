@@ -90,7 +90,7 @@ export async function fundEscrow(escrowId: string): Promise<ActionResult> {
 
   const { data: escrow } = await (supabase as any)
     .from('escrow_accounts')
-    .select('id, payer_id, amount, status')
+    .select('id, payer_id, payee_id, amount, status')
     .eq('id', escrowId)
     .single()
 
@@ -136,6 +136,18 @@ export async function fundEscrow(escrowId: string): Promise<ActionResult> {
     metadata:    { amount: escrow.amount },
   })
 
+  try {
+    const admin = createAdminClient()
+    await (admin as any).from('notifications').insert({
+      user_id:    escrow.payee_id,
+      type:       'payment',
+      title:      'Escrow funded',
+      body:       `A payment of ${Number(escrow.amount).toLocaleString()} XAF has been placed in escrow for you.`,
+      data:       { escrowId },
+      action_url: `/account/escrow/${escrowId}`,
+    })
+  } catch { /* notification failure does not block escrow funding */ }
+
   revalidatePath(`/account/escrow/${escrowId}`)
   revalidatePath('/account/wallet')
   return { success: true }
@@ -150,7 +162,7 @@ export async function releaseEscrow(escrowId: string): Promise<ActionResult> {
 
   const { data: escrow } = await (supabase as any)
     .from('escrow_accounts')
-    .select('id, payer_id, status, reference_type, reference_id, amount')
+    .select('id, payer_id, payee_id, status, reference_type, reference_id, amount')
     .eq('id', escrowId)
     .single()
 
@@ -180,6 +192,18 @@ export async function releaseEscrow(escrowId: string): Promise<ActionResult> {
       referenceId:    escrow.reference_id,
     })
   }
+
+  try {
+    const admin = createAdminClient()
+    await (admin as any).from('notifications').insert({
+      user_id:    escrow.payee_id,
+      type:       'payment',
+      title:      'Escrow released',
+      body:       `A payment of ${Number(escrow.amount).toLocaleString()} XAF has been released to your wallet.`,
+      data:       { escrowId },
+      action_url: `/account/wallet`,
+    })
+  } catch { /* notification failure does not block escrow release */ }
 
   revalidatePath(`/account/escrow/${escrowId}`)
   revalidatePath('/account/escrow')
