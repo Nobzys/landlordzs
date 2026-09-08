@@ -308,6 +308,44 @@ export async function submitInquiry(
   })
 
   if (error) return { error: error.message }
+
+  // Notify property owner (and agent if assigned) about the new inquiry.
+  // Uses admin client because notif_insert RLS requires is_admin().
+  if (user) {
+    try {
+      const admin = createAdminClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: property } = await (admin as any)
+        .from('properties')
+        .select('owner_id, agent_id, title')
+        .eq('id', propertyId)
+        .single()
+
+      if (property) {
+        const recipientSet = new Set<string>()
+        if (property.owner_id) recipientSet.add(property.owner_id)
+        if (property.agent_id) recipientSet.add(property.agent_id)
+        recipientSet.delete(user.id) // don't notify the inquiry sender
+
+        if (recipientSet.size > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (admin as any).from('notifications').insert(
+            [...recipientSet].map(uid => ({
+              user_id:    uid,
+              type:       'enquiry',
+              title:      'New property inquiry',
+              body:       `${name} is interested in "${property.title}"`,
+              data:       { propertyId, from: user.id },
+              action_url: `/seller/listings`,
+            }))
+          )
+        }
+      }
+    } catch {
+      // Notification failure does not block the inquiry submission
+    }
+  }
+
   return { success: true }
 }
 

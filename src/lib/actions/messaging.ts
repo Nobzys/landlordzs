@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { STORAGE_BUCKETS } from '@/lib/utils/constants'
 import { v4 as uuidv4 } from 'uuid'
 import type { ActionResult } from '@/types/auth'
@@ -547,6 +548,43 @@ export async function sendMessage(params: {
 
   if (msgError || !msg) {
     return { error: msgError?.message ?? 'Failed to send message' }
+  }
+
+  // Notify other conversation participants (fire-and-forget — don't fail the
+  // send if notifications fail). Uses admin client because notif_insert RLS
+  // requires is_admin(); service key stays server-side.
+  try {
+    const { data: otherParticipants } = await sb
+      .from('conversation_participants')
+      .select('user_id')
+      .eq('conversation_id', params.conversationId)
+      .neq('user_id', user.id)
+      .is('left_at', null)
+
+    if (otherParticipants && otherParticipants.length > 0) {
+      const { data: senderProfile } = await sb
+        .from('profiles')
+        .select('display_name, full_name')
+        .eq('id', user.id)
+        .single()
+      const senderName =
+        senderProfile?.display_name || senderProfile?.full_name || 'Someone'
+
+      const admin = createAdminClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (admin as any).from('notifications').insert(
+        (otherParticipants as { user_id: string }[]).map(p => ({
+          user_id:    p.user_id,
+          type:       'message',
+          title:      'New message',
+          body:       `${senderName} sent you a message`,
+          data:       { conversationId: params.conversationId, messageId: msg.id },
+          action_url: `/messages/${params.conversationId}`,
+        }))
+      )
+    }
+  } catch {
+    // Notification failure does not block the message send
   }
 
   return { success: true, data: { messageId: msg.id } }

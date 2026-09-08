@@ -57,4 +57,9 @@ export const queryKeys = {
     conversations: () => [...queryKeys.messaging.all, 'conversations'] as const,
     messages:      (convId: string) => [...queryKeys.messaging.all, 'messages', convId] as const,
   },
+  notifications: {
+    all:         ['notifications'] as const,
+    list:        () => [...queryKeys.notifications.all, 'list'] as const,
+    unreadCount: () => [...queryKeys.notifications.all, 'unread-count'] as const,
+  },
 } as const

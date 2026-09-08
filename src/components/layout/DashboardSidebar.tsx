@@ -8,7 +8,7 @@ import {
   Heart, Search, Building2, Plus, TrendingUp, Store,
   Briefcase, Wrench, Ruler, Scale, LayoutDashboard, MessageCircle,
   Users, Wallet, User, ShieldCheck, Flag, Settings, ClipboardList, ScrollText,
-  ShoppingCart,
+  ShoppingCart, Bell,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { signOut } from '@/lib/actions/auth'
@@ -16,13 +16,14 @@ import { ROLE_LABELS } from '@/types/auth'
 import { ROLE_NAV, type NavItem } from '@/lib/nav-config'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { NotificationBell } from '@/components/notifications/NotificationBell'
 import type { Profile } from '@/types/auth'
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Heart, Search, Building2, Plus, TrendingUp, Store,
   Briefcase, Wrench, Ruler, Scale, LayoutDashboard, MessageCircle,
   Users, Wallet, User, ShieldCheck, Flag, Settings, ClipboardList, ScrollText,
-  ShoppingCart,
+  ShoppingCart, Bell,
 }
 
 function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
@@ -53,10 +54,11 @@ function SidebarBody({ profile, onNavigate }: { profile: Profile; onNavigate?: (
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center h-14 px-5 border-b shrink-0">
-        <Link href="/" className="font-extrabold text-base tracking-tight text-primary">
+      <div className="flex items-center h-14 px-5 border-b shrink-0 gap-2">
+        <Link href="/" className="font-extrabold text-base tracking-tight text-primary flex-1">
           LANDLORDZS
         </Link>
+        <NotificationBell />
       </div>
 
       <div className="px-5 py-3 border-b shrink-0">
@@ -111,9 +113,10 @@ export function DashboardSidebar({ profile }: { profile: Profile }) {
             <SidebarBody profile={profile} onNavigate={() => setOpen(false)} />
           </SheetContent>
         </Sheet>
-        <Link href="/" className="font-extrabold text-sm tracking-tight text-primary">
+        <Link href="/" className="font-extrabold text-sm tracking-tight text-primary flex-1">
           LANDLORDZS
         </Link>
+        <NotificationBell />
       </div>
     </>
   )

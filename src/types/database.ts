@@ -21,7 +21,7 @@ export type DbBookingStatus = 'pending'|'confirmed'|'active'|'completed'|'cancel
 export type DbOrderStatus   = 'pending'|'confirmed'|'processing'|'shipped'|'delivered'|'cancelled'
 export type DbPaymentStatus = 'pending'|'processing'|'completed'|'failed'|'refunded'|'cancelled'
 export type DbEscrowStatus  = 'pending'|'funded'|'released'|'disputed'|'cancelled'
-export type DbNotificationType = 'property_inquiry'|'property_favorite'|'order_update'|'payment_received'|'escrow_funded'|'escrow_released'|'review_received'|'message_received'|'account_verified'|'system'
+export type DbNotificationType = 'message'|'enquiry'|'offer'|'booking'|'payment'|'review'|'property_update'|'order_update'|'service_update'|'job_update'|'system'|'promotional'|'verification'
 export type DbReportStatus  = 'pending'|'reviewed'|'resolved'|'dismissed'
 export type DbPostStatus    = 'active'|'closed'|'deleted'
 
@@ -169,7 +169,11 @@ export interface NotificationRow {
   title: string
   body: string
   data: Json
+  action_url: string | null
   is_read: boolean
+  read_at: string | null
+  sent_email: boolean
+  sent_push: boolean
   created_at: string
 }
 
