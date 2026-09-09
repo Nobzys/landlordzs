@@ -62,7 +62,7 @@ const SHOP_CATEGORIES = [
 ]
 const SHOP_ACCOUNT = [
   { label: 'Shopping Cart',   href: '/buyer/cart'   },
-  { label: 'Post a Service',  href: '/services/new' },
+  { label: 'Post a Service',  href: '/services/requests/new' },
   { label: 'Vendor Dashboard', href: '/vendor'      },
 ]
 

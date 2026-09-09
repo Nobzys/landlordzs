@@ -79,7 +79,7 @@ export async function createServiceRequest(formData: FormData): Promise<ActionRe
 
   if (error || !item) return { error: error?.message ?? 'Failed to create service request' }
 
-  revalidatePath('/services')
+  revalidatePath('/services/requests')
   return { success: true, data: { id: item.id } }
 }
 
@@ -141,11 +141,11 @@ export async function submitQuotation(formData: FormData): Promise<ActionResult>
       title:      'New quotation received',
       body:       'A professional has submitted a quotation for your service request.',
       data:       { requestId: request_id },
-      action_url: `/services/${request_id}`,
+      action_url: `/services/requests/${request_id}`,
     })
   } catch { /* notification failure does not block quotation submission */ }
 
-  revalidatePath(`/services/${request_id}`)
+  revalidatePath(`/services/requests/${request_id}`)
   revalidatePath('/contractor/requests')
   return { success: true }
 }
@@ -261,11 +261,11 @@ export async function acceptQuotation(quotationId: string): Promise<ActionResult
       title:      'Quotation accepted',
       body:       `Your quotation for "${request.title}" has been accepted. A service contract has been created.`,
       data:       { requestId: request.id, contractId: contract.id },
-      action_url: `/services/${request.id}`,
+      action_url: `/services/requests/${request.id}`,
     })
   } catch { /* notification failure does not block contract creation */ }
 
-  revalidatePath(`/services/${request.id}`)
+  revalidatePath(`/services/requests/${request.id}`)
   revalidatePath('/contractor/requests')
   return { success: true, data: { contractId: contract.id } }
 }
@@ -308,7 +308,7 @@ export async function completeService(contractId: string): Promise<ActionResult>
     .eq('id', contract.request_id)
     .eq('client_id', user.id)
 
-  revalidatePath(`/services/${contract.request_id}`)
+  revalidatePath(`/services/requests/${contract.request_id}`)
   revalidatePath('/contractor/requests')
   return { success: true }
 }
@@ -356,7 +356,7 @@ export async function cancelService(contractId: string): Promise<ActionResult> {
       .eq('client_id', user.id)
   }
 
-  revalidatePath(`/services/${contract.request_id}`)
+  revalidatePath(`/services/requests/${contract.request_id}`)
   revalidatePath('/contractor/requests')
   return { success: true }
 }

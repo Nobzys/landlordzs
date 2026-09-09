@@ -12,7 +12,7 @@ import HomeFooter from '@/components/marketing/home-footer'
 //   /rentals      /rentals/[id]
 //   /jobs         /jobs/[id]
 //   /tenders      /tenders/[id]
-//   /services     /services/[id]     /services/new
+//   /services     /services/[slug]     /services/requests     /services/requests/[id]     /services/requests/new
 //   /help
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {

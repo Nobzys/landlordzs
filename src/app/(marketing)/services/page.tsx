@@ -1,227 +1,157 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { FileText } from 'lucide-react'
+import { ArrowRight, ClipboardList } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { LinkButton } from '@/components/ui/link-button'
-import { ServiceRequestCard } from '@/components/services/ServiceRequestCard'
-import type { ServiceRequestSummary } from '@/components/services/ServiceRequestCard'
-import { CAMEROON_CITIES } from '@/lib/utils/constants'
 
-export const metadata: Metadata = { title: 'Service Requests — LandLordz' }
+export const metadata: Metadata = {
+  title: 'Home Services — LandLordz',
+  description: 'Find trusted service providers across Cameroon — cleaning, plumbing, electrical, security, and more.',
+}
 
-type RequestRow = {
+// Fallback emoji icons keyed by category slug
+const CATEGORY_ICONS: Record<string, string> = {
+  cleaning:        '🧹',
+  plumbing:        '🔧',
+  electrical:      '⚡',
+  landscaping:     '🌳',
+  security:        '🔒',
+  construction:    '🏗️',
+  interior_design: '🛋️',
+  architecture:    '📐',
+  legal_services:  '⚖️',
+  surveying:       '📏',
+}
+
+const DEFAULT_ICON = '🔨'
+
+type CategoryRow = {
   id:          string
-  title:       string
-  description: string
-  city:        string | null
-  budget_min:  number | null
-  budget_max:  number | null
-  deadline:    string | null
-  status:      string
-  created_at:  string
-  service_categories: { name: string } | null
+  name:        string
+  slug:        string
+  icon:        string | null
+  description: string | null
 }
 
-type CategoryRow = { id: string; name: string }
-
-interface PageProps {
-  searchParams: Promise<{
-    city?:     string
-    category?: string
-  }>
-}
-
-export default async function ServicesPage({ searchParams }: PageProps) {
-  const { city, category } = await searchParams
-  const supabase = await createClient()
-
+export default async function ServicesHubPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let requestQuery = (supabase as any)
-    .from('service_requests')
-    .select(`
-      id, title, description, city, budget_min, budget_max, deadline, status, created_at,
-      service_categories(name)
-    `)
-    .eq('status', 'open')
-    .order('created_at', { ascending: false })
-    .limit(50)
+  const supabase = await createClient() as any
 
-  if (city)     requestQuery = requestQuery.eq('city', city)
-  if (category) requestQuery = requestQuery.eq('category_id', category)
+  const { data: categories } = await supabase
+    .from('service_categories')
+    .select('id, name, slug, icon, description')
+    .eq('is_active', true)
+    .order('sort_order') as { data: CategoryRow[] | null }
 
-  const [{ data }, catsRes] = await Promise.all([
-    requestQuery as Promise<{ data: RequestRow[] | null }>,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase as any)
-      .from('service_categories')
-      .select('id, name')
-      .order('name') as Promise<{ data: CategoryRow[] | null }>,
-  ])
-
-  const requests: ServiceRequestSummary[] = (data ?? []).map(r => ({
-    id:          r.id,
-    title:       r.title,
-    description: r.description,
-    city:        r.city,
-    budget_min:  r.budget_min,
-    budget_max:  r.budget_max,
-    deadline:    r.deadline,
-    status:      r.status,
-    created_at:  r.created_at,
-    category:    r.service_categories,
-  }))
-
-  const categories    = catsRes.data ?? []
-  const hasFilter     = !!(city || category)
-  const cityLabel     = city ? (CAMEROON_CITIES.find(c => c.value === city)?.label ?? city) : null
-  const categoryLabel = category ? (categories.find(c => c.id === category)?.name ?? null) : null
-
-  function buildHref(overrides: { city?: string | null; category?: string | null }) {
-    const params = new URLSearchParams()
-    const nc = 'city'     in overrides ? overrides.city     : city
-    const nk = 'category' in overrides ? overrides.category : category
-    if (nc) params.set('city', nc)
-    if (nk) params.set('category', nk)
-    const qs = params.toString()
-    return `/services${qs ? `?${qs}` : ''}`
-  }
+  const cats = categories ?? []
 
   return (
     <main className="min-h-screen bg-background">
       {/* Hero */}
-      <div className="bg-[#1a0505] py-12 px-4">
-        <div className="max-w-7xl mx-auto space-y-3">
-          <h1 className="text-3xl font-bold text-white">Service Requests</h1>
-          <p className="text-white/80 max-w-xl">
-            Open requests from clients across Cameroon — browse and submit your quotation.
+      <div className="bg-[#1a0505] py-14 px-4">
+        <div className="max-w-7xl mx-auto space-y-4">
+          <h1 className="text-4xl font-bold text-white">Home Services</h1>
+          <p className="text-white/80 max-w-xl text-lg">
+            Find trusted professionals for cleaning, repairs, security, landscaping, and more across Cameroon.
           </p>
+          <div className="flex flex-wrap gap-3 pt-2">
+            <Link
+              href="/services/requests/new"
+              className="inline-flex items-center gap-2 rounded-md bg-[#B71C1C] hover:bg-[#9b1515] text-white px-5 py-2.5 text-sm font-semibold transition-colors"
+            >
+              Post a Request
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/services/requests"
+              className="inline-flex items-center gap-2 rounded-md bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 text-sm font-semibold transition-colors"
+            >
+              Browse Requests
+            </Link>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
-
-          {/* ── Sidebar ─────────────────────────────────────────────────── */}
-          <aside className="w-full lg:w-64 lg:shrink-0 lg:sticky lg:top-4 lg:self-start">
-            <div className="p-4 rounded-xl border bg-card space-y-5">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-sm">Search Filters</span>
-                {hasFilter && (
-                  <Link href="/services" className="text-xs text-[#B71C1C] hover:underline">
-                    Reset
-                  </Link>
-                )}
-              </div>
-
-              {/* Category */}
-              {categories.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Service Category
-                  </p>
-                  <div className="flex flex-col gap-1.5">
-                    <Link
-                      href={buildHref({ category: null })}
-                      className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                        !category
-                          ? 'bg-[#B71C1C] text-white'
-                          : 'bg-muted text-muted-foreground hover:bg-accent'
-                      }`}
-                    >
-                      All categories
-                    </Link>
-                    {categories.map(cat => (
-                      <Link
-                        key={cat.id}
-                        href={buildHref({ category: cat.id })}
-                        className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                          category === cat.id
-                            ? 'bg-secondary text-secondary-foreground'
-                            : 'bg-muted text-muted-foreground hover:bg-accent'
-                        }`}
-                      >
-                        {cat.name}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Location */}
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Location
-                </p>
-                <form method="GET" action="/services" className="space-y-2">
-                  {category && <input type="hidden" name="category" value={category} />}
-                  <select
-                    name="city"
-                    defaultValue={city ?? ''}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+      {/* Category grid */}
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        {cats.length === 0 ? (
+          <p className="text-center text-muted-foreground py-16">
+            Service categories are coming soon.
+          </p>
+        ) : (
+          <>
+            <h2 className="text-xl font-bold mb-6">Browse by Category</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {cats.map(cat => {
+                const icon = cat.icon || CATEGORY_ICONS[cat.slug] || DEFAULT_ICON
+                return (
+                  <Link
+                    key={cat.id}
+                    href={`/services/${cat.slug}`}
+                    className="group flex flex-col items-center gap-3 rounded-xl border bg-card p-5 hover:border-[#B71C1C]/40 hover:shadow-sm transition-all text-center"
                   >
-                    <option value="">All cities</option>
-                    {CAMEROON_CITIES.map(c => (
-                      <option key={c.value} value={c.value}>{c.label}</option>
-                    ))}
-                  </select>
-                  <div className="flex gap-2">
-                    <button
-                      type="submit"
-                      className="flex-1 rounded-md bg-[#B71C1C] text-white px-3 py-1.5 text-sm font-medium hover:bg-[#9b1515] transition-colors"
-                    >
-                      Apply
-                    </button>
-                    {city && (
-                      <Link
-                        href={buildHref({ city: null })}
-                        className="rounded-md bg-muted px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors text-muted-foreground"
-                      >
-                        Clear
-                      </Link>
+                    <span className="text-4xl" aria-hidden="true">{icon}</span>
+                    <span className="text-sm font-semibold leading-tight group-hover:text-[#B71C1C] transition-colors">
+                      {cat.name}
+                    </span>
+                    {cat.description && (
+                      <span className="text-[11px] text-muted-foreground line-clamp-2 leading-snug">
+                        {cat.description}
+                      </span>
                     )}
-                  </div>
-                </form>
-              </div>
+                  </Link>
+                )
+              })}
 
-              {/* Post CTA */}
-              <div className="border-t pt-4">
-                <LinkButton href="/services/new" className="w-full text-center">
-                  Post a Request
-                </LinkButton>
-              </div>
+              {/* "All Services" tile */}
+              <Link
+                href="/services/requests"
+                className="group flex flex-col items-center gap-3 rounded-xl border border-dashed bg-muted/30 p-5 hover:bg-muted/50 transition-all text-center"
+              >
+                <span className="text-4xl" aria-hidden="true">📋</span>
+                <span className="text-sm font-semibold leading-tight group-hover:text-[#B71C1C] transition-colors">
+                  All Requests
+                </span>
+                <span className="text-[11px] text-muted-foreground line-clamp-2 leading-snug">
+                  Browse open service requests
+                </span>
+              </Link>
             </div>
-          </aside>
+          </>
+        )}
 
-          {/* ── Main content ─────────────────────────────────────────────── */}
-          <div className="flex-1 min-w-0 space-y-6">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <p className="text-sm text-muted-foreground">
-                {requests.length} open request{requests.length !== 1 ? 's' : ''}
-                {categoryLabel ? ` · ${categoryLabel}` : ''}
-                {cityLabel     ? ` in ${cityLabel}` : ''}
-              </p>
-              <LinkButton href="/services/new" className="hidden sm:inline-flex">
-                Post a Request
-              </LinkButton>
-            </div>
-
-            {requests.length === 0 ? (
-              <div className="text-center py-16 border rounded-xl text-muted-foreground">
-                <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                <p className="font-medium mb-1">No open service requests</p>
-                <p className="text-sm mb-4">
-                  {hasFilter ? 'Try removing a filter.' : 'Be the first to post a service request.'}
-                </p>
-                {!hasFilter && <LinkButton href="/services/new">Post a Request</LinkButton>}
+        {/* How it works */}
+        <div className="mt-16 border-t pt-12">
+          <h2 className="text-xl font-bold mb-8 text-center">How It Works</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+            {[
+              { step: '1', title: 'Choose a Category', desc: 'Browse service providers by category or post a request directly.' },
+              { step: '2', title: 'Receive Quotations', desc: 'Professionals review your request and send you competitive quotations.' },
+              { step: '3', title: 'Hire & Get It Done', desc: 'Accept the best offer, confirm the contract, and get the work done.' },
+            ].map(s => (
+              <div key={s.step} className="text-center space-y-3">
+                <div className="mx-auto h-12 w-12 rounded-full bg-[#B71C1C]/10 text-[#B71C1C] flex items-center justify-center text-xl font-bold">
+                  {s.step}
+                </div>
+                <h3 className="font-semibold">{s.title}</h3>
+                <p className="text-sm text-muted-foreground">{s.desc}</p>
               </div>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {requests.map(r => (
-                  <ServiceRequestCard key={r.id} request={r} />
-                ))}
-              </div>
-            )}
+            ))}
           </div>
+        </div>
+
+        {/* CTA banner */}
+        <div className="mt-12 rounded-xl bg-[#1a0505] p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="text-center sm:text-left space-y-1">
+            <p className="text-white font-semibold text-lg">Need a service done?</p>
+            <p className="text-white/70 text-sm">Post a request and let professionals come to you.</p>
+          </div>
+          <Link
+            href="/services/requests/new"
+            className="inline-flex items-center gap-2 rounded-md bg-[#B71C1C] hover:bg-[#9b1515] text-white px-6 py-3 text-sm font-semibold transition-colors whitespace-nowrap"
+          >
+            <ClipboardList className="h-4 w-4" />
+            Post a Service Request
+          </Link>
         </div>
       </div>
     </main>

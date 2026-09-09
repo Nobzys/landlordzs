@@ -57,9 +57,9 @@ export function ServiceRequestForm({ categories }: ServiceRequestFormProps) {
       setResult({ success: true })
       setTimeout(() => {
         if (res.data?.id) {
-          router.push(`/services/${res.data.id}`)
+          router.push(`/services/requests/${res.data.id}`)
         } else {
-          router.push('/services')
+          router.push('/services/requests')
         }
       }, 800)
     })

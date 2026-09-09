@@ -60,7 +60,7 @@ interface ServiceRequestCardProps {
 }
 
 export function ServiceRequestCard({ request, href }: ServiceRequestCardProps) {
-  const link = href ?? `/services/${request.id}`
+  const link = href ?? `/services/requests/${request.id}`
   const statusColor = STATUS_COLORS[request.status] ?? STATUS_COLORS.open
   const statusLabel = STATUS_LABELS[request.status] ?? request.status
 

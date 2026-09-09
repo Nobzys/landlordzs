@@ -129,7 +129,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
       <div className="flex items-center gap-2">
-        <Link href="/services" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <Link href="/services/requests" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
           ← Service Requests
         </Link>
       </div>
@@ -185,7 +185,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
             <form action={async () => {
               'use server'
               await completeService(contract!.id)
-              revalidatePath(`/services/${id}`)
+              revalidatePath(`/services/requests/${id}`)
             }}>
               <Button type="submit">
                 <CheckCircle2 className="h-4 w-4 mr-2" />
@@ -196,7 +196,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
             <form action={async () => {
               'use server'
               await cancelService(contract!.id)
-              revalidatePath(`/services/${id}`)
+              revalidatePath(`/services/requests/${id}`)
             }}>
               <Button type="submit" variant="ghost" className="text-destructive hover:text-destructive">
                 Cancel Contract
@@ -261,7 +261,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                     <form action={async () => {
                       'use server'
                       await acceptQuotation(q.id)
-                      revalidatePath(`/services/${id}`)
+                      revalidatePath(`/services/requests/${id}`)
                     }}>
                       <Button type="submit" size="sm">
                         Accept this Quotation
@@ -335,7 +335,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
             Sign in as a professional to submit a quotation.
           </p>
           <Link
-            href={`/login?redirectTo=/services/${request.id}`}
+            href={`/login?redirectTo=/services/requests/${request.id}`}
             className="text-sm font-medium text-primary hover:underline"
           >
             Sign in →

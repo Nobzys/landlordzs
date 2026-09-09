@@ -7,7 +7,7 @@ import { ServiceRequestForm } from '@/components/services/ServiceRequestForm'
 
 export const metadata: Metadata = { title: 'Post a Service Request — LandLordz' }
 
-// /services/new falls under the PUBLIC_ROUTES /services prefix in middleware —
+// Falls under the PUBLIC_ROUTES /services prefix in middleware —
 // middleware does NOT enforce auth here. This page enforces auth server-side.
 export default async function NewServiceRequestPage() {
   const profile = await getServerProfile()
@@ -27,7 +27,7 @@ export default async function NewServiceRequestPage() {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex items-center gap-2 mb-6">
         <Link
-          href="/services"
+          href="/services/requests"
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           ← Service Requests
