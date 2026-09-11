@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import JobsTendersPreview from './jobs-tenders-preview'
 
 // Phase 16.4 — Marketplace vertical sections.
 // 5 promotional sections surface the platform's non-property verticals.
@@ -57,17 +58,6 @@ const VEHICLE_RENTALS = [
   { emoji: '🚙', label: 'SUVs',             sub: 'From 55K FCFA/day'  },
   { emoji: '🛻', label: 'Pickup Trucks',    sub: 'From 40K FCFA/day'  },
   { emoji: '🏎️', label: 'Luxury Vehicles', sub: 'From 120K FCFA/day' },
-]
-
-// ─── Jobs & Tenders ──────────────────────────────────────────────────────────
-
-const JOBS = [
-  { emoji: '🏗️', label: 'Construction',     sub: 'Site & project roles'    },
-  { emoji: '⚙️', label: 'Engineering',      sub: 'Civil, structural & MEP' },
-  { emoji: '🏠', label: 'Property Mgmt',   sub: 'Facilities & maintenance' },
-  { emoji: '📐', label: 'Architecture',     sub: 'Design & drafting'        },
-  { emoji: '⚖️', label: 'Legal & Finance', sub: 'Conveyancing & valuation' },
-  { emoji: '📋', label: 'Tenders',          sub: 'Government & private'     },
 ]
 
 // ─── Shared sub-card component ───────────────────────────────────────────────
@@ -266,22 +256,8 @@ export default function MarketplaceSections() {
         </div>
       </section>
 
-      {/* ── Jobs & Tenders ── */}
-      <section className="py-12 md:py-16 bg-white">
-        <div className="max-w-[1280px] mx-auto px-5">
-          <SectionHeader
-            title="Jobs &amp; Tenders"
-            sub="Construction, engineering, and property opportunities across Cameroon"
-            href="/tenders"
-            linkLabel="All Listings"
-          />
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {JOBS.map(j => (
-              <SubCard key={j.label} href="/tenders" emoji={j.emoji} label={j.label} sub={j.sub} />
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ── Jobs & Tenders — live DB preview ── */}
+      <JobsTendersPreview />
 
     </>
   )
