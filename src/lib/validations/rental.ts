@@ -4,6 +4,9 @@ const BOOKING_STATUS_VALUES = [
   'pending', 'confirmed', 'active', 'completed', 'cancelled', 'no_show',
 ] as const
 
+export const FUEL_TYPES = ['petrol', 'diesel', 'electric', 'hybrid'] as const
+export type FuelType = (typeof FUEL_TYPES)[number]
+
 export const createRentalListingSchema = z.object({
   name:            z.string().min(1, 'Name is required').max(200),
   description:     z.string().max(2000).optional(),
@@ -21,6 +24,14 @@ export const createRentalListingSchema = z.object({
   make:            z.string().max(100).optional(),
   model_name:      z.string().max(100).optional(),
   year:            z.coerce.number().int().min(1900).max(2030).nullable().optional(),
+  // Equipment-specific
+  with_operator:   z.boolean().default(false),
+  // Vehicle-specific
+  with_driver:     z.boolean().default(false),
+  has_ac:          z.boolean().default(false),
+  has_gps:         z.boolean().default(false),
+  has_child_seat:  z.boolean().default(false),
+  fuel_type:       z.enum(FUEL_TYPES).nullable().optional(),
 })
 
 export const createRentalBookingSchema = z.object({

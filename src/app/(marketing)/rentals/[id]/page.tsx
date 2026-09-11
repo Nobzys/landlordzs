@@ -37,6 +37,13 @@ type RentalDetailRow = {
   rating_avg:      number
   rating_count:    number
   rental_categories: { name: string } | null
+  // Type-specific filter attributes (added Migration 3)
+  with_operator:   boolean
+  with_driver:     boolean
+  has_ac:          boolean
+  has_gps:         boolean
+  has_child_seat:  boolean
+  fuel_type:       string | null
 }
 
 const CONDITION_LABELS: Record<string, string> = {
@@ -83,6 +90,7 @@ export default async function RentalDetailPage({ params, searchParams }: PagePro
       min_rental_days, max_rental_days,
       city, address, images, is_available,
       rating_avg, rating_count,
+      with_operator, with_driver, has_ac, has_gps, has_child_seat, fuel_type,
       rental_categories:category_id(name)
     `)
     .eq('id', id)
@@ -230,6 +238,59 @@ export default async function RentalDetailPage({ params, searchParams }: PagePro
                 )}
               </div>
             </div>
+
+            {/* ── Features (equipment or vehicle-specific) ── */}
+            {listing.type === 'equipment' && listing.with_operator && (
+              <section>
+                <h2 className="font-semibold text-base mb-3">Equipment Features</h2>
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border bg-muted px-3 py-1 text-xs font-medium">
+                    <CheckCircle className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                    Operator included
+                  </span>
+                </div>
+              </section>
+            )}
+
+            {listing.type === 'vehicle' && (
+              listing.with_driver || listing.has_ac || listing.has_gps ||
+              listing.has_child_seat || listing.fuel_type
+            ) && (
+              <section>
+                <h2 className="font-semibold text-base mb-3">Vehicle Features</h2>
+                <div className="flex flex-wrap gap-2">
+                  {listing.with_driver && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border bg-muted px-3 py-1 text-xs font-medium">
+                      <CheckCircle className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                      Driver included
+                    </span>
+                  )}
+                  {listing.has_ac && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border bg-muted px-3 py-1 text-xs font-medium">
+                      <CheckCircle className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                      Air conditioning
+                    </span>
+                  )}
+                  {listing.has_gps && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border bg-muted px-3 py-1 text-xs font-medium">
+                      <CheckCircle className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                      GPS tracker
+                    </span>
+                  )}
+                  {listing.has_child_seat && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border bg-muted px-3 py-1 text-xs font-medium">
+                      <CheckCircle className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                      Child seat available
+                    </span>
+                  )}
+                  {listing.fuel_type && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border bg-muted px-3 py-1 text-xs font-medium capitalize">
+                      {listing.fuel_type}
+                    </span>
+                  )}
+                </div>
+              </section>
+            )}
 
             {/* Description */}
             {listing.description && (

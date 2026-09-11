@@ -220,38 +220,36 @@ export default function MarketplaceSections() {
         </div>
       </section>
 
-      {/* ── Rentals ── */}
+      {/* ── Equipment Rentals ── */}
       <section className="py-12 md:py-16 bg-gray-50">
         <div className="max-w-[1280px] mx-auto px-5">
           <SectionHeader
-            title="Equipment &amp; Vehicle Rentals"
-            sub="Heavy machinery, tools, and vehicles for construction and transport"
-            href="/rentals"
-            linkLabel="View All Rentals"
+            title="Equipment Rentals"
+            sub="Heavy machinery, generators, and tools for construction projects across Cameroon"
+            href="/rentals?type=equipment"
+            linkLabel="View All Equipment"
           />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Equipment */}
-            <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
-                Equipment Rentals
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                {EQUIPMENT_RENTALS.map(e => (
-                  <SubCard key={e.label} href="/rentals" emoji={e.emoji} label={e.label} sub={e.sub} />
-                ))}
-              </div>
-            </div>
-            {/* Vehicles */}
-            <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
-                Vehicle Rentals
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                {VEHICLE_RENTALS.map(v => (
-                  <SubCard key={v.label} href="/rentals" emoji={v.emoji} label={v.label} sub={v.sub} />
-                ))}
-              </div>
-            </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {EQUIPMENT_RENTALS.map(e => (
+              <SubCard key={e.label} href="/rentals?type=equipment" emoji={e.emoji} label={e.label} sub={e.sub} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Vehicle Rentals ── */}
+      <section className="py-12 md:py-16 bg-white">
+        <div className="max-w-[1280px] mx-auto px-5">
+          <SectionHeader
+            title="Vehicle Rentals"
+            sub="Cars, SUVs, pickups, and luxury vehicles available across Cameroon"
+            href="/rentals?type=vehicle"
+            linkLabel="View All Vehicles"
+          />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {VEHICLE_RENTALS.map(v => (
+              <SubCard key={v.label} href="/rentals?type=vehicle" emoji={v.emoji} label={v.label} sub={v.sub} />
+            ))}
           </div>
         </div>
       </section>
