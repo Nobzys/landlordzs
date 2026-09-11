@@ -220,8 +220,7 @@ export default async function FeaturedProperties() {
           </div>
           <Link
             href="/properties"
-            className="text-[13.5px] font-semibold whitespace-nowrap hover:underline"
-            style={{ color: '#B71C1C' }}
+            className="inline-flex items-center rounded-md bg-[#B71C1C] hover:bg-[#9b1515] text-white px-3.5 py-1.5 text-[13px] font-semibold whitespace-nowrap transition-colors"
           >
             View All Properties →
           </Link>

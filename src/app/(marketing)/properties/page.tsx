@@ -174,7 +174,7 @@ export default async function PropertiesPage({ searchParams }: PageProps) {
   return (
     <main className="min-h-screen bg-background">
       {/* Hero */}
-      <div className="bg-[#1a0505] py-12 px-4">
+      <div className="bg-gradient-to-br from-[#1a0505] via-[#420e0e] to-[#7f1111] py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold text-white">Find Your Property</h1>
           <p className="text-white/80 mt-2 max-w-xl">

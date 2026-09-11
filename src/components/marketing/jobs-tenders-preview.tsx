@@ -114,8 +114,7 @@ export default async function JobsTendersPreview() {
           </div>
           <Link
             href="/jobs"
-            className="text-[13.5px] font-semibold whitespace-nowrap hover:underline"
-            style={{ color: '#B71C1C' }}
+            className="inline-flex items-center rounded-md bg-[#B71C1C] hover:bg-[#9b1515] text-white px-3.5 py-1.5 text-[13px] font-semibold whitespace-nowrap transition-colors"
           >
             All Listings →
           </Link>
@@ -250,7 +249,7 @@ export default async function JobsTendersPreview() {
         <div className="mt-6 text-center">
           <Link
             href="/jobs"
-            className="inline-flex items-center gap-2 rounded-lg border border-[#B71C1C] text-[#B71C1C] px-5 py-2.5 text-sm font-semibold hover:bg-[#B71C1C] hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#B71C1C] hover:bg-[#9b1515] text-white px-5 py-2.5 text-sm font-semibold transition-colors"
           >
             View All Jobs &amp; Tenders
           </Link>

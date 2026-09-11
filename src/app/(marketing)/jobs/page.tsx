@@ -359,7 +359,7 @@ export default async function JobsPage({ searchParams }: PageProps) {
   return (
     <main className="min-h-screen bg-background">
       {/* Hero */}
-      <div className="bg-[#1a0505] py-12 px-4">
+      <div className="bg-gradient-to-br from-[#1a0505] via-[#420e0e] to-[#7f1111] py-12 px-4">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
           {/* Left: heading + subtitle */}
           <div className="space-y-2">

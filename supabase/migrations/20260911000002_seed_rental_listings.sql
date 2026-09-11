@@ -39,7 +39,7 @@ VALUES (
 ON CONFLICT (id) DO NOTHING;
 
 -- ── 2. Dev seed profile ───────────────────────────────────────────────────────
-INSERT INTO public.profiles (id, email, full_name, role, status)
+INSERT INTO public.profiles (id, email, full_name, role, account_status)
 VALUES (
   '00000000-0000-0000-0000-000000000099',
   'dev-seed@landlordzs.internal',

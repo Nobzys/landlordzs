@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Package, Truck, ShieldCheck, Clock, Star } from 'lucide-react'
+import { Package, Truck, ShieldCheck, Clock, Star, PlusCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { formatXAF } from '@/lib/utils/format'
 import { CAMEROON_CITIES } from '@/lib/utils/constants'
@@ -17,21 +17,31 @@ const PAGE_SIZE = 9
 
 interface PageProps {
   searchParams: Promise<{
-    type?:           string
-    city?:           string
-    category?:       string
-    price_min?:      string
-    price_max?:      string
-    condition?:      string
-    page?:           string
-    // Equipment-specific filter
-    with_operator?:  string
+    type?:             string
+    city?:             string
+    category?:         string
+    price_min?:        string
+    price_max?:        string
+    condition?:        string
+    page?:             string
+    // Rental duration — boolean flags, apply to both equipment and vehicle
+    duration_weekly?:  string
+    duration_monthly?: string
+    // Vehicle-only duration (UI state only — no DB column for hourly/daily)
+    duration_hourly?:  string
+    duration_daily?:   string
+    // Equipment-specific filters
+    with_operator?:    string
     // Vehicle-specific filters
-    with_driver?:    string
-    has_ac?:         string
-    has_gps?:        string
-    has_child_seat?: string
-    fuel_type?:      string
+    with_driver?:      string
+    has_ac?:           string
+    has_gps?:          string
+    has_child_seat?:   string
+    fuel_type?:        string
+    // Availability (UI state only — server always filters is_available=true)
+    available_now?:    string
+    // Sort
+    sort_by?:          string
   }>
 }
 
@@ -69,6 +79,10 @@ const SELECT_CLASS =
 const INPUT_CLASS =
   'w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring'
 
+const CHECK_CLASS  = 'h-4 w-4 rounded border-input accent-[#B71C1C]'
+const LABEL_CLASS  = 'flex items-center gap-2.5 cursor-pointer select-none'
+const SECTION_HEAD = 'text-xs font-semibold uppercase tracking-wide text-muted-foreground'
+
 export default async function RentalsPage({ searchParams }: PageProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = await createClient() as any
@@ -83,16 +97,29 @@ export default async function RentalsPage({ searchParams }: PageProps) {
   const page      = Math.max(1, parseInt(sp.page ?? '1', 10) || 1)
   const offset    = (page - 1) * PAGE_SIZE
 
-  // Type-specific filter params — only applied when the matching type is active
-  const withOperator = sp.with_operator  === 'true'
-  const withDriver   = sp.with_driver    === 'true'
-  const hasAC        = sp.has_ac         === 'true'
-  const hasGPS       = sp.has_gps        === 'true'
+  // Duration filters — apply to both equipment and vehicle modes
+  const durationWeekly  = sp.duration_weekly  === 'true'
+  const durationMonthly = sp.duration_monthly === 'true'
+  // Vehicle UI-only duration (no server filter — all listings have daily rates; no hourly_rate column)
+  const durationHourly  = sp.duration_hourly  === 'true'
+  const durationDaily   = sp.duration_daily   === 'true'
+
+  // Equipment-specific
+  const withOperator = sp.with_operator === 'true'
+  // Vehicle-specific
+  const withDriver   = sp.with_driver   === 'true'
+  const hasAC        = sp.has_ac        === 'true'
+  const hasGPS       = sp.has_gps       === 'true'
   const hasChildSeat = sp.has_child_seat === 'true'
-  const fuelType     = sp.fuel_type      || null
+  const fuelType     = sp.fuel_type     || null
+  // Availability (UI state — server already filters is_available=true)
+  const availableNow = sp.available_now === 'true'
+
+  const sortBy = sp.sort_by || 'newest'
 
   const hasFilter = !!(
-    type || city || category || priceMin || priceMax || condition
+    type || city || category || priceMin || priceMax
+    || durationWeekly || durationMonthly
     || (type === 'equipment' && withOperator)
     || (type === 'vehicle'   && (withDriver || hasAC || hasGPS || hasChildSeat || fuelType))
   )
@@ -115,9 +142,18 @@ export default async function RentalsPage({ searchParams }: PageProps) {
           { count: 'exact' }
         )
         .eq('is_available', true)
-        .order('is_featured', { ascending: false })
-        .order('created_at',  { ascending: false })
-        .range(offset, offset + PAGE_SIZE - 1)
+
+      // Sort order
+      if (sortBy === 'price_asc') {
+        q = q.order('daily_rate', { ascending: true })
+      } else if (sortBy === 'price_desc') {
+        q = q.order('daily_rate', { ascending: false })
+      } else {
+        q = q.order('is_featured', { ascending: false })
+        q = q.order('created_at',  { ascending: false })
+      }
+
+      q = q.range(offset, offset + PAGE_SIZE - 1)
 
       if (type)      q = q.eq('type',       type)
       if (city)      q = q.eq('city',       city)
@@ -126,13 +162,19 @@ export default async function RentalsPage({ searchParams }: PageProps) {
       if (priceMax)  q = q.lte('daily_rate', priceMax)
       if (condition) q = q.eq('condition',  condition)
 
-      // Type-specific filters — only applied when the relevant type is active
+      // Duration filters — applicable to both equipment and vehicle
+      if (durationWeekly)  q = q.not('weekly_rate',  'is', null)
+      if (durationMonthly) q = q.not('monthly_rate', 'is', null)
+
+      // Equipment-specific filters
       if (type === 'equipment' && withOperator) q = q.eq('with_operator',  true)
-      if (type === 'vehicle'   && withDriver)   q = q.eq('with_driver',    true)
-      if (type === 'vehicle'   && hasAC)        q = q.eq('has_ac',         true)
-      if (type === 'vehicle'   && hasGPS)       q = q.eq('has_gps',        true)
-      if (type === 'vehicle'   && hasChildSeat) q = q.eq('has_child_seat', true)
-      if (type === 'vehicle'   && fuelType)     q = q.eq('fuel_type',      fuelType)
+
+      // Vehicle-specific filters
+      if (type === 'vehicle' && withDriver)   q = q.eq('with_driver',    true)
+      if (type === 'vehicle' && hasAC)        q = q.eq('has_ac',         true)
+      if (type === 'vehicle' && hasGPS)       q = q.eq('has_gps',        true)
+      if (type === 'vehicle' && hasChildSeat) q = q.eq('has_child_seat', true)
+      if (type === 'vehicle' && fuelType)     q = q.eq('fuel_type',      fuelType)
 
       return q
     })() as Promise<{ data: RentalListingRow[] | null; count: number | null }>,
@@ -146,7 +188,6 @@ export default async function RentalsPage({ searchParams }: PageProps) {
   const visibleCategories = categories.filter(c => !type || c.type === type)
   const cityLabel  = city ? (CAMEROON_CITIES.find(c => c.value === city)?.label ?? city) : null
 
-  // Type-aware content
   const isEquipment = type === 'equipment'
   const isVehicle   = type === 'vehicle'
   const heroTitle   = isEquipment
@@ -159,60 +200,291 @@ export default async function RentalsPage({ searchParams }: PageProps) {
     : isVehicle
     ? 'Cars, SUVs, pickups, and luxury vehicles available for daily, weekly, or monthly hire.'
     : 'Construction equipment, vehicles, and tools from trusted owners across Cameroon.'
-  const ctaLabel  = isVehicle ? 'List Your Vehicle' : 'List Your Equipment'
-  const baseHref  = type ? `/rentals?type=${type}` : '/rentals'
+  const ctaLabel = isVehicle ? 'List Your Vehicle' : 'List Your Equipment'
+  const baseHref = type ? `/rentals?type=${type}` : '/rentals'
 
   const rangeStart = totalCount === 0 ? 0 : offset + 1
   const rangeEnd   = Math.min(offset + PAGE_SIZE, totalCount)
 
   function buildPaginationHref(p: number): string {
     const params = new URLSearchParams()
-    if (type)      params.set('type',      type)
-    if (city)      params.set('city',      city)
-    if (category)  params.set('category',  category)
-    if (priceMin)  params.set('price_min', String(priceMin))
-    if (priceMax)  params.set('price_max', String(priceMax))
-    if (condition) params.set('condition', condition)
-    // Type-specific filters — preserved across pages only when the matching type is active
-    if (type === 'equipment' && withOperator) params.set('with_operator', 'true')
-    if (type === 'vehicle') {
+    if (type)            params.set('type',      type)
+    if (city)            params.set('city',       city)
+    if (category)        params.set('category',   category)
+    if (priceMin)        params.set('price_min',  String(priceMin))
+    if (priceMax)        params.set('price_max',  String(priceMax))
+    if (condition)       params.set('condition',  condition)
+    if (durationWeekly)  params.set('duration_weekly',  'true')
+    if (durationMonthly) params.set('duration_monthly', 'true')
+    if (isVehicle && durationHourly) params.set('duration_hourly', 'true')
+    if (isVehicle && durationDaily)  params.set('duration_daily',  'true')
+    if (availableNow)    params.set('available_now', 'true')
+    if (isEquipment && withOperator) params.set('with_operator', 'true')
+    if (isVehicle) {
       if (withDriver)   params.set('with_driver',    'true')
       if (hasAC)        params.set('has_ac',         'true')
       if (hasGPS)       params.set('has_gps',        'true')
       if (hasChildSeat) params.set('has_child_seat', 'true')
       if (fuelType)     params.set('fuel_type',      fuelType)
     }
-    if (p > 1)     params.set('page',      String(p))
+    if (sortBy !== 'newest') params.set('sort_by', sortBy)
+    if (p > 1) params.set('page', String(p))
     const qs = params.toString()
     return `/rentals${qs ? `?${qs}` : ''}`
   }
 
-  const filterForm = (
+  // ── Shared sidebar fragments ─────────────────────────────────────────────
+
+  const sortBySection = (
+    <div className="space-y-2">
+      <p className={SECTION_HEAD}>Sort By</p>
+      <select name="sort_by" defaultValue={sortBy} className={SELECT_CLASS}>
+        <option value="newest">Newest</option>
+        <option value="price_asc">Price: Low → High</option>
+        <option value="price_desc">Price: High → Low</option>
+      </select>
+    </div>
+  )
+
+  const locationSection = (
+    <div className="space-y-2">
+      <p className={SECTION_HEAD}>Location</p>
+      <select name="city" defaultValue={city ?? ''} className={SELECT_CLASS}>
+        <option value="">All Cities</option>
+        {CAMEROON_CITIES.map(c => (
+          <option key={c.value} value={c.value}>{c.label}</option>
+        ))}
+      </select>
+    </div>
+  )
+
+  const priceRangeSection = (
+    <div className="space-y-2">
+      <p className={SECTION_HEAD}>Price Range Per Day (FCFA)</p>
+      <div className="flex gap-2">
+        <input type="number" name="price_min" placeholder="Min"
+          defaultValue={priceMin ?? ''} min={0} className={INPUT_CLASS} />
+        <input type="number" name="price_max" placeholder="Max"
+          defaultValue={priceMax ?? ''} min={0} className={INPUT_CLASS} />
+      </div>
+    </div>
+  )
+
+  const availabilitySection = (
+    <div className="space-y-2">
+      <p className={SECTION_HEAD}>Availability</p>
+      <label className={LABEL_CLASS}>
+        <input type="checkbox" name="available_now" value="true"
+          defaultChecked={availableNow} className={CHECK_CLASS} />
+        <span className="text-sm">Available Now</span>
+      </label>
+    </div>
+  )
+
+  const sidebarHeader = (resetHref: string) => (
+    <div className="flex items-center justify-between">
+      <span className="font-semibold text-sm">Search Filters</span>
+      <Link
+        href={resetHref}
+        className={`text-xs font-medium transition-colors ${
+          hasFilter
+            ? 'text-[#B71C1C] hover:underline'
+            : 'text-muted-foreground/40 pointer-events-none select-none'
+        }`}
+        aria-disabled={!hasFilter}
+        tabIndex={hasFilter ? undefined : -1}
+      >
+        Reset
+      </Link>
+    </div>
+  )
+
+  const applyBtn = (
+    <button
+      type="submit"
+      className="w-full rounded-md bg-[#B71C1C] text-white py-2.5 text-sm font-semibold hover:bg-[#9b1515] transition-colors"
+    >
+      Apply Filters
+    </button>
+  )
+
+  // ── VEHICLE sidebar ──────────────────────────────────────────────────────
+  const vehicleFilterForm = (
+    <form method="GET" action="/rentals">
+      <input type="hidden" name="type" value="vehicle" />
+      <div className="p-4 rounded-xl border bg-card space-y-5">
+
+        {sidebarHeader(baseHref)}
+        {sortBySection}
+
+        {/* Vehicle Type */}
+        <div className="space-y-2">
+          <p className={SECTION_HEAD}>Vehicle Type</p>
+          {visibleCategories.map(c => (
+            <label key={c.id} className={LABEL_CLASS}>
+              <input type="checkbox" name="category" value={c.id}
+                defaultChecked={category === c.id} className={CHECK_CLASS} />
+              <span className="text-sm">{c.name}</span>
+            </label>
+          ))}
+        </div>
+
+        {locationSection}
+
+        {/* Rental Duration */}
+        <div className="space-y-2">
+          <p className={SECTION_HEAD}>Rental Duration</p>
+          <label className={LABEL_CLASS}>
+            <input type="checkbox" name="duration_hourly" value="true"
+              defaultChecked={durationHourly} className={CHECK_CLASS} />
+            <span className="text-sm">Hourly</span>
+          </label>
+          <label className={LABEL_CLASS}>
+            <input type="checkbox" name="duration_daily" value="true"
+              defaultChecked={durationDaily} className={CHECK_CLASS} />
+            <span className="text-sm">Daily</span>
+          </label>
+          <label className={LABEL_CLASS}>
+            <input type="checkbox" name="duration_weekly" value="true"
+              defaultChecked={durationWeekly} className={CHECK_CLASS} />
+            <span className="text-sm">Weekly</span>
+          </label>
+          <label className={LABEL_CLASS}>
+            <input type="checkbox" name="duration_monthly" value="true"
+              defaultChecked={durationMonthly} className={CHECK_CLASS} />
+            <span className="text-sm">Monthly</span>
+          </label>
+        </div>
+
+        {/* Features */}
+        <div className="space-y-2">
+          <p className={SECTION_HEAD}>Features</p>
+          <label className={LABEL_CLASS}>
+            <input type="checkbox" name="with_driver" value="true"
+              defaultChecked={withDriver} className={CHECK_CLASS} />
+            <span className="text-sm">Driver Included</span>
+          </label>
+          <label className={LABEL_CLASS}>
+            <input type="checkbox" name="has_ac" value="true"
+              defaultChecked={hasAC} className={CHECK_CLASS} />
+            <span className="text-sm">Air Conditioning</span>
+          </label>
+          <label className={LABEL_CLASS}>
+            <input type="checkbox" name="has_gps" value="true"
+              defaultChecked={hasGPS} className={CHECK_CLASS} />
+            <span className="text-sm">GPS Navigation</span>
+          </label>
+          <label className={LABEL_CLASS}>
+            <input type="checkbox" name="has_child_seat" value="true"
+              defaultChecked={hasChildSeat} className={CHECK_CLASS} />
+            <span className="text-sm">Child Seat</span>
+          </label>
+        </div>
+
+        {/* Fuel Type */}
+        <div className="space-y-2">
+          <p className={SECTION_HEAD}>Fuel Type</p>
+          <label className={LABEL_CLASS}>
+            <input type="checkbox" name="fuel_type" value="petrol"
+              defaultChecked={fuelType === 'petrol'} className={CHECK_CLASS} />
+            <span className="text-sm">Petrol</span>
+          </label>
+          <label className={LABEL_CLASS}>
+            <input type="checkbox" name="fuel_type" value="diesel"
+              defaultChecked={fuelType === 'diesel'} className={CHECK_CLASS} />
+            <span className="text-sm">Diesel</span>
+          </label>
+          <label className={LABEL_CLASS}>
+            <input type="checkbox" name="fuel_type" value="electric"
+              defaultChecked={fuelType === 'electric'} className={CHECK_CLASS} />
+            <span className="text-sm">Electric</span>
+          </label>
+        </div>
+
+        {priceRangeSection}
+        {availabilitySection}
+        {applyBtn}
+      </div>
+    </form>
+  )
+
+  // ── EQUIPMENT sidebar ────────────────────────────────────────────────────
+  const equipmentFilterForm = (
+    <form method="GET" action="/rentals">
+      <input type="hidden" name="type" value="equipment" />
+      <div className="p-4 rounded-xl border bg-card space-y-5">
+
+        {sidebarHeader(baseHref)}
+        {sortBySection}
+
+        {/* Equipment Type */}
+        <div className="space-y-2">
+          <p className={SECTION_HEAD}>Equipment Type</p>
+          {visibleCategories.map(c => (
+            <label key={c.id} className={LABEL_CLASS}>
+              <input type="checkbox" name="category" value={c.id}
+                defaultChecked={category === c.id} className={CHECK_CLASS} />
+              <span className="text-sm">{c.name}</span>
+            </label>
+          ))}
+        </div>
+
+        {locationSection}
+
+        {/* Rental Duration */}
+        <div className="space-y-2">
+          <p className={SECTION_HEAD}>Rental Duration</p>
+          <label className={LABEL_CLASS}>
+            <input type="checkbox" name="duration_hourly" value="true"
+              defaultChecked={durationHourly} className={CHECK_CLASS} />
+            <span className="text-sm">Hourly</span>
+          </label>
+          <label className={LABEL_CLASS}>
+            <input type="checkbox" name="duration_daily" value="true"
+              defaultChecked={durationDaily} className={CHECK_CLASS} />
+            <span className="text-sm">Daily</span>
+          </label>
+          <label className={LABEL_CLASS}>
+            <input type="checkbox" name="duration_weekly" value="true"
+              defaultChecked={durationWeekly} className={CHECK_CLASS} />
+            <span className="text-sm">Weekly</span>
+          </label>
+          <label className={LABEL_CLASS}>
+            <input type="checkbox" name="duration_monthly" value="true"
+              defaultChecked={durationMonthly} className={CHECK_CLASS} />
+            <span className="text-sm">Monthly</span>
+          </label>
+        </div>
+
+        {priceRangeSection}
+        {availabilitySection}
+
+        {/* Operator */}
+        <div className="space-y-2">
+          <p className={SECTION_HEAD}>Operator</p>
+          <label className={LABEL_CLASS}>
+            <input type="checkbox" name="with_operator" value="true"
+              defaultChecked={withOperator} className={CHECK_CLASS} />
+            <span className="text-sm">Operator Included</span>
+          </label>
+        </div>
+
+        {applyBtn}
+      </div>
+    </form>
+  )
+
+  // ── GENERIC sidebar (combined /rentals, no type selected) ────────────────
+  const genericFilterForm = (
     <form method="GET" action="/rentals">
       <div className="p-4 rounded-xl border bg-card space-y-5">
 
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <span className="font-semibold text-sm">Search Filters</span>
-          <Link
-            href="/rentals"
-            className={`text-xs font-medium transition-colors ${
-              hasFilter
-                ? 'text-[#B71C1C] hover:underline'
-                : 'text-muted-foreground/40 pointer-events-none select-none'
-            }`}
-            aria-disabled={!hasFilter}
-            tabIndex={hasFilter ? undefined : -1}
-          >
-            Reset
-          </Link>
-        </div>
+        {sidebarHeader('/rentals')}
+        {sortBySection}
 
         {/* Rental Type */}
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Rental Type
-          </p>
+          <p className={SECTION_HEAD}>Rental Type</p>
           <select name="type" defaultValue={type ?? ''} className={SELECT_CLASS}>
             <option value="">All Rentals</option>
             <option value="equipment">Equipment</option>
@@ -222,62 +494,24 @@ export default async function RentalsPage({ searchParams }: PageProps) {
 
         {/* Category */}
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Category
-          </p>
+          <p className={SECTION_HEAD}>Category</p>
           <select name="category" defaultValue={category ?? ''} className={SELECT_CLASS}>
             <option value="">All Categories</option>
-            {visibleCategories.map(c => (
+            {categories.map(c => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
         </div>
 
-        {/* Location */}
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Location
-          </p>
-          <select name="city" defaultValue={city ?? ''} className={SELECT_CLASS}>
-            <option value="">All Cities</option>
-            {CAMEROON_CITIES.map(c => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </select>
-        </div>
+        {locationSection}
 
         <div className="border-t" />
 
-        {/* Price Range Per Day */}
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Price Per Day (XAF)
-          </p>
-          <div className="flex gap-2">
-            <input
-              type="number"
-              name="price_min"
-              placeholder="Min"
-              defaultValue={priceMin ?? ''}
-              min={0}
-              className={INPUT_CLASS}
-            />
-            <input
-              type="number"
-              name="price_max"
-              placeholder="Max"
-              defaultValue={priceMax ?? ''}
-              min={0}
-              className={INPUT_CLASS}
-            />
-          </div>
-        </div>
+        {priceRangeSection}
 
         {/* Condition */}
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Condition
-          </p>
+          <p className={SECTION_HEAD}>Condition</p>
           <select name="condition" defaultValue={condition ?? ''} className={SELECT_CLASS}>
             <option value="">Any Condition</option>
             <option value="new">New</option>
@@ -287,117 +521,34 @@ export default async function RentalsPage({ searchParams }: PageProps) {
           </select>
         </div>
 
-        {/* ── Equipment-specific filters ─────────────────────────────── */}
-        {isEquipment && (
-          <>
-            <div className="border-t" />
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Equipment Options
-              </p>
-              <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  name="with_operator"
-                  value="true"
-                  defaultChecked={withOperator}
-                  className="h-4 w-4 rounded border-input accent-[#B71C1C]"
-                />
-                <span className="text-sm">Operator included</span>
-              </label>
-            </div>
-          </>
-        )}
-
-        {/* ── Vehicle-specific filters ───────────────────────────────── */}
-        {isVehicle && (
-          <>
-            <div className="border-t" />
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Vehicle Features
-              </p>
-              <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  name="with_driver"
-                  value="true"
-                  defaultChecked={withDriver}
-                  className="h-4 w-4 rounded border-input accent-[#B71C1C]"
-                />
-                <span className="text-sm">Driver included</span>
-              </label>
-              <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  name="has_ac"
-                  value="true"
-                  defaultChecked={hasAC}
-                  className="h-4 w-4 rounded border-input accent-[#B71C1C]"
-                />
-                <span className="text-sm">Air conditioning</span>
-              </label>
-              <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  name="has_gps"
-                  value="true"
-                  defaultChecked={hasGPS}
-                  className="h-4 w-4 rounded border-input accent-[#B71C1C]"
-                />
-                <span className="text-sm">GPS tracker</span>
-              </label>
-              <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  name="has_child_seat"
-                  value="true"
-                  defaultChecked={hasChildSeat}
-                  className="h-4 w-4 rounded border-input accent-[#B71C1C]"
-                />
-                <span className="text-sm">Child seat available</span>
-              </label>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Fuel Type
-              </p>
-              <select name="fuel_type" defaultValue={fuelType ?? ''} className={SELECT_CLASS}>
-                <option value="">Any Fuel Type</option>
-                <option value="petrol">Petrol</option>
-                <option value="diesel">Diesel</option>
-                <option value="electric">Electric</option>
-                <option value="hybrid">Hybrid</option>
-              </select>
-            </div>
-          </>
-        )}
-
-        <button
-          type="submit"
-          className="w-full rounded-md bg-[#B71C1C] text-white py-2.5 text-sm font-semibold hover:bg-[#9b1515] transition-colors"
-        >
-          Apply Filters
-        </button>
+        {applyBtn}
       </div>
     </form>
   )
+
+  const filterForm = isVehicle ? vehicleFilterForm : isEquipment ? equipmentFilterForm : genericFilterForm
 
   return (
     <main className="min-h-screen bg-background">
 
       {/* ── Hero ── */}
-      <div className="bg-[#1a0505] py-12 px-4">
-        <div className="max-w-7xl mx-auto space-y-4">
-          <h1 className="text-4xl font-bold text-white">{heroTitle}</h1>
-          <p className="text-white/80 max-w-xl text-lg">{heroSub}</p>
-          <Link
-            href="/account"
-            className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 text-sm font-semibold transition-colors"
-          >
-            {ctaLabel}
-          </Link>
+      <div className="bg-gradient-to-br from-[#1a0505] via-[#420e0e] to-[#7f1111] py-12 px-4">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+          {/* Left: heading + subtitle */}
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold text-white">{heroTitle}</h1>
+            <p className="text-white/80 max-w-xl text-lg">{heroSub}</p>
+          </div>
+          {/* Right: CTA */}
+          <div className="shrink-0">
+            <Link
+              href="/account"
+              className="inline-flex items-center gap-2 rounded-md bg-[#B71C1C] hover:bg-[#9b1515] text-white px-5 py-2.5 text-sm font-semibold transition-colors whitespace-nowrap"
+            >
+              <PlusCircle className="h-4 w-4" />
+              {ctaLabel}
+            </Link>
+          </div>
         </div>
       </div>
 

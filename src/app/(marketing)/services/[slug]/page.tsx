@@ -125,7 +125,7 @@ export default async function ServiceCategoryPage({ params, searchParams }: Page
   return (
     <main className="min-h-screen bg-background">
       {/* Hero */}
-      <div className="bg-[#1a0505] py-12 px-4">
+      <div className="bg-gradient-to-br from-[#1a0505] via-[#420e0e] to-[#7f1111] py-12 px-4">
         <div className="max-w-7xl mx-auto space-y-3">
           <p className="text-white/60 text-sm">
             <Link href="/services" className="hover:text-white transition-colors">Services</Link>

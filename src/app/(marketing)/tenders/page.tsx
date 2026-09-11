@@ -106,7 +106,7 @@ export default async function TendersPage({ searchParams }: PageProps) {
   return (
     <main className="min-h-screen bg-background">
       {/* Hero */}
-      <div className="bg-[#1a0505] py-12 px-4">
+      <div className="bg-gradient-to-br from-[#1a0505] via-[#420e0e] to-[#7f1111] py-12 px-4">
         <div className="max-w-7xl mx-auto space-y-3">
           <h1 className="text-3xl font-bold text-white">Tenders Board</h1>
           <p className="text-white/80 max-w-xl">
