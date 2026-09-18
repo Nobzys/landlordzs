@@ -17,7 +17,7 @@ export default async function ArchitectPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)
       .from('professional_profiles')
-      .select('profession_type, company_name, specializations, experience_years, day_rate, is_available, is_verified')
+      .select('profession_type, company_name, specializations, experience_years, day_rate, is_available, is_verified, availability_status')
       .eq('id', profile.id)
       .single(),
 

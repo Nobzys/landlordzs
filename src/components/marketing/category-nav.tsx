@@ -20,7 +20,8 @@ type DropdownPos = { id: string; top: number; left: number }
 // - /rentals DOES consume ?type=equipment and ?type=vehicle (confirmed).
 // - /services, /materials, /jobs, /tenders are confirmed existing public routes.
 // - Community has no dedicated page; /register is the nearest existing destination.
-// - Agents sub-items all map to /jobs (/professionals does not exist yet).
+// - Agents sub-items map to /jobs (no individual professional listing pages yet).
+// - Property Lawyers → /professionals/lawyers (dedicated directory page).
 const NAV_ENTRIES: NavEntry[] = [
   {
     id: 'buy', label: 'Buy Property', href: '/properties',
@@ -82,7 +83,7 @@ const NAV_ENTRIES: NavEntry[] = [
     ],
   },
   {
-    id: 'lawyers', label: 'Property Lawyers', href: '/jobs',
+    id: 'lawyers', label: 'Property Lawyers', href: '/professionals/lawyers',
     // Standalone top-level item — no sub-dropdown.
   },
   {

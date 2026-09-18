@@ -13,7 +13,7 @@ import { CAMEROON_CITIES } from '@/lib/utils/constants'
 //   properties    → /properties
 //   services      → /services
 //   materials     → /materials
-//   professionals → /jobs  (/professionals has no page yet)
+//   professionals → /professionals/lawyers
 //   rentals       → /rentals
 //
 // Property Type and Budget fields are conditionally shown only when the
@@ -30,7 +30,7 @@ const CATEGORY_OPTIONS = [
   { value: 'properties',    label: '🏠 All Properties',  route: '/properties' },
   { value: 'services',      label: '🔧 Services',         route: '/services'   },
   { value: 'materials',     label: '🧱 Materials',        route: '/materials'  },
-  { value: 'professionals', label: '💼 Professionals',    route: '/jobs'       },
+  { value: 'professionals', label: '💼 Professionals',    route: '/professionals/lawyers' },
   { value: 'rentals',       label: '🚗 Rentals',          route: '/rentals'    },
 ]
 

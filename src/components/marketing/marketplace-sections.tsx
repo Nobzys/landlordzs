@@ -3,8 +3,8 @@ import JobsTendersPreview from './jobs-tenders-preview'
 
 // Phase 16.4 — Marketplace vertical sections.
 // 5 promotional sections surface the platform's non-property verticals.
-// NOTE: /professionals has no page yet; "Hire Professionals" links to /jobs
-// (nearest existing route) pending a dedicated professionals listing page.
+// NOTE: Individual professional sub-cards have their own hrefs. Property Lawyers
+// links to /professionals/lawyers; all other professionals link to /jobs.
 // All subcategory cards link to the parent vertical route since sub-pages
 // do not exist independently in the current build.
 
@@ -25,12 +25,12 @@ const MATERIALS = [
 // ─── Hire Professionals ──────────────────────────────────────────────────────
 
 const PROFESSIONALS = [
-  { emoji: '🏛️', label: 'Architects',        sub: 'Design & planning'       },
-  { emoji: '🔨', label: 'Contractors',        sub: 'Construction & builds'   },
-  { emoji: '⚙️', label: 'Engineers',          sub: 'Structural & civil'      },
-  { emoji: '⚡', label: 'Electricians',       sub: 'Wiring & installations'  },
-  { emoji: '🔧', label: 'Plumbers',           sub: 'Pipes & sanitation'      },
-  { emoji: '⚖️', label: 'Property Lawyers',  sub: 'Legal & conveyancing'    },
+  { emoji: '🏛️', label: 'Architects',        sub: 'Design & planning',       href: '/jobs'                    },
+  { emoji: '🔨', label: 'Contractors',        sub: 'Construction & builds',   href: '/jobs'                    },
+  { emoji: '⚙️', label: 'Engineers',          sub: 'Structural & civil',      href: '/jobs'                    },
+  { emoji: '⚡', label: 'Electricians',       sub: 'Wiring & installations',  href: '/jobs'                    },
+  { emoji: '🔧', label: 'Plumbers',           sub: 'Pipes & sanitation',      href: '/jobs'                    },
+  { emoji: '⚖️', label: 'Property Lawyers',  sub: 'Legal & conveyancing',    href: '/professionals/lawyers'   },
 ]
 
 // ─── Home Services ───────────────────────────────────────────────────────────
@@ -197,7 +197,7 @@ export default function MarketplaceSections() {
           />
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {PROFESSIONALS.map(p => (
-              <SubCard key={p.label} href="/jobs" emoji={p.emoji} label={p.label} sub={p.sub} />
+              <SubCard key={p.label} href={p.href} emoji={p.emoji} label={p.label} sub={p.sub} />
             ))}
           </div>
         </div>

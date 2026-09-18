@@ -2,14 +2,14 @@ import Link from 'next/link'
 import {
   Briefcase, Wrench, Ruler, Scale, CheckCircle2,
   XCircle, Calendar, DollarSign, Star, Wallet,
-  ShieldCheck,
+  ShieldCheck, Clock,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatXAF } from '@/lib/utils/format'
-import { toggleProfessionalAvailability } from '@/lib/actions/profile'
 import { VerificationBanner, type KycRecord } from '@/components/dashboard/VerificationBanner'
+import { AvailabilityControl } from '@/components/dashboard/AvailabilityControl'
 import type { Profile } from '@/types/auth'
 
 export type { KycRecord } from '@/components/dashboard/VerificationBanner'
@@ -17,13 +17,14 @@ export type { KycRecord } from '@/components/dashboard/VerificationBanner'
 type ProfRole = 'contractor' | 'engineer' | 'architect' | 'lawyer'
 
 interface ProfessionalProfile {
-  profession_type: string
-  company_name:    string | null
-  specializations: string[]
-  experience_years: number
-  day_rate:        number | null
-  is_available:    boolean
-  is_verified:     boolean
+  profession_type:     string
+  company_name:        string | null
+  specializations:     string[]
+  experience_years:    number
+  day_rate:            number | null
+  is_available:        boolean
+  is_verified:         boolean
+  availability_status: string | null
 }
 
 interface WalletData {
@@ -72,16 +73,17 @@ export function ProfessionalDashboard({ profile, prof, wallet, kyc }: Props) {
             <p className="text-sm text-muted-foreground capitalize">{role} Dashboard</p>
           </div>
         </div>
-        {accountStatus === 'active' && (
-          <form action={toggleProfessionalAvailability}>
-            <Button type="submit" variant="outline" size="sm" className="gap-2">
-              {prof?.is_available ? (
-                <><CheckCircle2 className="h-4 w-4 text-green-500" />Available</>
-              ) : (
-                <><XCircle className="h-4 w-4 text-muted-foreground" />Unavailable</>
-              )}
-            </Button>
-          </form>
+        {accountStatus === 'active' && prof && (
+          <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-full border ${
+            prof.is_available
+              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+              : 'bg-gray-100 text-gray-500 border-gray-200'
+          }`}>
+            {prof.is_available
+              ? <><CheckCircle2 className="h-3.5 w-3.5" />Available</>
+              : <><XCircle className="h-3.5 w-3.5" />Unavailable</>
+            }
+          </div>
         )}
       </div>
 
@@ -183,6 +185,31 @@ export function ProfessionalDashboard({ profile, prof, wallet, kyc }: Props) {
           </CardContent>
         </Card>
       ) : (
+        /* profile-incomplete card rendered further below */
+        null
+      )}
+
+      {/* Availability control — shown whenever the professional profile exists */}
+      {prof && accountStatus === 'active' && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Clock className="h-4 w-4 text-[#B71C1C]" />
+              Your Availability
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Let clients know when you&apos;re available. This controls which
+              availability filters show your profile in the public directory.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <AvailabilityControl currentStatus={prof.availability_status} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Profile-incomplete card (only when prof is null) */}
+      {!prof && (
         <Card>
           <CardContent className="py-8 text-center">
             <Icon className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />

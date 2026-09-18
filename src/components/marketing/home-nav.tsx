@@ -69,14 +69,14 @@ const SHOP_ACCOUNT = [
 // ─── All Categories mega-menu ─────────────────────────────────────────────────
 // "Community" omitted — no route exists.
 // "Real Estate Agents" → /properties (no agent-directory route yet).
-// "Property Lawyers", "Contractors", "Engineers & Architects" → /jobs
-//   (/professionals page does not exist; /jobs is the nearest existing route).
+// "Property Lawyers" → /professionals/lawyers (dedicated directory page).
+// "Contractors", "Engineers & Architects" → /jobs (no individual listing pages yet).
 const CATEGORIES = [
   { icon: '🏠', name: 'Properties for Sale',   sub: 'Buy your dream home',     href: '/properties'             },
   { icon: '🔑', name: 'Properties for Rent',    sub: 'Find rental homes',       href: '/properties'             },
   { icon: '🌍', name: 'Land & Plots',           sub: 'Invest in land',          href: '/properties'             },
   { icon: '🏢', name: 'Commercial Property',    sub: 'Offices, shops & more',   href: '/properties'             },
-  { icon: '⚖️', name: 'Property Lawyers',       sub: 'Legal professionals',     href: '/jobs'                   },
+  { icon: '⚖️', name: 'Property Lawyers',       sub: 'Legal professionals',     href: '/professionals/lawyers'  },
   { icon: '🧱', name: 'Building Materials',     sub: 'Cement, tiles & more',    href: '/materials'              },
   { icon: '🔨', name: 'Contractors',            sub: 'Hire skilled builders',   href: '/jobs'                   },
   { icon: '📐', name: 'Engineers & Architects', sub: 'Design professionals',    href: '/jobs'                   },

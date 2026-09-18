@@ -3,8 +3,8 @@ import Link from 'next/link'
 // Category cards per Phase 16 worksheet section 11.
 // Cards use Deep Red accent (#fce4e4 bg / #B71C1C border-hover) matching the
 // .prop-type-card / .prop-type-icon pattern in the index.html design reference.
-// NOTE: /professionals does not yet have a page; linked to /jobs (nearest
-// existing route) pending Phase 16.x professionals listing page.
+// NOTE: "Professional Services" card links to /professionals/lawyers as the primary
+// professionals entry point; a broader directory page can be added later.
 
 const CATEGORIES = [
   {
@@ -41,7 +41,7 @@ const CATEGORIES = [
     emoji: '👷',
     label: 'Professional Services',
     sub:   'Contractors, engineers & more',
-    href:  '/jobs',
+    href:  '/professionals/lawyers',
   },
 ] as const
 

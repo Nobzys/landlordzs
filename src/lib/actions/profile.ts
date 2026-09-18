@@ -231,13 +231,45 @@ export async function toggleProfessionalAvailability(): Promise<void> {
 
   if (!current) return
 
+  const nextAvailable = !current.is_available
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase as any)
     .from('professional_profiles')
-    .update({ is_available: !current.is_available })
+    .update({
+      is_available:        nextAvailable,
+      availability_status: nextAvailable ? 'now' : 'unavailable',
+    })
     .eq('id', user.id)
 
   revalidatePath('/', 'layout')
+}
+
+const VALID_STATUSES = ['now', 'week', 'month', 'unavailable'] as const
+type AvailabilityStatus = typeof VALID_STATUSES[number]
+
+export async function setAvailabilityStatus(
+  status: string,
+): Promise<ActionResult> {
+  if (!(VALID_STATUSES as readonly string[]).includes(status)) {
+    return { error: 'Invalid availability status' }
+  }
+
+  const { supabase, user, error: authError } = await getProfessionalUser()
+  if (authError || !user) return { error: authError ?? 'Unauthorized' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from('professional_profiles')
+    .update({
+      availability_status: status as AvailabilityStatus,
+      is_available:        status !== 'unavailable',
+    })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/', 'layout')
+  return { success: true }
 }
 
 export async function updateProfileAvatar(avatarUrl: string): Promise<void> {
