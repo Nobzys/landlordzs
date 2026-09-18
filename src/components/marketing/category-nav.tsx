@@ -78,9 +78,12 @@ const NAV_ENTRIES: NavEntry[] = [
       { icon: '🏷️', label: 'Real Estate Agents',     href: '/jobs' },
       { icon: '🔨', label: 'Contractors',            href: '/jobs' },
       { icon: '📐', label: 'Engineers & Architects', href: '/jobs' },
-      { icon: '⚖️', label: 'Property Lawyers',       href: '/jobs' },
       { icon: '',   label: 'View All →',              href: '/jobs' },
     ],
+  },
+  {
+    id: 'lawyers', label: 'Property Lawyers', href: '/jobs',
+    // Standalone top-level item — no sub-dropdown.
   },
   {
     id: 'community', label: 'Community', href: '/register',
