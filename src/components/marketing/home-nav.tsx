@@ -58,7 +58,7 @@ const SHOP_CATEGORIES = [
   { icon: '🚜', label: 'Equipment Rentals',  href: '/rentals?type=equipment' },
   { icon: '🚗', label: 'Vehicle Rentals',    href: '/rentals?type=vehicle'   },
   { icon: '🔧', label: 'Home Services',      href: '/services'               },
-  { icon: '💼', label: 'Jobs & Tenders',     href: '/tenders'                },
+  { icon: '💼', label: 'Jobs & Tenders',     href: '/jobs'                   },
 ]
 const SHOP_ACCOUNT = [
   { label: 'Shopping Cart',   href: '/buyer/cart'   },
@@ -72,22 +72,22 @@ const SHOP_ACCOUNT = [
 // "Property Lawyers" → /professionals/lawyers (dedicated directory page).
 // "Contractors", "Engineers & Architects" → /jobs (no individual listing pages yet).
 const CATEGORIES = [
-  { icon: '🏠', name: 'Properties for Sale',   sub: 'Buy your dream home',     href: '/properties'             },
-  { icon: '🔑', name: 'Properties for Rent',    sub: 'Find rental homes',       href: '/properties'             },
-  { icon: '🌍', name: 'Land & Plots',           sub: 'Invest in land',          href: '/properties'             },
-  { icon: '🏢', name: 'Commercial Property',    sub: 'Offices, shops & more',   href: '/properties'             },
-  { icon: '⚖️', name: 'Property Lawyers',       sub: 'Legal professionals',     href: '/professionals/lawyers'  },
-  { icon: '🧱', name: 'Building Materials',     sub: 'Cement, tiles & more',    href: '/materials'              },
-  { icon: '🔨', name: 'Contractors',            sub: 'Hire skilled builders',   href: '/jobs'                   },
-  { icon: '📐', name: 'Engineers & Architects', sub: 'Design professionals',    href: '/jobs'                   },
-  { icon: '🏷️', name: 'Real Estate Agents',    sub: 'Trusted local agents',    href: '/properties'             },
-  { icon: '🧹', name: 'Cleaning Services',      sub: 'Home & office cleaning',  href: '/services'               },
-  { icon: '🗑️', name: 'Waste Collection',       sub: 'Disposal & recycling',   href: '/services'               },
-  { icon: '🔒', name: 'Security Services',      sub: 'Guards & surveillance',   href: '/services'               },
-  { icon: '🚜', name: 'Equipment Rentals',      sub: 'Heavy machinery hire',    href: '/rentals?type=equipment' },
-  { icon: '🚗', name: 'Vehicle Rentals',        sub: 'Cars, SUVs & trucks',     href: '/rentals?type=vehicle'   },
-  { icon: '🔧', name: 'Home Maintenance',       sub: 'Repairs & installations', href: '/services'               },
-  { icon: '💼', name: 'Jobs & Tenders',         sub: 'Construction & property', href: '/tenders'                },
+  { icon: '🏠', name: 'Properties for Sale',   sub: 'Buy your dream home',     href: '/properties?listing_type=sale'             },
+  { icon: '🔑', name: 'Properties for Rent',    sub: 'Find rental homes',       href: '/properties?listing_type=rent'             },
+  { icon: '🌍', name: 'Land & Plots',           sub: 'Invest in land',          href: '/properties?property_type=land'            },
+  { icon: '🏢', name: 'Commercial Property',    sub: 'Offices, shops & more',   href: '/properties?property_type=commercial_space' },
+  { icon: '⚖️', name: 'Property Lawyers',       sub: 'Legal professionals',     href: '/professionals/lawyers'                    },
+  { icon: '🧱', name: 'Building Materials',     sub: 'Cement, tiles & more',    href: '/materials'                                },
+  { icon: '🔨', name: 'Contractors',            sub: 'Hire skilled builders',   href: '/jobs'                                     },
+  { icon: '📐', name: 'Engineers & Architects', sub: 'Design professionals',    href: '/jobs'                                     },
+  { icon: '🏷️', name: 'Real Estate Agents',    sub: 'Trusted local agents',    href: '/properties'                               },
+  { icon: '🧹', name: 'Cleaning Services',      sub: 'Home & office cleaning',  href: '/services?category=cleaning'               },
+  { icon: '🗑️', name: 'Waste Collection',       sub: 'Disposal & recycling',   href: '/services'                                 },
+  { icon: '🔒', name: 'Security Services',      sub: 'Guards & surveillance',   href: '/services?category=security'               },
+  { icon: '🚜', name: 'Equipment Rentals',      sub: 'Heavy machinery hire',    href: '/rentals?type=equipment'                   },
+  { icon: '🚗', name: 'Vehicle Rentals',        sub: 'Cars, SUVs & trucks',     href: '/rentals?type=vehicle'                     },
+  { icon: '🔧', name: 'Home Maintenance',       sub: 'Repairs & installations', href: '/services'                                 },
+  { icon: '💼', name: 'Jobs & Tenders',         sub: 'Construction & property', href: '/jobs'                                     },
 ]
 
 type MenuKey = 'buyers' | 'sellers' | 'shop' | 'help'
@@ -671,7 +671,7 @@ export default function HomeNav() {
 
               {/* Jobs & Tenders — simple link */}
               <Link
-                href="/tenders"
+                href="/jobs"
                 onClick={() => setMobileOpen(false)}
                 className="block py-2.5 text-[14px] text-gray-700 border-b border-gray-100 hover:text-[#B71C1C] transition-colors"
               >
