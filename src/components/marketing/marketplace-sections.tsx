@@ -11,14 +11,15 @@ import JobsTendersPreview from './jobs-tenders-preview'
 // ─── Building Materials ──────────────────────────────────────────────────────
 
 const MATERIALS = [
-  { emoji: '🏗️', label: 'Cement',            sub: '420+ products'  },
-  { emoji: '🏠', label: 'Roofing',            sub: '280+ products'  },
-  { emoji: '⚡', label: 'Electrical',         sub: '960+ products'  },
-  { emoji: '🔧', label: 'Plumbing',           sub: '540+ products'  },
-  { emoji: '🎨', label: 'Paint & Finishes',   sub: '320+ products'  },
-  { emoji: '🟫', label: 'Tiles & Flooring',   sub: '1,200+ products'},
-  { emoji: '🚪', label: 'Doors & Windows',    sub: '780+ products'  },
-  { emoji: '☀️', label: 'Solar Equipment',    sub: '190+ products'  },
+  { emoji: '🏗️', label: 'Cement',            sub: '420+ products',   slug: 'cement-concrete'     },
+  { emoji: '🏠', label: 'Roofing',            sub: '280+ products',   slug: 'roofing'             },
+  { emoji: '⚡', label: 'Electrical',         sub: '960+ products',   slug: 'electrical-supplies' },
+  { emoji: '🔧', label: 'Plumbing',           sub: '540+ products',   slug: 'plumbing-supplies'   },
+  { emoji: '🎨', label: 'Paint & Finishes',   sub: '320+ products',   slug: 'paint-coatings'      },
+  { emoji: '🟫', label: 'Tiles & Flooring',   sub: '1,200+ products', slug: 'tiles-flooring'      },
+  { emoji: '🚪', label: 'Doors & Windows',    sub: '780+ products',   slug: 'doors-windows'       },
+  { emoji: '☀️', label: 'Solar Equipment',    sub: '190+ products',   slug: 'solar-equipment'     },
+  { emoji: '🪨', label: 'Sand & Gravel',      sub: '150+ products',   slug: 'sand-gravel'         },
 ]
 
 // ─── Hire Professionals ──────────────────────────────────────────────────────
@@ -142,7 +143,7 @@ export default function MarketplaceSections() {
           />
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
             {MATERIALS.map(m => (
-              <SubCard key={m.label} href="/materials" emoji={m.emoji} label={m.label} sub={m.sub} />
+              <SubCard key={m.label} href={`/materials?category=${m.slug}`} emoji={m.emoji} label={m.label} sub={m.sub} />
             ))}
           </div>
 
