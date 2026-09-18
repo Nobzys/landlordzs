@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { CAMEROON_CITIES } from '@/lib/utils/constants'
 import { ListingPagination } from '@/components/ui/listing-pagination'
 import { ServicesFilterSidebar } from '@/components/services/ServicesFilterSidebar'
+import { LawyerRatingWidget } from '@/components/lawyers/LawyerRatingWidget'
 
 export const metadata: Metadata = {
   title: 'Property Lawyers — Landlordzs',
@@ -36,18 +37,19 @@ interface PageProps {
 }
 
 type LawyerRow = {
-  id:               string
-  specializations:  string[]
-  service_areas:    string[]
-  rating_avg:       number | null
-  rating_count:     number | null
-  is_available:     boolean
-  is_verified:      boolean
-  is_featured:      boolean
-  experience_years: number | null
-  bio:              string | null
-  hourly_rate:      number | null
-  day_rate:         number | null
+  id:                  string
+  specializations:     string[]
+  service_areas:       string[]
+  rating_avg:          number | null
+  rating_count:        number | null
+  is_available:        boolean
+  is_verified:         boolean
+  is_featured:         boolean
+  experience_years:    number | null
+  bio:                 string | null
+  hourly_rate:         number | null
+  day_rate:            number | null
+  availability_status: string | null
   profiles: {
     full_name:  string | null
     avatar_url: string | null
@@ -93,7 +95,7 @@ export default async function PropertyLawyersPage({ searchParams }: PageProps) {
     .select(
       `id, specializations, service_areas, rating_avg, rating_count,
        is_available, is_verified, is_featured, experience_years, bio, hourly_rate, day_rate,
-       profiles(full_name, avatar_url, city)`,
+       availability_status, profiles(full_name, avatar_url, city)`,
       { count: 'exact' },
     )
     .eq('profession_type', 'lawyer')
@@ -427,115 +429,159 @@ export default async function PropertyLawyersPage({ searchParams }: PageProps) {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {lawyers.map(lawyer => {
-                    const name             = lawyer.profiles?.full_name ?? 'Unnamed Lawyer'
-                    const cityVal          = lawyer.profiles?.city ?? null
-                    const cityLabel        = cityVal
+                    const name              = lawyer.profiles?.full_name ?? 'Unnamed Lawyer'
+                    const avatarUrl         = lawyer.profiles?.avatar_url ?? null
+                    const cityVal           = lawyer.profiles?.city ?? null
+                    const cityLabel         = cityVal
                       ? (CAMEROON_CITIES.find(c => c.value === cityVal)?.label ?? cityVal)
                       : null
-                    const lawyerRating     = lawyer.rating_avg    ?? 0
+                    const lawyerRating      = lawyer.rating_avg   ?? 0
                     const lawyerRatingCount = lawyer.rating_count  ?? 0
-                    const expYears         = lawyer.experience_years ?? 0
-                    const initial          = name.charAt(0).toUpperCase()
+                    const expYears          = lawyer.experience_years ?? 0
+                    const initial           = name.charAt(0).toUpperCase()
+
+                    // Availability badge config from availability_status (4-state)
+                    const availConfig = (() => {
+                      switch (lawyer.availability_status) {
+                        case 'now':         return { cls: 'bg-emerald-100 text-emerald-700', label: 'Available Now'   }
+                        case 'week':        return { cls: 'bg-blue-100   text-blue-700',     label: 'This Week'       }
+                        case 'month':       return { cls: 'bg-amber-100  text-amber-700',    label: 'This Month'      }
+                        case 'unavailable': return { cls: 'bg-gray-100   text-gray-400',     label: 'Not Available'   }
+                        default:            return { cls: 'bg-gray-100   text-gray-400',     label: 'Not Available'   }
+                      }
+                    })()
 
                     return (
                       <div
                         key={lawyer.id}
-                        className="rounded-xl border border-gray-200 bg-white p-5 flex flex-col gap-3 hover:shadow-sm transition-shadow"
+                        className={[
+                          'rounded-xl border bg-white flex flex-col overflow-hidden hover:shadow-md transition-shadow',
+                          lawyer.is_featured
+                            ? 'border-[#B71C1C]/30 ring-1 ring-[#B71C1C]/20'
+                            : 'border-gray-200',
+                        ].join(' ')}
                       >
-                        {/* Header row */}
-                        <div className="flex items-start gap-3">
-                          {/* Avatar initial */}
-                          <div className="shrink-0 w-11 h-11 rounded-full bg-[#fce4e4] flex items-center justify-center text-base font-bold text-[#B71C1C]">
-                            {initial}
+                        {/* Featured label */}
+                        {lawyer.is_featured && (
+                          <div className="px-5 pt-3">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#B71C1C] bg-[#B71C1C]/10 px-2 py-0.5 rounded-full">
+                              Featured
+                            </span>
                           </div>
+                        )}
 
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <h2 className="font-semibold text-[14px] text-gray-900 leading-tight">
-                                {name}
-                              </h2>
-                              {lawyer.is_verified && (
-                                <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-[#B71C1C] bg-[#fce4e4] px-1.5 py-0.5 rounded-full shrink-0">
-                                  <ShieldCheck className="h-3 w-3" />
-                                  Verified
-                                </span>
+                        {/* Card body */}
+                        <div className="p-5 flex flex-col gap-3 flex-1">
+
+                          {/* Header: avatar + name/info + availability badge */}
+                          <div className="flex items-start gap-3">
+                            {/* Avatar — real photo or initial fallback */}
+                            <div className="shrink-0 w-12 h-12 rounded-full overflow-hidden bg-[#fce4e4] flex items-center justify-center text-base font-bold text-[#B71C1C]">
+                              {avatarUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+                              ) : (
+                                initial
                               )}
                             </div>
 
-                            <p className="text-[12px] text-gray-400 mt-0.5">Property Lawyer</p>
+                            <div className="min-w-0 flex-1">
+                              {/* Name + Verified badge */}
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <h2 className="font-semibold text-[14px] text-gray-900 leading-tight">
+                                  {name}
+                                </h2>
+                                {lawyer.is_verified && (
+                                  <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-[#B71C1C] bg-[#fce4e4] px-1.5 py-0.5 rounded-full shrink-0">
+                                    <ShieldCheck className="h-3 w-3" />
+                                    Verified
+                                  </span>
+                                )}
+                              </div>
 
-                            <div className="flex items-center gap-3 text-[11px] text-gray-500 mt-1 flex-wrap">
-                              {cityLabel && (
-                                <span className="flex items-center gap-0.5">
-                                  <MapPin className="h-3 w-3 shrink-0" />
-                                  {cityLabel}
-                                </span>
-                              )}
-                              {expYears > 0 && (
-                                <span className="flex items-center gap-0.5">
-                                  <Briefcase className="h-3 w-3 shrink-0" />
-                                  {expYears} yr{expYears !== 1 ? 's' : ''} exp.
+                              <p className="text-[12px] text-gray-400 mt-0.5">Property Lawyer</p>
+
+                              {/* Location + Experience */}
+                              <div className="flex items-center gap-3 text-[11px] text-gray-500 mt-1 flex-wrap">
+                                {cityLabel && (
+                                  <span className="flex items-center gap-0.5">
+                                    <MapPin className="h-3 w-3 shrink-0" />{cityLabel}
+                                  </span>
+                                )}
+                                {expYears > 0 && (
+                                  <span className="flex items-center gap-0.5">
+                                    <Briefcase className="h-3 w-3 shrink-0" />{expYears} yr{expYears !== 1 ? 's' : ''} exp
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Availability badge — top-right corner */}
+                            <span className={`shrink-0 rounded-full text-[10px] font-semibold px-2.5 py-0.5 whitespace-nowrap ${availConfig.cls}`}>
+                              {availConfig.label}
+                            </span>
+                          </div>
+
+                          {/* Star rating — interactive widget (display + rate form) */}
+                          <LawyerRatingWidget
+                            lawyerId={lawyer.id}
+                            lawyerName={name}
+                            ratingAvg={lawyerRating}
+                            ratingCount={lawyerRatingCount}
+                          />
+
+                          {/* Bio */}
+                          {lawyer.bio && (
+                            <p className="text-[12px] text-gray-500 leading-relaxed line-clamp-2">
+                              {lawyer.bio}
+                            </p>
+                          )}
+
+                          {/* Specialization pills */}
+                          {lawyer.specializations.length > 0 ? (
+                            <div className="flex flex-wrap gap-1.5">
+                              {lawyer.specializations.slice(0, 4).map(spec => {
+                                const specLabel = SPECIALIZATIONS.find(s => s.value === spec)?.label ?? spec
+                                return (
+                                  <span
+                                    key={spec}
+                                    className="rounded-full bg-[#fce4e4]/70 text-[#B71C1C] text-[11px] px-2.5 py-0.5 font-medium"
+                                  >
+                                    {specLabel}
+                                  </span>
+                                )
+                              })}
+                              {lawyer.specializations.length > 4 && (
+                                <span className="rounded-full bg-gray-100 text-gray-400 text-[11px] px-2.5 py-0.5">
+                                  +{lawyer.specializations.length - 4}
                                 </span>
                               )}
                             </div>
-                          </div>
-
-                          {/* Availability badge */}
-                          <span className={[
-                            'shrink-0 rounded-full text-[10px] font-semibold px-2 py-0.5',
-                            lawyer.is_available
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : 'bg-gray-100 text-gray-400',
-                          ].join(' ')}>
-                            {lawyer.is_available ? 'Available' : 'Busy'}
-                          </span>
+                          ) : (
+                            <p className="text-[11px] text-gray-400 italic">Specialization not listed</p>
+                          )}
                         </div>
 
-                        {/* Bio */}
-                        {lawyer.bio && (
-                          <p className="text-[12px] text-gray-500 leading-relaxed line-clamp-2">
-                            {lawyer.bio}
-                          </p>
-                        )}
-
-                        {/* Specialization pills */}
-                        {lawyer.specializations.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5">
-                            {lawyer.specializations.slice(0, 3).map(spec => {
-                              const specLabel = SPECIALIZATIONS.find(s => s.value === spec)?.label ?? spec
-                              return (
-                                <span
-                                  key={spec}
-                                  className="rounded-full bg-gray-100 text-gray-500 text-[11px] px-2.5 py-0.5 font-medium"
-                                >
-                                  {specLabel}
+                        {/* Card footer: rate + Contact */}
+                        <div className="px-5 py-3.5 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between gap-3">
+                          <div className="text-[12px]">
+                            {(lawyer.day_rate ?? 0) > 0 ? (
+                              <span>
+                                <span className="font-semibold text-gray-800">
+                                  {(lawyer.day_rate! / 1000).toFixed(0)}K XAF
                                 </span>
-                              )
-                            })}
-                            {lawyer.specializations.length > 3 && (
-                              <span className="rounded-full bg-gray-100 text-gray-400 text-[11px] px-2.5 py-0.5">
-                                +{lawyer.specializations.length - 3}
+                                <span className="text-gray-400">/day</span>
                               </span>
+                            ) : (
+                              <span className="text-gray-400">Rate on request</span>
                             )}
                           </div>
-                        )}
-
-                        {/* Footer: rating + rate */}
-                        <div className="flex items-center justify-between gap-3 border-t border-gray-100 pt-3 mt-auto">
-                          <div className="flex items-center gap-1 text-[12px] text-gray-500">
-                            <Star className={`h-3.5 w-3.5 shrink-0 ${lawyerRating > 0 ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`} />
-                            <span className="font-medium text-gray-700">
-                              {lawyerRating > 0 ? lawyerRating.toFixed(1) : '—'}
-                            </span>
-                            {lawyerRatingCount > 0 && (
-                              <span className="text-gray-400">({lawyerRatingCount} review{lawyerRatingCount !== 1 ? 's' : ''})</span>
-                            )}
-                          </div>
-                          {(lawyer.day_rate ?? 0) > 0 && (
-                            <span className="text-[12px] text-gray-400 font-medium">
-                              {(lawyer.day_rate! / 1000).toFixed(0)}K XAF/day
-                            </span>
-                          )}
+                          <Link
+                            href="/login"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-[#B71C1C] hover:bg-[#9b1515] active:bg-[#7f1111] text-white px-4 py-2 text-[12px] font-semibold transition-colors whitespace-nowrap"
+                          >
+                            Contact
+                          </Link>
                         </div>
                       </div>
                     )

@@ -76,3 +76,54 @@ export async function createReview(input: CreateReviewInput): Promise<ActionResu
   revalidatePath('/account/reviews')
   return { success: true, data: { id: row.id } }
 }
+
+// ─── rateLawyer ─────────────────────────────────────────────────────────────
+// Direct directory rating — no service_request_id required.
+// RLS `review_insert` (reviewer_id = auth.uid()) is satisfied by the insert.
+// The existing refresh_rating() trigger auto-updates professional_profiles.
+export async function rateLawyer(
+  lawyerId: string,
+  rating: number,
+  body?: string,
+): Promise<ActionResult<{ id: string }>> {
+  if (!lawyerId) return { error: 'Invalid lawyer.' }
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return { error: 'Rating must be between 1 and 5.' }
+  }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any
+
+  const { data: prof } = await sb
+    .from('professional_profiles')
+    .select('id')
+    .eq('id', lawyerId)
+    .eq('profession_type', 'lawyer')
+    .maybeSingle()
+
+  if (!prof) return { error: 'Lawyer not found.' }
+
+  const { data: row, error } = await sb
+    .from('reviews')
+    .insert({
+      reviewer_id: user.id,
+      target_type: 'lawyer',
+      target_id:   lawyerId,
+      rating,
+      body: body?.trim() || null,
+    })
+    .select('id')
+    .single()
+
+  if (error) {
+    if (error.code === '23505') return { error: 'You have already rated this lawyer.' }
+    return { error: error.message }
+  }
+
+  revalidatePath('/professionals/lawyers', 'page')
+  return { success: true, data: { id: row.id } }
+}
