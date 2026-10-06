@@ -1,77 +1,83 @@
-import { createClient } from '@/lib/supabase/server'
+// Platform trust & features strip — Phase 16.2
+// Replaces the live-stat chips with 5 evergreen trust signals.
+// Desktop: single row. Mobile/tablet: wraps without horizontal overflow.
 
-// Phase 16.2 — Platform trust stats strip.
-// Roadmap requirement: show at least 2 real Supabase-sourced stats.
-// Zero values are omitted (avoids "0+ properties" on a fresh environment).
-// "Free to Join" is always shown as a factual trust signal.
+const FEATURES = [
+  {
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+        aria-hidden="true" className="w-5 h-5">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <polyline points="9 12 11 14 15 10" />
+      </svg>
+    ),
+    label: 'Verified Listings',
+  },
+  {
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+        aria-hidden="true" className="w-5 h-5">
+        <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+        <line x1="1" y1="10" x2="23" y2="10" />
+      </svg>
+    ),
+    label: 'Secure Escrow Payments',
+  },
+  {
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+        aria-hidden="true" className="w-5 h-5">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+    label: 'Trusted Professionals',
+  },
+  {
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+        aria-hidden="true" className="w-5 h-5">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </svg>
+    ),
+    label: '24/7 Support',
+  },
+  {
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+        aria-hidden="true" className="w-5 h-5">
+        <polygon points="12 2 2 7 12 12 22 7 12 2" />
+        <polyline points="2 17 12 22 22 17" />
+        <polyline points="2 12 12 17 22 12" />
+      </svg>
+    ),
+    label: 'AI Property Match',
+  },
+]
 
-function formatStat(n: number): string {
-  if (n >= 10_000) return `${Math.floor(n / 1000)}K+`
-  if (n >= 1_000)  return `${parseFloat((n / 1000).toFixed(1))}K+`
-  if (n > 0)       return `${n}+`
-  return ''
-}
-
-async function getTrustStats() {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const supabase = await createClient() as any
-
-    const [propRes, cityRes, agentRes] = await Promise.all([
-      supabase
-        .from('properties')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'active'),
-      supabase
-        .from('properties')
-        .select('city')
-        .eq('status', 'active'),
-      supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'agent')
-        .eq('account_status', 'active'),
-    ])
-
-    const properties = (propRes.count as number | null) ?? 0
-    const cities     = cityRes.data
-      ? new Set((cityRes.data as { city: string | null }[])
-          .map(r => r.city)
-          .filter(Boolean)
-        ).size
-      : 0
-    const agents = (agentRes.count as number | null) ?? 0
-
-    return { properties, cities, agents }
-  } catch {
-    return { properties: 0, cities: 0, agents: 0 }
-  }
-}
-
-export default async function TrustBar() {
-  const { properties, cities, agents } = await getTrustStats()
-
-  const stats = [
-    properties > 0 && { value: formatStat(properties), label: 'Properties Listed' },
-    cities     > 0 && { value: formatStat(cities),     label: 'Cities Covered'    },
-    agents     > 0 && { value: formatStat(agents),     label: 'Verified Agents'   },
-                      { value: 'Free',                  label: 'To Join'           },
-  ].filter(Boolean) as { value: string; label: string }[]
-
+export default function TrustBar() {
   return (
     <div className="bg-white border-b border-gray-200 py-5">
       <div className="max-w-[1280px] mx-auto px-5">
-        <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 md:gap-x-16">
-          {stats.map((s, i) => (
-            <div key={i} className="flex flex-col items-center text-center">
+        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 md:gap-x-12 lg:gap-x-16">
+          {FEATURES.map((f) => (
+            <div key={f.label} className="flex items-center gap-2.5">
               <span
-                className="font-extrabold leading-tight"
-                style={{ fontSize: 'clamp(20px, 2.5vw, 28px)', color: '#B71C1C' }}
+                className="flex items-center justify-center w-9 h-9 rounded-full flex-shrink-0"
+                style={{ background: '#fce4e4', color: '#B71C1C' }}
               >
-                {s.value}
+                {f.icon}
               </span>
-              <span className="text-[11px] text-gray-500 font-semibold tracking-widest uppercase mt-0.5">
-                {s.label}
+              <span className="text-[13px] font-semibold text-gray-700 whitespace-nowrap">
+                {f.label}
               </span>
             </div>
           ))}
