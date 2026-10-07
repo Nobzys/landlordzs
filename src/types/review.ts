@@ -32,6 +32,15 @@ export interface ReviewablePerson {
   role: string | null
 }
 
+export interface ReviewResponse {
+  id: string
+  review_id: string
+  responder_id: string
+  body: string
+  created_at: string
+  updated_at: string
+}
+
 // A completed service request the current user can leave a review for,
 // paired with the professional who was awarded the accepted quotation.
 export interface ReviewableRequest {

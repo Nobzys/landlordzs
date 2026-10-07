@@ -6,6 +6,50 @@ import { createReviewSchema, type CreateReviewInput } from '@/lib/validations/re
 import { REVIEWABLE_ROLES } from '@/types/review'
 import type { ActionResult } from '@/types/auth'
 
+export async function createReviewResponse(
+  reviewId: string,
+  body: string,
+): Promise<ActionResult<{ id: string }>> {
+  const trimmed = body.trim()
+  if (!trimmed) return { error: 'Response cannot be empty.' }
+  if (trimmed.length > 2000) return { error: 'Response must be under 2000 characters.' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any
+
+  const { data: review } = await sb
+    .from('reviews')
+    .select('id, target_id, target_type')
+    .eq('id', reviewId)
+    .maybeSingle()
+
+  if (!review) return { error: 'Review not found.' }
+  if (review.target_id !== user.id) {
+    return { error: 'You can only respond to reviews about yourself.' }
+  }
+  if (!(REVIEWABLE_ROLES as readonly string[]).includes(review.target_type)) {
+    return { error: 'This review cannot be responded to.' }
+  }
+
+  const { data: row, error } = await sb
+    .from('review_responses')
+    .insert({ review_id: reviewId, responder_id: user.id, body: trimmed })
+    .select('id')
+    .single()
+
+  if (error) {
+    if (error.code === '23505') return { error: 'You have already responded to this review.' }
+    return { error: error.message }
+  }
+
+  revalidatePath('/account/reviews')
+  return { success: true, data: { id: row.id } }
+}
+
 export async function createReview(input: CreateReviewInput): Promise<ActionResult<{ id: string }>> {
   const parsed = createReviewSchema.safeParse(input)
   if (!parsed.success) {

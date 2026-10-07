@@ -1,13 +1,16 @@
 import { UserCircle } from 'lucide-react'
 import { StarRating } from './StarRating'
+import { ReviewResponseForm } from './ReviewResponseForm'
 import { formatDate } from '@/lib/utils/format'
-import type { Review } from '@/types/review'
+import type { Review, ReviewResponse } from '@/types/review'
 
 interface ReviewCardProps {
   review: Review
   personName: string
   personAvatarUrl?: string | null
   personRole?: string | null
+  response?: ReviewResponse | null
+  currentUserId?: string
 }
 
 const SUB_RATINGS: { key: keyof Review; label: string }[] = [
@@ -17,7 +20,7 @@ const SUB_RATINGS: { key: keyof Review; label: string }[] = [
   { key: 'cleanliness', label: 'Cleanliness' },
 ]
 
-export function ReviewCard({ review, personName, personAvatarUrl, personRole }: ReviewCardProps) {
+export function ReviewCard({ review, personName, personAvatarUrl, personRole, response, currentUserId }: ReviewCardProps) {
   const subRatings = SUB_RATINGS.filter(({ key }) => typeof review[key] === 'number')
 
   return (
@@ -50,6 +53,21 @@ export function ReviewCard({ review, personName, personAvatarUrl, personRole }: 
               {label}: {review[key] as number}/5
             </span>
           ))}
+        </div>
+      )}
+
+      {response && (
+        <div className="ml-6 pl-4 border-l-2 border-muted pt-2 space-y-1">
+          <p className="text-xs font-semibold text-muted-foreground">Professional response</p>
+          <p className="text-sm whitespace-pre-wrap">{response.body}</p>
+          <p className="text-xs text-muted-foreground">{formatDate(response.created_at)}</p>
+        </div>
+      )}
+
+      {!response && currentUserId === review.target_id && (
+        <div className="ml-6 pl-4 border-l-2 border-muted pt-2">
+          <p className="text-xs font-semibold text-muted-foreground mb-2">Reply as professional</p>
+          <ReviewResponseForm reviewId={review.id} />
         </div>
       )}
     </div>
