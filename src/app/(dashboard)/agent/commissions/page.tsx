@@ -4,6 +4,7 @@ import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { requireActiveProfile } from '@/lib/utils/account-status'
 import { CommissionSummary } from '@/components/payments/CommissionSummary'
 import { VerificationBanner, type KycRecord } from '@/components/dashboard/VerificationBanner'
+import { expireKycRecord } from '@/lib/actions/auth'
 
 export const metadata: Metadata = { title: 'My Commissions' }
 
@@ -15,13 +16,17 @@ export default async function CommissionsPage() {
   const supabase = await createClient()
   const { data: rawKyc } = await (supabase as any)
     .from('kyc_records')
-    .select('status, review_notes, national_id_front, national_id_back, business_reg, submitted_at')
+    .select('id, status, review_notes, national_id_front, national_id_back, business_reg, submitted_at, expires_at')
     .eq('user_id', profile.id)
     .order('submitted_at', { ascending: false })
     .limit(1)
     .maybeSingle()
 
-  const kyc = rawKyc as KycRecord | null
+  const kyc = rawKyc as (KycRecord & { id: string }) | null
+  if (kyc?.status === 'approved' && kyc.expires_at && new Date(kyc.expires_at) < new Date()) {
+    await expireKycRecord(kyc.id)
+    kyc.status = 'expired'
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">

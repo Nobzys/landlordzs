@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { requireActiveProfile } from '@/lib/utils/account-status'
 import { ProfessionalDashboard, type KycRecord } from '@/components/dashboard/ProfessionalDashboard'
+import { expireKycRecord } from '@/lib/actions/auth'
 
 export const metadata: Metadata = { title: 'Lawyer Dashboard' }
 
@@ -31,19 +32,25 @@ export default async function LawyerPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)
       .from('kyc_records')
-      .select('status, review_notes, national_id_front, national_id_back, business_reg, submitted_at')
+      .select('id, status, review_notes, national_id_front, national_id_back, business_reg, submitted_at, expires_at')
       .eq('user_id', profile.id)
       .order('created_at', { ascending: false })
       .limit(1)
-      .maybeSingle() as Promise<{ data: KycRecord | null }>,
+      .maybeSingle() as Promise<{ data: (KycRecord & { id: string }) | null }>,
   ])
+
+  const kycData = kycResult.data ?? null
+  if (kycData?.status === 'approved' && kycData.expires_at && new Date(kycData.expires_at) < new Date()) {
+    await expireKycRecord(kycData.id)
+    kycData.status = 'expired'
+  }
 
   return (
     <ProfessionalDashboard
       profile={profile}
       prof={profResult.data ?? null}
       wallet={walletResult.data ?? null}
-      kyc={kycResult.data ?? null}
+      kyc={kycData}
     />
   )
 }

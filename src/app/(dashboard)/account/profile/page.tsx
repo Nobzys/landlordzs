@@ -46,7 +46,7 @@ export default async function ProfilePage() {
     needsVerification
       ? (sb
           .from('kyc_records')
-          .select('status, review_notes, national_id_front, national_id_back, business_reg, submitted_at')
+          .select('status, review_notes, national_id_front, national_id_back, business_reg, submitted_at, expires_at')
           .eq('user_id', profile.id)
           .order('submitted_at', { ascending: false })
           .limit(1)

@@ -13,6 +13,7 @@ const KYC_STATUS_BADGE: Record<string, { label: string; className: string }> = {
   pending:  { label: 'Under Review', className: 'bg-blue-100 text-blue-700' },
   approved: { label: 'Approved',     className: 'bg-emerald-100 text-emerald-700' },
   rejected: { label: 'Rejected',     className: 'bg-red-100 text-red-700' },
+  expired:  { label: 'Expired',      className: 'bg-orange-100 text-orange-700' },
 }
 
 function DocRow({ label, uploaded }: { label: string; uploaded: boolean }) {
@@ -33,11 +34,15 @@ export function KycVerificationSection({ profile, kyc }: Props) {
   const accountStatus = profile.account_status
   const kycStatus     = kyc?.status ?? null
 
-  // Show the upload form only when the account still needs docs and the
-  // previous submission (if any) was rejected — not while pending review.
+  const isExpired =
+    kycStatus === 'expired' ||
+    (!!kyc?.expires_at && new Date(kyc.expires_at) < new Date())
+
+  // Show the upload form when the account needs docs (rejected/missing),
+  // or when existing approved documents have expired.
   const showUploadForm =
-    accountStatus === 'pending_verification' &&
-    (kyc === null || kycStatus === 'rejected')
+    (accountStatus === 'pending_verification' && (kyc === null || kycStatus === 'rejected'))
+    || isExpired
 
   const accountBadge =
     accountStatus === 'active'               ? { label: 'Verified',             className: 'bg-emerald-100 text-emerald-700' } :
@@ -105,10 +110,19 @@ export function KycVerificationSection({ profile, kyc }: Props) {
             </div>
           )}
 
-          {kycStatus === 'approved' && (
+          {kycStatus === 'approved' && !isExpired && (
             <div className="flex items-center gap-2 border-t pt-2">
               <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
               <p className="text-xs text-emerald-700 font-medium">Documents verified — your account is active.</p>
+            </div>
+          )}
+
+          {isExpired && (
+            <div className="flex items-center gap-2 border-t pt-2">
+              <Clock className="h-4 w-4 text-orange-500 shrink-0" />
+              <p className="text-xs text-orange-700 font-medium">
+                Your verification documents have expired. Please resubmit below.
+              </p>
             </div>
           )}
         </div>

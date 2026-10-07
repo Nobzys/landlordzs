@@ -18,20 +18,44 @@ export default async function VerificationPage() {
     redirect('/account/profile')
   }
 
-  if (profile.account_status === 'active') {
-    redirect('/account/profile')
-  }
-
   const supabase = await createClient()
   const { data: rawKyc } = await (supabase as any)
     .from('kyc_records')
-    .select('status, review_notes, national_id_front, national_id_back, business_reg, submitted_at')
+    .select('status, review_notes, national_id_front, national_id_back, business_reg, submitted_at, expires_at')
     .eq('user_id', profile.id)
     .order('submitted_at', { ascending: false })
     .limit(1)
     .maybeSingle()
 
   const kyc = rawKyc as KycRecord | null
+
+  const isExpired =
+    kyc?.status === 'expired' ||
+    (!!kyc?.expires_at && new Date(kyc.expires_at) < new Date())
+
+  // Active users with valid documents have nothing to do here
+  if (profile.account_status === 'active' && !isExpired) {
+    redirect('/account/profile')
+  }
+
+  if (isExpired) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-8 space-y-6">
+        <div className="flex items-center gap-3">
+          <Button asChild variant="ghost" size="icon" className="-ml-2">
+            <Link href="/account/profile"><ChevronLeft className="h-4 w-4" /></Link>
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Resubmit Expired Documents</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Your verification has expired. Please resubmit to remain active on the platform.
+            </p>
+          </div>
+        </div>
+        <KycResubmitForm profile={profile} />
+      </div>
+    )
+  }
 
   if (kyc?.status === 'pending') {
     return (

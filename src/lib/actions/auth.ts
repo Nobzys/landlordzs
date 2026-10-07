@@ -1426,3 +1426,16 @@ export async function joinAgency(slug: string): Promise<ActionResult> {
   revalidatePath('/agent/agency')
   return { success: true }
 }
+
+// ─── expireKycRecord ─────────────────────────────────────────────────────────
+// Lazy cron-like check called from professional dashboard pages on page load.
+// kyc_moderator_update RLS restricts status writes to moderators/admins, so
+// this must use createAdminClient() — the same pattern used throughout this file.
+export async function expireKycRecord(kycRecordId: string): Promise<void> {
+  const admin = createAdminClient() as any
+  await admin
+    .from('kyc_records')
+    .update({ status: 'expired' })
+    .eq('id', kycRecordId)
+    .eq('status', 'approved')
+}

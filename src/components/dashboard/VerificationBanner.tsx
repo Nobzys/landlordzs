@@ -3,12 +3,13 @@ import { AlertCircle, Clock, ShieldCheck, ShieldX, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export interface KycRecord {
-  status:            'pending' | 'approved' | 'rejected' | 'needs_more_info'
+  status:            'pending' | 'approved' | 'rejected' | 'needs_more_info' | 'expired'
   review_notes:      string | null
   national_id_front: string | null
   national_id_back:  string | null
   business_reg:      string | null
   submitted_at:      string | null
+  expires_at?:       string | null
 }
 
 export function VerificationBanner({
@@ -18,6 +19,29 @@ export function VerificationBanner({
   accountStatus: string
   kyc: KycRecord | null
 }) {
+  const isExpired =
+    kyc?.status === 'expired' ||
+    (!!kyc?.expires_at && new Date(kyc.expires_at) < new Date())
+
+  if (isExpired) {
+    return (
+      <div className="rounded-xl border border-orange-200 bg-orange-50 p-4 space-y-3">
+        <div className="flex items-start gap-2.5">
+          <Clock className="h-5 w-5 text-orange-600 shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-orange-800">Verification expired</p>
+            <p className="text-xs text-orange-700 mt-0.5">
+              Your verification documents have expired. Please resubmit to remain active on the platform.
+            </p>
+          </div>
+        </div>
+        <Button asChild size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+          <Link href="/account/verification">Resubmit Documents</Link>
+        </Button>
+      </div>
+    )
+  }
+
   if (accountStatus === 'active') {
     return (
       <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
