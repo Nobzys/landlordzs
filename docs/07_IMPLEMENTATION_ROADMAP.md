@@ -1765,9 +1765,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 **Dependencies:** Phase 1 (Tasks 1.1, 1.2, 1.3), Phase 3 (Task 3.2).
 
----
-
-### Task 20.1 — Document expiry tracking 🟡 MEDIUM | M
+### Task 20.1 — Document expiry tracking ✅ COMPLETED
 
 **Problem:** `kyc_records` has an `expires_at` column, but no logic checks if documents are expired. A professional could have approved documents that have since expired without any re-verification prompt.
 
@@ -1780,9 +1778,9 @@ Same pattern as Tasks 12.1 and 13.1.
 **UI changes:** VerificationBanner new state: "Your verification has expired. Please resubmit your documents." with CTA.
 
 **Test checklist:**
-- [ ] User with expired documents sees expiry banner
-- [ ] User can resubmit documents after expiry
-- [ ] Admin sees expired records in verification list
+- [x] User with expired documents sees expiry banner
+- [x] User can resubmit documents after expiry
+- [x] Admin sees expired records in verification list
 
 **Rollback:** Remove expiry check. Users with expired docs continue to appear verified (current behavior).
 
