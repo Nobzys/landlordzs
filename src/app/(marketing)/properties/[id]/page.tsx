@@ -1,13 +1,17 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { Star } from 'lucide-react'
 import { PropertyGallery } from '@/components/properties/PropertyGallery'
 import { PropertyDetails } from '@/components/properties/PropertyDetails'
 import { PropertyAmenities } from '@/components/properties/PropertyAmenities'
 import { PropertyInquiryForm } from '@/components/properties/PropertyInquiryForm'
 import { PropertyBookingForm } from '@/components/properties/PropertyBookingForm'
 import { ContactButton } from '@/components/messaging/ContactButton'
+import { ReviewCard } from '@/components/reviews/ReviewCard'
+import { PropertyReviewForm } from '@/components/reviews/PropertyReviewForm'
 import type { PropertyWithDetails } from '@/types/property'
+import type { Review } from '@/types/review'
 
 interface PropertyPageProps {
   params: Promise<{ id: string }>
@@ -71,6 +75,56 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
 
   if (!property) notFound()
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any
+
+  // Fetch reviews for this property
+  const { data: rawReviews } = await sb
+    .from('reviews')
+    .select('*')
+    .eq('target_type', 'property')
+    .eq('target_id', property.id)
+    .order('created_at', { ascending: false })
+
+  const propertyReviews: Review[] = rawReviews ?? []
+
+  // Batch-fetch reviewer profiles
+  const reviewerIds = [...new Set(propertyReviews.map((r: Review) => r.reviewer_id))]
+  const reviewerMap = new Map<string, { full_name: string | null; display_name: string | null; avatar_url: string | null }>()
+  if (reviewerIds.length > 0) {
+    const { data: reviewerProfiles } = await sb
+      .from('profiles')
+      .select('id, full_name, display_name, avatar_url')
+      .in('id', reviewerIds)
+    for (const p of (reviewerProfiles ?? [])) {
+      reviewerMap.set(p.id, p)
+    }
+  }
+
+  // Computed average (properties has no stored rating_avg column)
+  const avgRating = propertyReviews.length > 0
+    ? propertyReviews.reduce((s: number, r: Review) => s + r.rating, 0) / propertyReviews.length
+    : null
+
+  // Eligibility: user must have a funded escrow for this property
+  let isEligibleBuyer = false
+  let hasExistingReview = false
+  if (user) {
+    hasExistingReview = propertyReviews.some((r: Review) => r.reviewer_id === user.id)
+    if (!hasExistingReview) {
+      const { data: escrow } = await sb
+        .from('escrow_accounts')
+        .select('id')
+        .eq('reference_type', 'property')
+        .eq('reference_id', property.id)
+        .eq('payer_id', user.id)
+        .in('status', ['funded', 'released'])
+        .limit(1)
+        .maybeSingle()
+      isEligibleBuyer = !!escrow
+    }
+  }
+
   const isOwnerOrAgent =
     !!user && (user.id === property.owner_id || user.id === property.agent_id)
 
@@ -101,6 +155,48 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
             {property.property_amenities.length > 0 && (
               <PropertyAmenities amenities={property.property_amenities} />
             )}
+
+            {/* Reviews */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-semibold">Reviews</h2>
+                {avgRating !== null && (
+                  <div className="flex items-center gap-1">
+                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                    <span className="font-medium">{avgRating.toFixed(1)}</span>
+                    <span className="text-sm text-muted-foreground">
+                      ({propertyReviews.length}{' '}
+                      {propertyReviews.length === 1 ? 'review' : 'reviews'})
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {propertyReviews.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No reviews yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {propertyReviews.map((review: Review) => {
+                    const prof = reviewerMap.get(review.reviewer_id)
+                    return (
+                      <ReviewCard
+                        key={review.id}
+                        review={review}
+                        personName={prof?.display_name ?? prof?.full_name ?? 'Anonymous'}
+                        personAvatarUrl={prof?.avatar_url}
+                      />
+                    )
+                  })}
+                </div>
+              )}
+
+              {isEligibleBuyer && (
+                <div className="rounded-lg border p-4 space-y-3">
+                  <h3 className="text-base font-medium">Write a Review</h3>
+                  <PropertyReviewForm propertyId={property.id} />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Sidebar */}

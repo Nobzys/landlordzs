@@ -6,6 +6,60 @@ import { createReviewSchema, type CreateReviewInput } from '@/lib/validations/re
 import { REVIEWABLE_ROLES } from '@/types/review'
 import type { ActionResult } from '@/types/auth'
 
+export async function createPropertyReview(
+  propertyId: string,
+  input: { rating: number; title?: string; body?: string },
+): Promise<ActionResult<{ id: string }>> {
+  if (!propertyId) return { error: 'Invalid property.' }
+  const rating = Math.round(input.rating)
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return { error: 'Rating must be between 1 and 5.' }
+  }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any
+
+  // Eligibility: buyer must have a funded escrow for this property
+  const { data: escrow } = await sb
+    .from('escrow_accounts')
+    .select('id')
+    .eq('reference_type', 'property')
+    .eq('reference_id', propertyId)
+    .eq('payer_id', user.id)
+    .in('status', ['funded', 'released'])
+    .limit(1)
+    .maybeSingle()
+
+  if (!escrow) {
+    return { error: 'You must have completed a funded transaction for this property to leave a review.' }
+  }
+
+  const { data: row, error } = await sb
+    .from('reviews')
+    .insert({
+      reviewer_id: user.id,
+      target_type: 'property',
+      target_id:   propertyId,
+      rating,
+      title: input.title?.trim() || null,
+      body:  input.body?.trim()  || null,
+    })
+    .select('id')
+    .single()
+
+  if (error) {
+    if (error.code === '23505') return { error: 'You have already reviewed this property.' }
+    return { error: error.message }
+  }
+
+  revalidatePath(`/properties/${propertyId}`)
+  return { success: true, data: { id: row.id } }
+}
+
 export async function createReviewResponse(
   reviewId: string,
   body: string,

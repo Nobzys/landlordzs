@@ -1714,7 +1714,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 19.2 — Review response UI 🟡 MEDIUM | M
+### Task 19.2 — Review response UI 🟡 MEDIUM | M ✅ COMPLETED
 
 **Problem:** `review_responses` table exists. Professionals can respond to reviews, but there is no UI for this.
 
@@ -1730,28 +1730,30 @@ Same pattern as Tasks 12.1 and 13.1.
 **UI changes:** "Reply" button on review card for the reviewed professional. Response displayed below review indented.
 
 **Test checklist:**
-- [ ] Professional can reply to their own reviews
-- [ ] Non-professional cannot reply to reviews about others
-- [ ] Response appears indented below the review
-- [ ] Only one response per review (unique constraint on `review_id` + `responder_id`)
+- [x] Professional can reply to their own reviews
+- [x] Non-professional cannot reply to reviews about others
+- [x] Response appears indented below the review
+- [x] Only one response per review (unique constraint on `review_id` + `responder_id`)
 
 **Rollback:** Remove ResponseForm and action.
 
 ---
 
-### Task 19.3 — Reviews on property listings 🟢 LOW | M
+### Task 19.3 — Reviews on property listings 🟢 LOW | M ✅ COMPLETED
 
 **Problem:** Properties can theoretically be reviewed (polymorphic reviews table), but there is no review form on property detail pages.
 
 **Files affected:**
 - `src/app/(marketing)/properties/[id]/page.tsx` — add reviews section: `ReviewList` for existing reviews, `ReviewForm` for buyers who've completed a transaction on this property
+- `src/components/reviews/PropertyReviewForm.tsx` (new) — property review form component
+- `src/lib/actions/reviews.ts` — added `createPropertyReview(propertyId, input)` action
 
-**Database changes:** May need a gate: only buyers who funded escrow for this property can review it.
+**Database changes:** None. Eligibility check uses existing `escrow_accounts` table (`reference_type='property'`, `payer_id=user.id`, `status IN ('funded','released')`). `properties` table has no `rating_avg` column; rating computed on-the-fly from `reviews` table.
 
 **Test checklist:**
-- [ ] Property detail shows star rating and reviews
-- [ ] Only eligible buyers see the review form
-- [ ] Review submission updates property rating aggregate (or `properties.rating_avg` if column exists)
+- [x] Property detail shows star rating and reviews
+- [x] Only eligible buyers see the review form
+- [x] Review submission updates property rating aggregate (or `properties.rating_avg` if column exists)
 
 **Rollback:** Remove reviews section from property detail.
 
