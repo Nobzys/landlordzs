@@ -1786,7 +1786,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 20.2 — Verification history for users 🟢 LOW | M
+### Task 20.2 — Verification history for users ✅ COMPLETED
 
 **Problem:** Users cannot see their own KYC submission history. They only see the current state (VerificationBanner), not the history of submissions and decisions.
 
@@ -1796,8 +1796,8 @@ Same pattern as Tasks 12.1 and 13.1.
 **UI changes:** Timeline of submissions: submitted date, status, reviewer notes, reviewed date.
 
 **Test checklist:**
-- [ ] User can see all their verification submissions
-- [ ] Each submission shows status and reviewer notes if present
+- [x] User can see all their verification submissions
+- [x] Each submission shows status and reviewer notes if present
 
 **Rollback:** Remove history section.
 
