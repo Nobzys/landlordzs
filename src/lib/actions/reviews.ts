@@ -160,6 +160,7 @@ export async function createReview(input: CreateReviewInput): Promise<ActionResu
       communication: data.communication ?? null,
       value:         data.value ?? null,
       accuracy:      data.accuracy ?? null,
+      is_verified:   true,
     })
     .select('id')
     .single()
