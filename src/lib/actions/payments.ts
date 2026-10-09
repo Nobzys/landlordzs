@@ -120,10 +120,18 @@ export async function initiatePayment(
       const payToken   = result.data?.pay_token   ?? null
       const notifToken = result.data?.notif_token ?? null
 
-      await (supabase as any).from('transactions').update({
+      const { error: metaError } = await (supabase as any).from('transactions').update({
         status:        'processing',
         provider_meta: { pay_token: payToken, order_id: txnId, notif_token: notifToken },
       }).eq('id', txnId)
+
+      if (metaError) {
+        const { error: failError } = await (supabase as any).from('transactions').update({ status: 'failed', failure_reason: metaError.message }).eq('id', txnId).eq('status', 'pending')
+        if (failError) {
+          console.error('[payments/initiatePayment] failed to mark transaction failed after metadata error:', { txnId, metaError: metaError.message, failError: failError.message })
+        }
+        return { error: 'Orange Money payment initiation failed' }
+      }
 
       return {
         success: true,

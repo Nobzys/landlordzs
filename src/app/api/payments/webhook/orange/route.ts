@@ -47,9 +47,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true })
   }
 
-  // Validate notif_token against stored value
+  // Validate notif_token against stored value.
+  // Reject if the stored token is absent (initiation never persisted it) OR mismatched.
   const storedToken = (txn.provider_meta as Record<string, string>)?.notif_token
-  if (storedToken && storedToken !== notif_token) {
+  if (!storedToken || storedToken !== notif_token) {
     return NextResponse.json({ error: 'Invalid notif_token' }, { status: 401 })
   }
 
