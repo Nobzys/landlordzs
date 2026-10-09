@@ -182,7 +182,13 @@ export default async function AdminPayoutsPage({
 
                 {/* Pending actions: Process + Reject */}
                 {p.status === 'pending' && (
-                  <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
+                  <div className="flex flex-col gap-2 pt-2 border-t">
+                    {p.provider === 'orange_money' && (
+                      <div className="rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 text-xs text-orange-800">
+                        <span className="font-semibold">Manual transfer required.</span> Clicking &ldquo;Process Payout&rdquo; will debit the recipient&apos;s wallet immediately. You must then send <span className="font-semibold">{formatXAF(p.net_amount)}</span> to {p.account_details?.phone ?? 'the recipient'} via the Orange Money portal before marking this payout as paid.
+                      </div>
+                    )}
+                    <div className="flex flex-col sm:flex-row gap-2">
                     <form action={async () => {
                       'use server'
                       await processPayoutAdmin(payoutId)
@@ -241,12 +247,18 @@ export default async function AdminPayoutsPage({
                         Reject
                       </Button>
                     </form>
+                    </div>
                   </div>
                 )}
 
                 {/* Processing action: Mark Paid */}
                 {p.status === 'processing' && (
-                  <div className="pt-2 border-t">
+                  <div className="flex flex-col gap-2 pt-2 border-t">
+                    {p.provider === 'orange_money' && (
+                      <div className="rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 text-xs text-orange-800">
+                        <span className="font-semibold">Confirm transfer before marking paid.</span> Only click &ldquo;Mark Paid&rdquo; after confirming that the Orange Money transfer to {p.account_details?.phone ?? 'the recipient'} has been completed in the Orange Money portal.
+                      </div>
+                    )}
                     <form action={async () => {
                       'use server'
                       const adminClient = createAdminClient()

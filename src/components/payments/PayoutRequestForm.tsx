@@ -75,6 +75,11 @@ export function PayoutRequestForm({
           onChange={v => v !== 'wallet' && setValue('provider', v as any)}
           amount={amount}
         />
+        {provider === 'orange_money' && (
+          <p className="text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
+            Orange Money withdrawals are processed manually by our team and may take longer than MTN Mobile Money payouts.
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
