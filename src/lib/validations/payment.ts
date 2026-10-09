@@ -42,7 +42,7 @@ export const initiatePaymentSchema = z.object({
 })
 
 export const requestPayoutSchema = z.object({
-  amount:   z.number().int().positive().min(1000, 'Minimum payout is 1,000 XAF'),
+  amount:   z.number().int().positive(),
   provider: z.enum(MOBILE_PROVIDERS),
   phone:    z.string().regex(CAMEROON_PHONE, 'Invalid Cameroon phone number'),
   name:     z.string().max(100).optional(),

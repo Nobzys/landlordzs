@@ -1811,7 +1811,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 21.1 — Enforce minimum withdrawal in UI 🟡 MEDIUM | XS
+### Task 21.1 — Enforce minimum withdrawal in UI ✅ COMPLETED
 
 **Problem:** `platform_settings.min_withdrawal_xaf = 5000` exists but is not enforced in the `PayoutRequestForm`. Users can technically submit payout requests below the minimum.
 
@@ -1824,8 +1824,8 @@ Same pattern as Tasks 12.1 and 13.1.
 **UI changes:** Minimum amount message below payout amount input.
 
 **Test checklist:**
-- [ ] Submitting payout below minimum shows validation error
-- [ ] Server action rejects below-minimum payouts even if client validation is bypassed
+- [x] Submitting payout below minimum shows validation error
+- [x] Server action rejects below-minimum payouts even if client validation is bypassed
 
 **Rollback:** Remove the minimum check. Payouts below minimum can be submitted.
 

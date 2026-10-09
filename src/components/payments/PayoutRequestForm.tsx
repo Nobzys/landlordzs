@@ -13,7 +13,13 @@ import { useRequestPayout } from '@/hooks/payments/usePaymentMutations'
 import { requestPayoutSchema, type RequestPayoutInput } from '@/lib/validations/payment'
 import { formatXAF } from '@/lib/utils/format'
 
-export function PayoutRequestForm({ onSuccess }: { onSuccess?: () => void }) {
+export function PayoutRequestForm({
+  onSuccess,
+  minWithdrawal = 5000,
+}: {
+  onSuccess?: () => void
+  minWithdrawal?: number
+}) {
   const { data: wallet } = useWallet()
   const available = (wallet?.balance ?? 0) - (wallet?.locked ?? 0)
   const requestPayout = useRequestPayout()
@@ -27,6 +33,10 @@ export function PayoutRequestForm({ onSuccess }: { onSuccess?: () => void }) {
   const amount   = watch('amount')
 
   const onSubmit = async (data: RequestPayoutInput) => {
+    if (data.amount < minWithdrawal) {
+      toast.error(`Minimum payout is ${formatXAF(minWithdrawal)}`)
+      return
+    }
     if (data.amount > available) {
       toast.error(`Maximum payout is ${formatXAF(available)}`)
       return
@@ -50,11 +60,12 @@ export function PayoutRequestForm({ onSuccess }: { onSuccess?: () => void }) {
         <Input
           type="number"
           placeholder="Enter amount"
-          min={1000}
+          min={minWithdrawal}
           max={available}
           {...register('amount', { valueAsNumber: true })}
         />
         {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
+        <p className="text-xs text-muted-foreground">Minimum withdrawal: {formatXAF(minWithdrawal)}</p>
       </div>
 
       <div className="space-y-2">
@@ -98,7 +109,7 @@ export function PayoutRequestForm({ onSuccess }: { onSuccess?: () => void }) {
         </div>
       )}
 
-      <Button type="submit" className="w-full" disabled={requestPayout.isPending || available < 1000}>
+      <Button type="submit" className="w-full" disabled={requestPayout.isPending || available < minWithdrawal}>
         {requestPayout.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         Request Payout
       </Button>

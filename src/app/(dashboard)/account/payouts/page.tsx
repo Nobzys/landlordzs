@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { getServerProfile } from '@/lib/supabase/server'
+import { getServerProfile, createClient } from '@/lib/supabase/server'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +14,14 @@ export const metadata: Metadata = { title: 'Payouts' }
 export default async function PayoutsPage() {
   const profile = await getServerProfile()
   if (!profile) redirect('/login')
+
+  const supabase = await createClient()
+  const { data: minSetting } = await (supabase as any)
+    .from('platform_settings')
+    .select('value')
+    .eq('key', 'min_withdrawal_xaf')
+    .single()
+  const minWithdrawal = Math.max(1, parseInt(minSetting?.value ?? '', 10) || 5000)
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
@@ -31,7 +39,7 @@ export default async function PayoutsPage() {
               <SheetTitle>Request Payout</SheetTitle>
             </SheetHeader>
             <div className="mt-6">
-              <PayoutRequestForm />
+              <PayoutRequestForm minWithdrawal={minWithdrawal} />
             </div>
           </SheetContent>
         </Sheet>

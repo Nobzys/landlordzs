@@ -232,6 +232,16 @@ export async function requestPayout(
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Unauthorized' }
 
+  const { data: minSetting } = await (supabase as any)
+    .from('platform_settings')
+    .select('value')
+    .eq('key', 'min_withdrawal_xaf')
+    .single()
+  const minWithdrawal = Math.max(1, parseInt(minSetting?.value ?? '', 10) || 5000)
+  if (parsed.data.amount < minWithdrawal) {
+    return { error: `Minimum payout is ${minWithdrawal.toLocaleString()} XAF` }
+  }
+
   const PAYOUT_FEE_PCT = 1.0
   const fee        = Math.round(parsed.data.amount * (PAYOUT_FEE_PCT / 100))
   const net_amount = parsed.data.amount - fee
