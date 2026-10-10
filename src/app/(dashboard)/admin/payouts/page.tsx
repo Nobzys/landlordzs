@@ -5,7 +5,7 @@ import { Wallet, ChevronLeft, CheckCircle2, XCircle, Clock } from 'lucide-react'
 import { revalidatePath } from 'next/cache'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { processPayoutAdmin, retryPayoutAdmin } from '@/lib/actions/payments'
+import { processPayoutAdmin, retryPayoutAdmin, confirmOrangePayoutAdmin, cancelProcessingPayoutAdmin } from '@/lib/actions/payments'
 import { Button } from '@/components/ui/button'
 import { formatXAF, formatRelative } from '@/lib/utils/format'
 
@@ -185,7 +185,7 @@ export default async function AdminPayoutsPage({
                   <div className="flex flex-col gap-2 pt-2 border-t">
                     {p.provider === 'orange_money' && (
                       <div className="rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 text-xs text-orange-800">
-                        <span className="font-semibold">Manual transfer required.</span> Clicking &ldquo;Process Payout&rdquo; will debit the recipient&apos;s wallet immediately. You must then send <span className="font-semibold">{formatXAF(p.net_amount)}</span> to {p.account_details?.phone ?? 'the recipient'} via the Orange Money portal before marking this payout as paid.
+                        <span className="font-semibold">Manual transfer required.</span> Clicking &ldquo;Process Payout&rdquo; moves this payout to processing without debiting the wallet. You must then send <span className="font-semibold">{formatXAF(p.net_amount)}</span> to {p.account_details?.phone ?? 'the recipient'} via the Orange Money portal, then click &ldquo;Confirm Transfer Sent&rdquo; to debit the wallet and complete the payout.
                       </div>
                     )}
                     <div className="flex flex-col sm:flex-row gap-2">
@@ -251,32 +251,64 @@ export default async function AdminPayoutsPage({
                   </div>
                 )}
 
-                {/* Processing action: Mark Paid */}
+                {/* Processing actions */}
                 {p.status === 'processing' && (
                   <div className="flex flex-col gap-2 pt-2 border-t">
-                    {p.provider === 'orange_money' && (
-                      <div className="rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 text-xs text-orange-800">
-                        <span className="font-semibold">Confirm transfer before marking paid.</span> Only click &ldquo;Mark Paid&rdquo; after confirming that the Orange Money transfer to {p.account_details?.phone ?? 'the recipient'} has been completed in the Orange Money portal.
-                      </div>
+                    {p.provider === 'orange_money' ? (
+                      <>
+                        <div className="rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 text-xs text-orange-800">
+                          <span className="font-semibold">Confirm transfer before completing.</span> Only click &ldquo;Confirm Transfer Sent&rdquo; after confirming that <span className="font-semibold">{formatXAF(p.net_amount)}</span> has been sent to {p.account_details?.phone ?? 'the recipient'} via the Orange Money portal. This action debits the recipient&apos;s wallet and marks the payout complete.
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <form action={async () => {
+                            'use server'
+                            await confirmOrangePayoutAdmin(payoutId)
+                          }}>
+                            <Button
+                              type="submit"
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                              Confirm Transfer Sent
+                            </Button>
+                          </form>
+                          <form action={async () => {
+                            'use server'
+                            await cancelProcessingPayoutAdmin(payoutId)
+                          }}>
+                            <Button
+                              type="submit"
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 border-red-200 hover:bg-red-50"
+                            >
+                              <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                              Cancel Payout
+                            </Button>
+                          </form>
+                        </div>
+                      </>
+                    ) : (
+                      <form action={async () => {
+                        'use server'
+                        const adminClient = createAdminClient()
+                        await (adminClient as any)
+                          .from('payouts')
+                          .update({
+                            status: 'completed',
+                            completed_at: new Date().toISOString(),
+                          })
+                          .eq('id', payoutId)
+                          .eq('status', 'processing')
+                        revalidatePath('/admin/payouts')
+                      }}>
+                        <Button type="submit" variant="outline" size="sm">
+                          <Clock className="h-3.5 w-3.5 mr-1.5" />
+                          Mark Paid
+                        </Button>
+                      </form>
                     )}
-                    <form action={async () => {
-                      'use server'
-                      const adminClient = createAdminClient()
-                      await (adminClient as any)
-                        .from('payouts')
-                        .update({
-                          status: 'completed',
-                          completed_at: new Date().toISOString(),
-                        })
-                        .eq('id', payoutId)
-                        .eq('status', 'processing')
-                      revalidatePath('/admin/payouts')
-                    }}>
-                      <Button type="submit" variant="outline" size="sm">
-                        <Clock className="h-3.5 w-3.5 mr-1.5" />
-                        Mark Paid
-                      </Button>
-                    </form>
                   </div>
                 )}
 

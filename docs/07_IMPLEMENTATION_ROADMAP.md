@@ -1919,6 +1919,34 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
+### Task 22.4 — Orange Money payout atomicity 🔴 HIGH | S
+
+**Problem:** `processPayoutAdmin` debited the recipient wallet at the moment of processing for all providers, including Orange Money. Because Orange Money has no public B2C disbursement API, admins must transfer funds manually via the Orange Money portal. The wallet debit happened before the admin confirmed the external transfer was sent, creating a window where the wallet balance was permanently reduced without the recipient receiving funds.
+
+**Solution:** Defer the wallet debit for Orange Money to after admin confirmation. Two new atomic PL/pgSQL functions (`complete_orange_payout`, `cancel_orange_payout`) perform wallet debit/unlock and payout status update in a single database transaction using `SELECT ... FOR UPDATE` on the payout row to serialize concurrent calls.
+
+**Files affected:**
+- `supabase/migrations/20261010000001_orange_payout_atomic_ops.sql` — NEW: `complete_orange_payout(UUID)` and `cancel_orange_payout(UUID)` SECURITY DEFINER functions; `REVOKE ALL FROM PUBLIC` + `GRANT EXECUTE TO service_role`
+- `src/lib/actions/payments.ts` — `processPayoutAdmin` refactored: Orange Money path moves payout to `processing` only (no wallet debit); `confirmOrangePayoutAdmin` and `cancelProcessingPayoutAdmin` server actions added
+- `src/app/(dashboard)/admin/payouts/page.tsx` — processing section branched: Orange Money shows "Confirm Transfer Sent" + "Cancel Payout"; all other providers retain the existing "Mark Paid" button
+
+**Database changes:** Migration `20261010000001_orange_payout_atomic_ops.sql` adds two SECURITY DEFINER functions restricted to service_role.
+
+**Test checklist:**
+- [x] TypeScript check passes (0 errors)
+- [x] Next.js production build passes
+- [x] MTN payout processing behavior unchanged
+- [x] Orange Money wallet debit deferred to confirmation step (code verified)
+- [x] Concurrent confirm/cancel requests serialized by `FOR UPDATE` (logic verified against PostgreSQL `FOR UPDATE` semantics)
+- [ ] Staging: concurrent double-complete blocked at database level
+- [ ] Staging: wallet `balance` and `locked` correct after confirm (`balance − amount`, `locked − amount`)
+- [ ] Staging: wallet `balance` and `locked` correct after cancel (`balance` unchanged, `locked − amount`)
+- [ ] Staging: `authenticated` role cannot invoke either function via PostgREST RPC
+
+**Rollback:** Drop migration, revert `processPayoutAdmin` to debit wallet at processing time for all providers, remove `confirmOrangePayoutAdmin` and `cancelProcessingPayoutAdmin`, revert admin payouts page processing section.
+
+---
+
 ## Phase 23 — Escrow Completion
 
 **Objective:** Complete the escrow system. Core funded/released/disputed flow exists. Missing: admin dispute resolution UI, auto-release cron, milestone creation UI.

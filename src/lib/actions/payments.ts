@@ -311,10 +311,20 @@ export async function processPayoutAdmin(payoutId: string): Promise<ActionResult
 
   if (!payout) return { error: 'Payout not found or already processed' }
 
-  try {
-    // ── Send funds to recipient via the correct API ───────────────────────────
-    if (payout.provider === 'mtn_momo') {
-      // Disbursements API: platform → recipient phone (NOT Collections which charges the recipient)
+  // MTN MoMo: claim atomically then disburse via external API
+  if (payout.provider === 'mtn_momo') {
+    // Claim the payout before calling the external API. Prevents concurrent admins
+    // from both proceeding past the initial fetch and double-initiating a transfer.
+    const { data: claimed } = await (adminClient as any)
+      .from('payouts')
+      .update({ status: 'processing' })
+      .eq('id', payoutId)
+      .eq('status', 'pending')
+      .select('id')
+    if (!claimed || claimed.length === 0) return { error: 'Payout already being processed' }
+
+    try {
+      // Disbursements API: platform sends funds to recipient's phone
       await mtnTransfer({
         referenceId:  payoutId,
         phone:        payout.account_details.phone,
@@ -323,53 +333,109 @@ export async function processPayoutAdmin(payoutId: string): Promise<ActionResult
         payerMessage: 'LANDLORDZS Payout',
         payeeNote:    `Payout ${payoutId}`,
       })
+
+      const { error: rpcError } = await (adminClient as any).rpc('wallet_transfer', {
+        p_from_id:  payout.recipient_id,
+        p_to_id:    null,
+        p_amount:   payout.amount,
+        p_ref_type: 'payout',
+        p_ref_id:   payoutId,
+        p_desc:     'Payout withdrawal',
+      })
+      if (rpcError) throw new Error(rpcError.message)
+
+      await (adminClient as any).rpc('wallet_unlock', {
+        p_user_id: payout.recipient_id,
+        p_amount:  payout.amount,
+      })
+
+      await (adminClient as any).from('payouts').update({
+        initiated_at: new Date().toISOString(),
+      }).eq('id', payoutId)
+
+      revalidatePath('/admin/payouts')
+      return { success: true }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Payout processing failed'
+
+      await (adminClient as any).rpc('wallet_unlock', {
+        p_user_id: payout.recipient_id,
+        p_amount:  payout.amount,
+      })
+
+      await (adminClient as any).from('payouts').update({
+        status:         'failed',
+        failure_reason: msg,
+        failed_at:      new Date().toISOString(),
+      }).eq('id', payoutId)
+
+      return { error: msg }
     }
-    // Orange Money CM and bank_transfer have no public B2C disbursement API.
-    // Wallet is debited and payout is moved to 'processing'; admin must complete
-    // the external transfer manually and then click "Mark Paid".
-
-    // ── Debit user's wallet balance to record funds as disbursed ─────────────
-    const { error: rpcError } = await (adminClient as any).rpc('wallet_transfer', {
-      p_from_id:  payout.recipient_id,
-      p_to_id:    null,
-      p_amount:   payout.amount,
-      p_ref_type: 'payout',
-      p_ref_id:   payoutId,
-      p_desc:     'Payout withdrawal',
-    })
-
-    if (rpcError) throw new Error(rpcError.message)
-
-    // ── Release the lock atomically — wallet_unlock uses a single UPDATE ──────
-    await (adminClient as any).rpc('wallet_unlock', {
-      p_user_id: payout.recipient_id,
-      p_amount:  payout.amount,
-    })
-
-    await (adminClient as any).from('payouts').update({
-      status:       'processing',
-      initiated_at: new Date().toISOString(),
-    }).eq('id', payoutId)
-
-    revalidatePath('/admin/payouts')
-    return { success: true }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Payout processing failed'
-
-    // ── Unlock funds atomically so the user is not permanently locked out ─────
-    await (adminClient as any).rpc('wallet_unlock', {
-      p_user_id: payout.recipient_id,
-      p_amount:  payout.amount,
-    })
-
-    await (adminClient as any).from('payouts').update({
-      status:         'failed',
-      failure_reason: msg,
-      failed_at:      new Date().toISOString(),
-    }).eq('id', payoutId)
-
-    return { error: msg }
   }
+
+  // Orange Money and bank_transfer: no automatic disbursement API.
+  // Move to 'processing' only. The admin sends funds manually via the provider
+  // portal, then confirms via confirmOrangePayoutAdmin, which performs the atomic
+  // wallet debit and payout completion in a single database transaction.
+  const { data: updateResult, error: updateError } = await (adminClient as any)
+    .from('payouts')
+    .update({ status: 'processing', initiated_at: new Date().toISOString() })
+    .eq('id', payoutId)
+    .eq('status', 'pending')
+    .select('id')
+  if (updateError) return { error: updateError.message }
+  if (!updateResult || updateResult.length === 0) return { error: 'Payout already being processed' }
+
+  revalidatePath('/admin/payouts')
+  return { success: true }
+}
+
+// Admin: confirm Orange Money payout (atomic debit + completion)
+// Called after the admin has sent funds manually via the Orange Money portal.
+// Delegates to complete_orange_payout which debits the wallet and marks the
+// payout completed in a single database transaction.
+export async function confirmOrangePayoutAdmin(payoutId: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  const { data: caller } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single()
+  if (caller?.role !== 'admin') return { error: 'Insufficient permissions' }
+
+  const adminClient = createAdminClient()
+  const { data: result, error: rpcError } = await (adminClient as any).rpc('complete_orange_payout', {
+    p_payout_id: payoutId,
+  })
+
+  if (rpcError) return { error: rpcError.message }
+  if (result === 'not_processing') return { error: 'Payout is not in processing state' }
+
+  revalidatePath('/admin/payouts')
+  return { success: true }
+}
+
+// Admin: cancel a processing Orange Money payout
+// Called when the admin was unable to complete the external transfer.
+// Delegates to cancel_orange_payout which releases the wallet lock and marks
+// the payout failed. The wallet balance is not debited.
+export async function cancelProcessingPayoutAdmin(payoutId: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  const { data: caller } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single()
+  if (caller?.role !== 'admin') return { error: 'Insufficient permissions' }
+
+  const adminClient = createAdminClient()
+  const { data: result, error: rpcError } = await (adminClient as any).rpc('cancel_orange_payout', {
+    p_payout_id: payoutId,
+  })
+
+  if (rpcError) return { error: rpcError.message }
+  if (result === 'not_processing') return { error: 'Payout is not in processing state' }
+
+  revalidatePath('/admin/payouts')
+  return { success: true }
 }
 
 // ─── Admin: retry a failed payout ────────────────────────────────────────────
