@@ -2384,9 +2384,9 @@
 
 ---
 
-### Task 27.5 — Validate migration history 🔴 HIGH | M 🚧 PARTIAL
+### Task 27.5 — Validate migration history ✅ COMPLETE 🔴 HIGH | M
 
-**Status (2026-10-12):** Staging (qexipldvyzxcbgyycrtt) fully recovered on 2026-10-10. All 66 migrations applied. Local migration files restored from git history (4 files recovered: 20260618000003, 20260618000004, 20260619000002, 20260619000006). `supabase db push --include-all` succeeded against staging. `20261012000001_performance_indexes.sql` still needs to be applied to staging (use `supabase db push --linked` manually). Production migration history is a separate concern — never `db push` to prod directly.
+**Status (2026-10-12):** Staging (qexipldvyzxcbgyycrtt) fully recovered on 2026-10-10. All 66 migrations applied. `20261012000001_performance_indexes.sql` applied to staging on 2026-10-12 via `supabase db push --linked` (CLI re-linked to staging ref, dry-run verified single migration, push confirmed via `migration list --linked`). All 67 local migrations now match staging remote history. Production migration history is a separate concern — never `db push` to prod directly.
 
 **Problem:** Remote Supabase project has 29 migrations applied via dashboard that have no local SQL files. `supabase db push` will fail. This blocks all future schema changes.
 
