@@ -1259,7 +1259,7 @@
 
 ---
 
-### Task 15.2 — Shopping cart and checkout 🔴 HIGH | XL
+### Task 15.2 — Shopping cart and checkout 🔴 HIGH | XL ✅ COMPLETE
 
 **Problem:** `cart_items` table exists but no cart UI. No checkout flow. Vendors cannot receive orders from the public.
 
@@ -1288,7 +1288,7 @@
 
 ---
 
-### Task 15.3 — Equipment rental marketplace 🟢 LOW | XL
+### Task 15.3 — Equipment rental marketplace 🟢 LOW | XL ✅ COMPLETE
 
 **Problem:** `rental_categories`, `rental_listings`, `rental_bookings` tables exist. `/rentals` is in PUBLIC_ROUTES but has no page.
 
@@ -1309,7 +1309,7 @@
 
 ---
 
-### Task 15.4 — Jobs board 🟢 LOW | L
+### Task 15.4 — Jobs board 🟢 LOW | L ✅ COMPLETE
 
 **Problem:** `jobs`, `job_applications` tables exist. `/jobs` is in PUBLIC_ROUTES but has no page.
 
@@ -1329,7 +1329,7 @@
 
 ---
 
-### Task 15.5 — Tenders board 🟢 LOW | L
+### Task 15.5 — Tenders board 🟢 LOW | L ✅ COMPLETE
 
 **Problem:** `tenders`, `tender_bids` tables exist. Referenced in Constitution.
 
@@ -1802,7 +1802,7 @@
 
 ---
 
-### Task 21.2 — Stripe payment integration 🟢 LOW | XL
+### Task 21.2 — Stripe payment integration 🟢 LOW | XL 🚫 BLOCKED
 
 **Problem:** `payment_provider` enum has `'stripe'` but `platform_settings.stripe_enabled = false`. Stripe is not integrated. International buyers cannot pay by card.
 
@@ -1877,7 +1877,9 @@
 
 ---
 
-### Task 22.3 — Commission auto-payout 🟢 LOW | M
+### Task 22.3 — Commission auto-payout 🟢 LOW | M ⏸ DEFERRED
+
+**Decision (2026-10-12):** Intentionally deferred. Auto-payout removes admin control over commission timing. Admin-approval-only is lower risk and preferred for now. The roadmap note itself says "Keep as admin-approval only for now (lower risk). This task remains LOW priority."
 
 **Problem:** Agent commissions are manually approved and paid by admins. There is no auto-payout once escrow releases.
 
@@ -1950,7 +1952,9 @@
 
 ---
 
-### Task 23.2 — Escrow auto-release mechanism 🟡 MEDIUM | M
+### Task 23.2 — Escrow auto-release mechanism 🟡 MEDIUM | M 🚫 STOP
+
+**STOP (2026-10-12):** Auto-release triggers `release_escrow()` RPC which transfers real funds. Irreversible. Requires explicit approval and manual QA before implementation.
 
 **Problem:** `escrow_accounts.auto_release_at` column and `platform_settings.escrow_auto_release_days = 30` exist but no background job actually auto-releases escrows when the date passes.
 
@@ -2380,7 +2384,9 @@
 
 ---
 
-### Task 27.5 — Validate migration history 🔴 HIGH | M
+### Task 27.5 — Validate migration history 🔴 HIGH | M 🚧 PARTIAL
+
+**Status (2026-10-12):** Staging (qexipldvyzxcbgyycrtt) fully recovered on 2026-10-10. All 66 migrations applied. Local migration files restored from git history (4 files recovered: 20260618000003, 20260618000004, 20260619000002, 20260619000006). `supabase db push --include-all` succeeded against staging. `20261012000001_performance_indexes.sql` still needs to be applied to staging (use `supabase db push --linked` manually). Production migration history is a separate concern — never `db push` to prod directly.
 
 **Problem:** Remote Supabase project has 29 migrations applied via dashboard that have no local SQL files. `supabase db push` will fail. This blocks all future schema changes.
 
