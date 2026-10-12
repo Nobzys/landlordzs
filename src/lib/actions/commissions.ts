@@ -5,40 +5,6 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { ActionResult } from '@/types/auth'
 
-// â”€â”€â”€ Record commission â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Called internally when a property sale/rent transaction completes.
-
-export async function recordAgentCommission(
-  transactionId: string,
-  agentId: string,
-  saleAmount: number,
-  commissionRatePct: number,
-  referenceType: string,
-  referenceId: string
-): Promise<ActionResult<{ id: string }>> {
-  const adminClient = createAdminClient()
-  const commissionAmount = Math.round(saleAmount * (commissionRatePct / 100))
-
-  const { data, error } = await (adminClient as any)
-    .from('commission_records')
-    .insert({
-      transaction_id:  transactionId,
-      earner_id:       agentId,
-      commission_type: 'agent',
-      reference_type:  referenceType,
-      reference_id:    referenceId,
-      amount:          commissionAmount,
-      rate_pct:        commissionRatePct,
-      currency:        'XAF',
-      status:          'pending',
-    })
-    .select('id')
-    .single()
-
-  if (error || !data) return { error: error?.message ?? 'Failed to record commission' }
-  return { success: true, data: { id: data.id } }
-}
-
 // â”€â”€â”€ Pay commission (credit agent wallet) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function payCommission(commissionId: string): Promise<ActionResult> {

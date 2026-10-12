@@ -1482,12 +1482,19 @@ export async function banProfessionalAdmin(userId: string): Promise<ActionResult
 // ─── expireKycRecord ─────────────────────────────────────────────────────────
 // Lazy cron-like check called from professional dashboard pages on page load.
 // kyc_moderator_update RLS restricts status writes to moderators/admins, so
-// this must use createAdminClient() — the same pattern used throughout this file.
+// this must use createAdminClient(). The .eq('user_id', user.id) guard ensures
+// a caller can only expire their own record even if a crafted Next-Action call
+// passes a foreign kycRecordId.
 export async function expireKycRecord(kycRecordId: string): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return
+
   const admin = createAdminClient() as any
   await admin
     .from('kyc_records')
     .update({ status: 'expired' })
     .eq('id', kycRecordId)
+    .eq('user_id', user.id)
     .eq('status', 'approved')
 }

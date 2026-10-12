@@ -2138,9 +2138,9 @@ Same pattern as Tasks 12.1 and 13.1.
 **Database changes:** None. **UI changes:** None. This is a code review task.
 
 **Test checklist:**
-- [ ] No `createAdminClient` in any `*.tsx` client component file
-- [ ] Every `createAdminClient` call is preceded by `profile.role !== 'admin'` guard
-- [ ] `createAdminClient` not exposed in any API route that lacks auth verification
+- [x] No `createAdminClient` in any `*.tsx` client component file
+- [x] Every `createAdminClient` call is preceded by `profile.role !== 'admin'` guard
+- [x] `createAdminClient` not exposed in any API route that lacks auth verification
 
 **Rollback:** N/A (code audit; no changes unless a vulnerability is found).
 
@@ -2155,8 +2155,8 @@ Same pattern as Tasks 12.1 and 13.1.
 - If any found, wrap with DOMPurify or equivalent sanitizer
 
 **Test checklist:**
-- [ ] No `dangerouslySetInnerHTML` with unsanitized user content
-- [ ] Script tags in description fields are escaped in output
+- [x] No `dangerouslySetInnerHTML` with unsanitized user content
+- [x] Script tags in description fields are escaped in output
 
 **Rollback:** N/A (audit; no changes unless vulnerability found).
 
