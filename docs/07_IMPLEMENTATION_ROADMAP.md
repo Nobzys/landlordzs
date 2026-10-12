@@ -2281,7 +2281,7 @@
 
 ---
 
-### Task 27.1 — Expand unit tests for server actions 🔴 HIGH | L
+### Task 27.1 — Expand unit tests for server actions ✅ COMPLETE
 
 **Problem:** Only 4 test files exist (`confirmEmail.test.ts`, `passwordResetRateLimit.test.ts`, `signUp.test.ts`, `updatePassword.test.ts`). All other server actions are untested.
 
