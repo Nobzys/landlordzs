@@ -8,6 +8,8 @@ import { PropertyAmenities } from '@/components/properties/PropertyAmenities'
 import { PropertyInquiryForm } from '@/components/properties/PropertyInquiryForm'
 import { PropertyBookingForm } from '@/components/properties/PropertyBookingForm'
 import { ContactButton } from '@/components/messaging/ContactButton'
+
+export const revalidate = 300
 import { ReviewCard } from '@/components/reviews/ReviewCard'
 import { PropertyReviewForm } from '@/components/reviews/PropertyReviewForm'
 import type { PropertyWithDetails } from '@/types/property'

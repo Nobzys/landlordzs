@@ -7,6 +7,8 @@ import { PropertyCard } from '@/components/properties/PropertyCard'
 import { ListingPagination } from '@/components/ui/listing-pagination'
 import type { PropertyWithImages } from '@/types/property'
 
+export const revalidate = 60
+
 export const metadata: Metadata = {
   title: 'Properties — Landlordzs',
   description: 'Browse properties for sale, rent, and shortlet across Cameroon.',
