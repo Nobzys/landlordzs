@@ -2109,15 +2109,24 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ### Task 25.2 — Content Security Policy headers 🟡 MEDIUM | M
 
+**Status:** ✅ Completed — commit pending (2026-10-12)
+
 **Problem:** No `Content-Security-Policy` header is set. XSS attacks via injected scripts are not mitigated at the HTTP layer.
 
 **Files affected:**
-- `next.config.ts` — add `headers()` function with CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
+- `next.config.js` — added `headers()` function with CSP (report-only), HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
+
+**Implementation notes:**
+- CSP deployed as `Content-Security-Policy-Report-Only` per the roadmap's conservative start — detects violations without blocking functionality
+- `script-src` includes `unsafe-inline` and `unsafe-eval` because Next.js requires them for runtime hydration
+- `connect-src` allows both HTTPS and WSS to the Supabase project for Realtime
+- `img-src` allows `data:` and `blob:` for image previews during upload; `https://${SUPABASE_HOST}` for stored property images
+- Promote to enforcing `Content-Security-Policy` once browser console confirms zero violations across all major flows
 
 **Risks:** MEDIUM. A strict CSP can break legitimate functionality (e.g., Google Fonts, Supabase CDN). Start with `Content-Security-Policy-Report-Only` to detect violations before enforcing.
 
 **Test checklist:**
-- [ ] CSP header present on all pages
+- [x] CSP header present on all pages
 - [ ] No CSP violations in browser console (test all major flows)
 - [ ] Google Fonts load correctly
 - [ ] Supabase Realtime WebSocket allowed
