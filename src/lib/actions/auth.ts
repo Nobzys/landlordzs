@@ -1489,6 +1489,39 @@ export async function banProfessionalAdmin(userId: string): Promise<ActionResult
   return { success: true }
 }
 
+// ─── updateEmail ─────────────────────────────────────────────────────────────
+// Initiates an email-change request via Supabase Auth. The user receives a
+// confirmation link at the NEW address; the change takes effect only after they
+// click it. `profiles.email` is synced automatically by a DB trigger.
+export async function updateEmail(newEmail: string): Promise<ActionResult<{ message: string }>> {
+  const trimmed = newEmail.trim().toLowerCase()
+  if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+    return { error: 'Please enter a valid email address.' }
+  }
+
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Not authenticated.' }
+
+  if (trimmed === user.email) {
+    return { error: 'The new email is the same as your current email.' }
+  }
+
+  const { error } = await supabase.auth.updateUser(
+    { email: trimmed },
+    { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/account/profile` }
+  )
+
+  if (error) {
+    if (error.message.toLowerCase().includes('already')) {
+      return { error: 'This email address is already in use.' }
+    }
+    return { error: error.message }
+  }
+
+  return { success: true, data: { message: `Confirmation sent to ${trimmed}. Click the link to complete the change.` } }
+}
+
 // ─── expireKycRecord ─────────────────────────────────────────────────────────
 // Lazy cron-like check called from professional dashboard pages on page load.
 // kyc_moderator_update RLS restricts status writes to moderators/admins, so

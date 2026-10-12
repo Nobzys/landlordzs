@@ -4,6 +4,7 @@ import { UserCircle, ShieldAlert } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { ProfileForm } from '@/components/auth/ProfileForm'
 import { ChangePasswordForm } from '@/components/auth/ChangePasswordForm'
+import { ChangeEmailForm } from '@/components/auth/ChangeEmailForm'
 import { KycVerificationSection } from '@/components/auth/KycVerificationSection'
 import { Button } from '@/components/ui/button'
 import { ROLE_LABELS, APPROVAL_REQUIRED_ROLES } from '@/lib/utils/constants'
@@ -105,6 +106,8 @@ export default async function ProfilePage() {
       {needsVerification && (
         <KycVerificationSection profile={profile} kyc={kyc} />
       )}
+
+      <ChangeEmailForm currentEmail={profile.email} />
 
       <ChangePasswordForm />
     </div>
