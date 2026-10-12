@@ -6,6 +6,7 @@ import { ProfileForm } from '@/components/auth/ProfileForm'
 import { ChangePasswordForm } from '@/components/auth/ChangePasswordForm'
 import { ChangeEmailForm } from '@/components/auth/ChangeEmailForm'
 import { KycVerificationSection } from '@/components/auth/KycVerificationSection'
+import { PhoneVerificationSection } from '@/components/auth/PhoneVerificationSection'
 import { Button } from '@/components/ui/button'
 import { ROLE_LABELS, APPROVAL_REQUIRED_ROLES } from '@/lib/utils/constants'
 import type { KycRecord } from '@/components/dashboard/VerificationBanner'
@@ -106,6 +107,8 @@ export default async function ProfilePage() {
       {needsVerification && (
         <KycVerificationSection profile={profile} kyc={kyc} />
       )}
+
+      <PhoneVerificationSection phone={profile.phone} phoneVerified={profile.phone_verified} />
 
       <ChangeEmailForm currentEmail={profile.email} />
 

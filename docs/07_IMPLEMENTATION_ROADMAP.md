@@ -341,7 +341,9 @@
 
 ---
 
-### Task 2.1 — Complete phone verification integration 🟡 MEDIUM | M
+### Task 2.1 — Complete phone verification integration 🟡 MEDIUM | M ✅ COMPLETE
+
+**Status:** ✅ Completed — 2026-10-12
 
 **Problem:** `PhoneVerificationForm` component and `sendPhoneOtp`/`verifyPhoneOtp` server actions exist but are not wired into the onboarding flow as a mandatory step. `profiles.phone_verified` is never set to `true` in practice.
 
@@ -368,7 +370,7 @@
 
 ---
 
-### Task 2.2 — Add email change flow 🟡 MEDIUM | M
+### Task 2.2 — Add email change flow 🟡 MEDIUM | M ✅ COMPLETE
 
 **Problem:** Users cannot change their email address. The profile form edits only display_name, phone, city, bio, avatar — not email. There is no server action for `updateEmail`.
 
@@ -396,7 +398,7 @@
 
 ---
 
-### Task 2.3 — Add custom 404 and error pages 🟡 MEDIUM | S
+### Task 2.3 — Add custom 404 and error pages 🟡 MEDIUM | S ✅ COMPLETE
 
 **Problem:** Next.js default 404 and error pages render without LANDLORDZS branding. Users who navigate to broken links see an unbranded page.
 
@@ -420,7 +422,7 @@
 
 ---
 
-### Task 2.4 — Add loading states for dashboard routes 🟢 LOW | M
+### Task 2.4 — Add loading states for dashboard routes 🟢 LOW | M ✅ COMPLETE
 
 **Problem:** Dashboard pages are server-rendered with no `loading.tsx` files. Users see a blank screen between navigations.
 
@@ -1015,7 +1017,7 @@
 
 ---
 
-### Task 7.2 — Order management 🔴 HIGH | L
+### Task 7.2 — Order management 🔴 HIGH | L ✅ COMPLETE
 
 **Problem:** Vendors have no UI to see or manage orders. The `orders` and `order_items` tables exist and are subscribed to Realtime, but there is no order inbox.
 
@@ -1361,7 +1363,7 @@
 
 ---
 
-### Task 16.0 — Layout architecture decision gate 🔴 HIGH | XS
+### Task 16.0 — Layout architecture decision gate 🔴 HIGH | XS ✅ COMPLETE
 
 **Problem:** Adding `src/app/(marketing)/layout.tsx` would automatically add nav/footer to all existing marketing pages (materials, jobs, rentals, tenders). Phase 16 must not silently alter those pages.
 
@@ -1377,7 +1379,7 @@
 
 ---
 
-### Task 16.1 — Hero section with simplified search 🔴 HIGH | L
+### Task 16.1 — Hero section with simplified search 🔴 HIGH | L ✅ COMPLETE
 
 **Problem:** No marketing homepage exists. Authenticated users are redirected (correct), but unauthenticated visitors see a blank/redirect page.
 
@@ -1405,7 +1407,7 @@
 
 ---
 
-### Task 16.2 — Trust bar and property category cards 🟡 MEDIUM | M
+### Task 16.2 — Trust bar and property category cards 🟡 MEDIUM | M ✅ COMPLETE
 
 **Problem:** Homepage needs social-proof elements and Browse-by-Type navigation to drive engagement.
 
@@ -1424,7 +1426,7 @@
 
 ---
 
-### Task 16.3 — Featured Properties section 🟡 MEDIUM | M
+### Task 16.3 — Featured Properties section 🟡 MEDIUM | M ✅ COMPLETE
 
 **Problem:** Homepage needs a real property showcase pulling from Supabase Storage (not Unsplash CDN).
 
@@ -1445,7 +1447,7 @@
 
 ---
 
-### Task 16.4 — Secondary sections and dual-CTA 🟢 LOW | M
+### Task 16.4 — Secondary sections and dual-CTA 🟢 LOW | M ✅ COMPLETE
 
 **Problem:** Homepage needs to surface the marketplace verticals and replace the inapplicable App Store section with a registration CTA.
 
@@ -2063,7 +2065,7 @@
 
 ---
 
-### Task 25.1 — Rate limiting on server actions 🔴 HIGH | L
+### Task 25.1 — Rate limiting on server actions 🔴 HIGH | L ✅ COMPLETE
 
 **Status:** ✅ Completed — commit `a4c3dff` (2026-10-12)
 
@@ -2092,7 +2094,7 @@
 
 ---
 
-### Task 25.2 — Content Security Policy headers 🟡 MEDIUM | M
+### Task 25.2 — Content Security Policy headers 🟡 MEDIUM | M ✅ COMPLETE
 
 **Status:** ✅ Completed — commit `0ce1058` (2026-10-12)
 
@@ -2121,7 +2123,7 @@
 
 ---
 
-### Task 25.3 — Audit `createAdminClient()` usage 🔴 HIGH | S
+### Task 25.3 — Audit `createAdminClient()` usage 🔴 HIGH | S ✅ COMPLETE
 
 **Problem:** `createAdminClient()` (service-role key) bypasses RLS. Any misuse exposes all data. Every call must be reviewed.
 
@@ -2140,7 +2142,7 @@
 
 ---
 
-### Task 25.4 — Input sanitization for rich text fields 🟡 MEDIUM | M
+### Task 25.4 — Input sanitization for rich text fields 🟡 MEDIUM | M ✅ COMPLETE
 
 **Problem:** `properties.description`, `service_requests.description`, `forum_posts.content` can contain user-supplied text displayed in the UI. While React prevents XSS by default, verify no `dangerouslySetInnerHTML` is used with unsanitized data.
 
@@ -2156,7 +2158,7 @@
 
 ---
 
-### Task 25.5 — Session timeout 🟢 LOW | M
+### Task 25.5 — Session timeout 🟢 LOW | M ✅ COMPLETE
 
 **Status:** ✅ Completed — commit `cfbd1e4` (2026-10-12)
 
