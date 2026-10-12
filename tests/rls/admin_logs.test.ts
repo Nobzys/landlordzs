@@ -20,7 +20,6 @@ describe.skipIf(!hasTestDb)('RLS — admin_logs table', () => {
       .insert({
         actor_id: adminId,
         action:   'test.rls_check',
-        metadata: { test: true },
       })
       .select('id')
       .single()

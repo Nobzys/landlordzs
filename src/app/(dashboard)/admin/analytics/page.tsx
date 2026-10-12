@@ -1,18 +1,12 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import dynamic from 'next/dynamic'
 import { BarChart2 } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { RangePicker } from './RangePicker'
+import { AnalyticsChart } from './AnalyticsChart'
 import type { ChartDataPoint } from '@/components/admin/ReportChart'
 
 export const metadata: Metadata = { title: 'Analytics' }
-
-// Recharts uses browser APIs; disable SSR for the chart component.
-const ReportChart = dynamic(
-  () => import('@/components/admin/ReportChart').then(m => m.ReportChart),
-  { ssr: false, loading: () => <div className="flex items-center justify-center h-[220px] text-sm text-muted-foreground animate-pulse">Loading chart…</div> }
-)
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -154,7 +148,7 @@ export default async function AnalyticsPage({
           <h2 className="text-sm font-semibold">New User Registrations</h2>
           <p className="text-xs text-muted-foreground">Daily signups over the last {range} days</p>
         </div>
-        <ReportChart type="line" data={usersByDay} color="#4f46e5" />
+        <AnalyticsChart type="line" data={usersByDay} color="#4f46e5" />
       </div>
 
       {/* Revenue trend */}
@@ -163,7 +157,7 @@ export default async function AnalyticsPage({
           <h2 className="text-sm font-semibold">Revenue Trend</h2>
           <p className="text-xs text-muted-foreground">Wallet credit totals by ISO week (last 12 weeks)</p>
         </div>
-        <ReportChart type="area" data={revenueByWeek} color="#10b981" />
+        <AnalyticsChart type="area" data={revenueByWeek} color="#10b981" />
       </div>
 
       {/* Escrows by status */}
@@ -172,7 +166,7 @@ export default async function AnalyticsPage({
           <h2 className="text-sm font-semibold">Active Escrows by Status</h2>
           <p className="text-xs text-muted-foreground">All escrow accounts grouped by current status</p>
         </div>
-        <ReportChart type="bar" data={escrowsByStatus} color="#f59e0b" />
+        <AnalyticsChart type="bar" data={escrowsByStatus} color="#f59e0b" />
       </div>
 
       {/* Top professionals */}
