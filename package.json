@@ -24,6 +24,7 @@
     "react-dom": "latest",
     "react-dropzone": "^15.0.0",
     "react-hook-form": "^7.78.0",
+    "recharts": "^3.10.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
     "uuid": "^14.0.0",

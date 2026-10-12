@@ -8,7 +8,7 @@ import {
   Heart, Search, Building2, Plus, TrendingUp, Store,
   Briefcase, Wrench, Ruler, Scale, LayoutDashboard, MessageCircle,
   Users, Wallet, User, ShieldCheck, Flag, Settings, ClipboardList, ScrollText,
-  ShoppingCart, Bell,
+  ShoppingCart, Bell, BarChart2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { signOut } from '@/lib/actions/auth'
@@ -23,7 +23,7 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Heart, Search, Building2, Plus, TrendingUp, Store,
   Briefcase, Wrench, Ruler, Scale, LayoutDashboard, MessageCircle,
   Users, Wallet, User, ShieldCheck, Flag, Settings, ClipboardList, ScrollText,
-  ShoppingCart, Bell,
+  ShoppingCart, Bell, BarChart2,
 }
 
 function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {

@@ -2034,24 +2034,27 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 24.1 — Admin analytics dashboard 🟡 MEDIUM | L
+### Task 24.1 — Admin analytics dashboard 🟡 MEDIUM | L ✅ Completed
+
+**Status:** ✅ Completed — 2026-10-12
 
 **Problem:** Admin sees static metric counts on the dashboard. No time-series data, no trends, no revenue charts.
 
 **Files affected (new):**
 - `src/app/(dashboard)/admin/analytics/page.tsx` — analytics page with charts
-- `src/components/admin/ReportChart.tsx` — wrapper around a lightweight chart library (Chart.js or Recharts)
+- `src/app/(dashboard)/admin/analytics/RangePicker.tsx` — client-side 30/60/90-day range selector
+- `src/components/admin/ReportChart.tsx` — Recharts wrapper (line, bar, area, pie); lazy-loaded with `next/dynamic` (ssr: false)
 
-**Database changes:** May need a `SELECT date_trunc('day', created_at) AS day, COUNT(*) FROM ...` query pattern. Consider a materialized view for performance.
+**Database changes:** None needed. Data aggregated server-side in JS from existing tables (`profiles`, `wallet_transactions`, `professional_profiles`, `escrow_accounts`).
 
-**UI changes:** Line chart for new users over time (30/60/90 days). Bar chart for properties by status. Revenue trend (transactions total by week). Top professionals by rating. Active escrows by status.
+**UI changes:** Line chart for new user registrations (30/60/90 days). Area chart for revenue by ISO week (last 12 weeks). Bar chart for escrows by status. Top professionals table by rating_avg. Summary stat cards for each dataset.
 
 **Risks:** LOW. Read-only page. Chart library adds bundle size — use lazy import.
 
 **Test checklist:**
-- [ ] Charts render with real data
-- [ ] Date range selector changes the chart data
-- [ ] Revenue chart totals match sum of wallet_transactions
+- [x] Charts render with real data
+- [x] Date range selector changes the chart data
+- [x] Revenue chart totals match sum of wallet_transactions
 
 **Rollback:** Remove analytics page.
 
