@@ -2250,7 +2250,7 @@
 
 ---
 
-### Task 26.5 — Database query indexes 🟡 MEDIUM | M
+### Task 26.5 — Database query indexes ✅ COMPLETE (migration created; needs staging apply)
 
 **Problem:** As data grows, queries on large tables without supporting indexes will degrade. Review the most common query patterns.
 
