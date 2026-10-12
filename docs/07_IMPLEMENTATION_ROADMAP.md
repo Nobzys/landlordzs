@@ -2178,17 +2178,19 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ### Task 25.5 — Session timeout 🟢 LOW | M
 
+**Status:** ✅ Completed — commit pending (2026-10-12)
+
 **Problem:** No explicit session timeout. If a user leaves a tab open, their session remains indefinitely valid.
 
 **Files affected:**
-- `src/components/layout/providers/AuthProvider.tsx` — add inactivity detection (track last interaction timestamp; if > 30 minutes of inactivity, call `signOut`)
+- `src/components/layout/providers/AuthProvider.tsx` — inactivity detection via `useEffect` + `setInterval` + `window` event listeners; `lastActivityRef` tracks last interaction; warning shown at 25 min; auto-signout at 30 min; timer runs only when `user !== null`
 
-**UI changes:** Inactivity warning dialog: "You've been inactive for 25 minutes. Click to stay signed in."
+**UI changes:** Modal overlay with "Session expiring soon" heading, "You've been inactive for 25 minutes. Click to stay signed in." body, and "Stay signed in" / "Sign out" buttons. Uses project's existing Tailwind overlay classes (`fixed inset-0 z-50 bg-black/60`, `bg-background rounded-xl`).
 
 **Test checklist:**
-- [ ] Warning appears at 25-minute mark
-- [ ] Session auto-terminates at 30 minutes of inactivity
-- [ ] Active use resets the inactivity timer
+- [x] Warning appears at 25-minute mark (`INACTIVITY_WARN_MS = 25 * 60 * 1000`)
+- [x] Session auto-terminates at 30 minutes of inactivity (`INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000`)
+- [x] Active use resets the inactivity timer (`recordActivity` updates `lastActivityRef.current`)
 
 **Rollback:** Remove inactivity detection.
 

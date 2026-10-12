@@ -1,11 +1,17 @@
 'use client'
 
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { useAuthStore } from '@/stores/authStore'
 import type { Profile } from '@/types/auth'
+
+const INACTIVITY_WARN_MS    = 25 * 60 * 1000
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000
+const CHECK_INTERVAL_MS     = 30 * 1000
+
+const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'] as const
 
 // Mirrors getServerProfile()'s fallback in src/lib/supabase/server.ts.
 // Used client-side when the profiles DB row doesn't exist yet (e.g. brand-new
@@ -42,8 +48,52 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children, initialProfile }: AuthProviderProps) {
   const router = useRouter()
-  const { setUser, setProfile, setHydrated, reset } = useAuthStore()
+  const { setUser, setProfile, setHydrated, reset, user } = useAuthStore()
+  const [showInactivityWarning, setShowInactivityWarning] = useState(false)
+  const lastActivityRef = useRef(Date.now())
 
+  // ── Inactivity timeout ────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!user) {
+      setShowInactivityWarning(false)
+      return
+    }
+
+    const supabase = createClient()
+
+    function recordActivity() {
+      lastActivityRef.current = Date.now()
+      setShowInactivityWarning(false)
+    }
+
+    ACTIVITY_EVENTS.forEach(ev => window.addEventListener(ev, recordActivity, { passive: true }))
+
+    const timer = setInterval(() => {
+      const idle = Date.now() - lastActivityRef.current
+      if (idle >= INACTIVITY_TIMEOUT_MS) {
+        supabase.auth.signOut()
+      } else if (idle >= INACTIVITY_WARN_MS) {
+        setShowInactivityWarning(true)
+      }
+    }, CHECK_INTERVAL_MS)
+
+    return () => {
+      ACTIVITY_EVENTS.forEach(ev => window.removeEventListener(ev, recordActivity))
+      clearInterval(timer)
+    }
+  }, [user])
+
+  function handleStaySignedIn() {
+    lastActivityRef.current = Date.now()
+    setShowInactivityWarning(false)
+  }
+
+  async function handleSignOutNow() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+  }
+
+  // ── Auth subscription ─────────────────────────────────────────────────────
   useEffect(() => {
     const supabase = createClient()
 
@@ -112,5 +162,41 @@ export function AuthProvider({ children, initialProfile }: AuthProviderProps) {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  return <>{children}</>
+  return (
+    <>
+      {children}
+      {showInactivityWarning && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="inactivity-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        >
+          <div className="w-full max-w-sm rounded-xl bg-background p-6 shadow-xl">
+            <h2 id="inactivity-title" className="mb-2 text-lg font-semibold">
+              Session expiring soon
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              You&apos;ve been inactive for 25 minutes. Click to stay signed in.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={handleSignOutNow}
+                className="rounded-md border px-4 py-2 text-sm hover:bg-accent"
+              >
+                Sign out
+              </button>
+              <button
+                onClick={handleStaySignedIn}
+                autoFocus
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                Stay signed in
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
 }
