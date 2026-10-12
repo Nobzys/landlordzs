@@ -4,7 +4,7 @@ vi.mock('next/cache',      () => ({ revalidatePath: vi.fn() }))
 vi.mock('@/lib/supabase/admin',  () => ({ createAdminClient: vi.fn() }))
 vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }))
 vi.mock('@/lib/utils/mtn-momo',    () => ({ mtnRequestToPay: vi.fn().mockResolvedValue({ referenceId: 'mtn-ref' }) }))
-vi.mock('@/lib/utils/orange-money', () => ({ orangeRequestToPay: vi.fn().mockResolvedValue({ paymentRef: 'om-ref' }) }), { virtual: true })
+vi.mock('@/lib/utils/orange-money', () => ({ orangeRequestToPay: vi.fn().mockResolvedValue({ paymentRef: 'om-ref' }) }))
 
 import { createClient }     from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'

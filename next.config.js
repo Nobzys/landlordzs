@@ -1,4 +1,8 @@
 /** @type {import('next').NextConfig} */
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+})
 
 const SUPABASE_HOST = 'xvjjyuhximxkjirckxpo.supabase.co'
 
@@ -65,6 +69,10 @@ const nextConfig = {
         hostname: SUPABASE_HOST,
       },
     ],
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 604800, // 7 days
+    deviceSizes: [375, 640, 768, 1024, 1280, 1920],
+    imageSizes: [16, 32, 64, 96, 128, 256, 384],
   },
   async headers() {
     return [
@@ -77,4 +85,4 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+module.exports = withBundleAnalyzer(nextConfig)

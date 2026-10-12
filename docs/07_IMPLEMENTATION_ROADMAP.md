@@ -2195,7 +2195,7 @@
 
 ---
 
-### Task 26.2 — N+1 query elimination 🟡 MEDIUM | M
+### Task 26.2 — N+1 query elimination ✅ COMPLETE
 
 **Problem:** Several pages make multiple sequential Supabase queries where a single JOIN would suffice. Most notable: admin users page fetches all profiles then does individual queries per user for role profile data.
 
@@ -2213,7 +2213,7 @@
 
 ---
 
-### Task 26.3 — Image optimization 🟡 MEDIUM | M
+### Task 26.3 — Image optimization ✅ COMPLETE
 
 **Problem:** Property images are served from Supabase Storage without any transform pipeline. Large raw images are downloaded by browsers.
 
@@ -2233,7 +2233,7 @@
 
 ---
 
-### Task 26.4 — Bundle analysis and lazy imports 🟢 LOW | M
+### Task 26.4 — Bundle analysis and lazy imports ✅ COMPLETE
 
 **Problem:** The app bundle has not been analyzed. Heavy components (PropertyGallery with Dialog, PropertyForm multi-step) may be included in pages that don't need them.
 

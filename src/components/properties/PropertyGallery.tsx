@@ -1,12 +1,17 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, X, Grid2X2 } from 'lucide-react'
+import { Grid2X2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils/cn'
 import type { PropertyImageRow } from '@/types/database'
+
+const PropertyLightbox = dynamic(
+  () => import('./PropertyLightbox').then(m => ({ default: m.PropertyLightbox })),
+  { ssr: false },
+)
 
 interface PropertyGalleryProps {
   images: PropertyImageRow[]
@@ -79,49 +84,16 @@ export function PropertyGallery({ images, title }: PropertyGalleryProps) {
         ))}
       </div>
 
-      {/* Lightbox */}
-      <Dialog open={lightboxIndex !== null} onOpenChange={() => setLightboxIndex(null)}>
-        <DialogContent className="max-w-5xl p-0 bg-black border-0">
-          <div className="relative h-[80vh]">
-            {lightboxIndex !== null && sorted[lightboxIndex] && (
-              <Image
-                src={sorted[lightboxIndex].url}
-                alt={sorted[lightboxIndex].alt_text ?? title}
-                fill
-                className="object-contain"
-                sizes="100vw"
-              />
-            )}
-
-            <button
-              className="absolute top-3 right-3 text-white bg-black/50 rounded-full p-1.5 hover:bg-black/70"
-              onClick={() => setLightboxIndex(null)}
-            >
-              <X className="h-5 w-5" />
-            </button>
-
-            {sorted.length > 1 && (
-              <>
-                <button
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-white bg-black/50 rounded-full p-2 hover:bg-black/70"
-                  onClick={() => go(-1)}
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white bg-black/50 rounded-full p-2 hover:bg-black/70"
-                  onClick={() => go(1)}
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-white text-sm bg-black/50 rounded-full px-3 py-1">
-                  {(lightboxIndex ?? 0) + 1} / {sorted.length}
-                </div>
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Lightbox — lazy-loaded on first open */}
+      {lightboxIndex !== null && (
+        <PropertyLightbox
+          images={sorted}
+          title={title}
+          index={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onNavigate={go}
+        />
+      )}
     </>
   )
 }
