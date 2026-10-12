@@ -53,6 +53,36 @@ export async function createAnnouncement(fd: FormData): Promise<ActionResult> {
   return { success: true }
 }
 
+export async function updatePlatformSettingAdmin(key: string, fd: FormData): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: callerProfile } = await (supabase as any)
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single() as { data: { role: string } | null }
+
+  if (callerProfile?.role !== 'admin') return { error: 'Insufficient permissions.' }
+
+  const newValue = (fd.get('value') as string | null)?.trim()
+  if (newValue === null || newValue === undefined) return { error: 'Value is required.' }
+
+  const adminClient = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (adminClient as any)
+    .from('platform_settings')
+    .update({ value: newValue, updated_at: new Date().toISOString() })
+    .eq('key', key)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin/settings')
+  return { success: true }
+}
+
 export async function toggleAnnouncement(
   id: string,
   isActive: boolean,

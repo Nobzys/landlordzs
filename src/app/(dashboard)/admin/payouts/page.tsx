@@ -2,10 +2,8 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Wallet, ChevronLeft, CheckCircle2, XCircle, Clock } from 'lucide-react'
-import { revalidatePath } from 'next/cache'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
-import { processPayoutAdmin, retryPayoutAdmin, confirmOrangePayoutAdmin, cancelProcessingPayoutAdmin } from '@/lib/actions/payments'
+import { processPayoutAdmin, retryPayoutAdmin, confirmOrangePayoutAdmin, cancelProcessingPayoutAdmin, rejectPayoutAdmin, markPayoutPaidAdmin } from '@/lib/actions/payments'
 import { Button } from '@/components/ui/button'
 import { formatXAF, formatRelative } from '@/lib/utils/format'
 
@@ -204,31 +202,7 @@ export default async function AdminPayoutsPage({
                     </form>
 
                     <form
-                      action={async (fd: FormData) => {
-                        'use server'
-                        const reason = (fd.get('reason') as string | null)?.trim() || 'Rejected by admin'
-                        const adminClient = createAdminClient()
-                        // Status update FIRST with CAS (.eq('status','pending')) so a concurrent
-                        // processPayoutAdmin sees 'failed' and aborts — same ordering fix as cancelPayout.
-                        const { data: rejected } = await (adminClient as any)
-                          .from('payouts')
-                          .update({
-                            status:         'failed',
-                            failure_reason: reason,
-                            failed_at:      new Date().toISOString(),
-                          })
-                          .eq('id', payoutId)
-                          .eq('status', 'pending')
-                          .select('id')
-                          .single()
-                        if (rejected) {
-                          await (adminClient as any).rpc('wallet_unlock', {
-                            p_user_id: recipientId,
-                            p_amount:  lockedAmt,
-                          })
-                        }
-                        revalidatePath('/admin/payouts')
-                      }}
+                      action={rejectPayoutAdmin.bind(null, payoutId, recipientId, lockedAmt)}
                       className="flex flex-1 gap-2"
                     >
                       <input
@@ -290,19 +264,7 @@ export default async function AdminPayoutsPage({
                         </div>
                       </>
                     ) : (
-                      <form action={async () => {
-                        'use server'
-                        const adminClient = createAdminClient()
-                        await (adminClient as any)
-                          .from('payouts')
-                          .update({
-                            status: 'completed',
-                            completed_at: new Date().toISOString(),
-                          })
-                          .eq('id', payoutId)
-                          .eq('status', 'processing')
-                        revalidatePath('/admin/payouts')
-                      }}>
+                      <form action={markPayoutPaidAdmin.bind(null, payoutId)}>
                         <Button type="submit" variant="outline" size="sm">
                           <Clock className="h-3.5 w-3.5 mr-1.5" />
                           Mark Paid

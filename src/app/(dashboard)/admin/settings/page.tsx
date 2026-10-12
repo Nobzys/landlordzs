@@ -1,11 +1,10 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { revalidatePath } from 'next/cache'
 import { Settings, ChevronLeft, Megaphone } from 'lucide-react'
 import { getServerProfile } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createAnnouncement, toggleAnnouncement } from '@/lib/actions/announcements'
+import { createAnnouncement, toggleAnnouncement, updatePlatformSettingAdmin } from '@/lib/actions/announcements'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatDate } from '@/lib/utils/format'
@@ -119,18 +118,7 @@ export default async function AdminSettingsPage() {
                   </div>
 
                   <form
-                    action={async (fd: FormData) => {
-                      'use server'
-                      const newValue = (fd.get('value') as string | null)?.trim()
-                      if (newValue === null || newValue === undefined) return
-                      const adminCl = createAdminClient()
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      await (adminCl as any)
-                        .from('platform_settings')
-                        .update({ value: newValue, updated_at: new Date().toISOString() })
-                        .eq('key', settingKey)
-                      revalidatePath('/admin/settings')
-                    }}
+                    action={updatePlatformSettingAdmin.bind(null, settingKey)}
                     className="flex items-center gap-2 shrink-0"
                   >
                     {s.type === 'boolean' ? (

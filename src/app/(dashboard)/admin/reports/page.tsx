@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { revalidatePath } from 'next/cache'
 import { Flag, ChevronLeft, CheckCircle2, XCircle, Clock } from 'lucide-react'
 import { getServerProfile } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { markReportReviewing, resolveReport, dismissReport } from '@/lib/actions/moderation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatRelative } from '@/lib/utils/format'
@@ -194,16 +194,7 @@ export default async function AdminReportsPage({
                 {(tab === 'pending' || tab === 'reviewing') && (
                   <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
                     {tab === 'pending' && (
-                      <form action={async () => {
-                        'use server'
-                        const adminCl = createAdminClient()
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        await (adminCl as any)
-                          .from('moderation_reports')
-                          .update({ status: 'reviewing', reviewed_at: new Date().toISOString() })
-                          .eq('id', reportId)
-                        revalidatePath('/admin/reports')
-                      }}>
+                      <form action={markReportReviewing.bind(null, reportId)}>
                         <Button type="submit" variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50">
                           <Clock className="h-3.5 w-3.5 mr-1.5" />
                           Mark Reviewing
@@ -212,23 +203,7 @@ export default async function AdminReportsPage({
                     )}
 
                     <form
-                      action={async (fd: FormData) => {
-                        'use server'
-                        const resolution  = (fd.get('resolution') as string | null)?.trim() || 'Content reviewed'
-                        const actionTaken = (fd.get('action_taken') as string | null)?.trim() || null
-                        const adminCl     = createAdminClient()
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        await (adminCl as any)
-                          .from('moderation_reports')
-                          .update({
-                            status:       'resolved',
-                            resolution,
-                            action_taken: actionTaken,
-                            reviewed_at:  new Date().toISOString(),
-                          })
-                          .eq('id', reportId)
-                        revalidatePath('/admin/reports')
-                      }}
+                      action={resolveReport.bind(null, reportId)}
                       className="flex flex-1 flex-wrap gap-2"
                     >
                       <input
@@ -249,16 +224,7 @@ export default async function AdminReportsPage({
                       </Button>
                     </form>
 
-                    <form action={async () => {
-                      'use server'
-                      const adminCl = createAdminClient()
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      await (adminCl as any)
-                        .from('moderation_reports')
-                        .update({ status: 'dismissed', reviewed_at: new Date().toISOString() })
-                        .eq('id', reportId)
-                      revalidatePath('/admin/reports')
-                    }}>
+                    <form action={dismissReport.bind(null, reportId)}>
                       <Button type="submit" variant="outline" size="sm" className="text-gray-600 border-gray-200 hover:bg-gray-50 shrink-0">
                         <XCircle className="h-3.5 w-3.5 mr-1.5" />
                         Dismiss

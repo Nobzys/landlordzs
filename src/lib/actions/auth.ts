@@ -1427,6 +1427,58 @@ export async function joinAgency(slug: string): Promise<ActionResult> {
   return { success: true }
 }
 
+// ─── Admin: suspend / reactivate / ban professionals ────────────────────────
+// suspend and reactivate: admin or moderator
+// ban: admin only
+
+export async function suspendProfessionalAdmin(userId: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: caller } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single()
+  if (caller?.role !== 'admin' && caller?.role !== 'moderator') return { error: 'Insufficient permissions' }
+
+  const adminClient = createAdminClient() as any
+  await adminClient.from('profiles').update({ account_status: 'suspended' }).eq('id', userId)
+
+  revalidatePath('/admin/professionals')
+  return { success: true }
+}
+
+export async function reactivateProfessionalAdmin(userId: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: caller } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single()
+  if (caller?.role !== 'admin' && caller?.role !== 'moderator') return { error: 'Insufficient permissions' }
+
+  const adminClient = createAdminClient() as any
+  await adminClient.from('profiles').update({ account_status: 'active' }).eq('id', userId)
+
+  revalidatePath('/admin/professionals')
+  return { success: true }
+}
+
+export async function banProfessionalAdmin(userId: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: caller } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single()
+  if (caller?.role !== 'admin') return { error: 'Insufficient permissions' }
+
+  const adminClient = createAdminClient() as any
+  await adminClient.from('profiles').update({ account_status: 'banned' }).eq('id', userId)
+
+  revalidatePath('/admin/professionals')
+  return { success: true }
+}
+
 // ─── expireKycRecord ─────────────────────────────────────────────────────────
 // Lazy cron-like check called from professional dashboard pages on page load.
 // kyc_moderator_update RLS restricts status writes to moderators/admins, so

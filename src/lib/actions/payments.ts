@@ -578,3 +578,70 @@ export async function cancelPayout(payoutId: string): Promise<ActionResult> {
   revalidatePath('/account/payouts')
   return { success: true }
 }
+
+// ─── Admin: reject a pending payout ─────────────────────────────────────────
+// Marks the payout as failed and releases the wallet lock.
+// Admin-only — moderators must not reach this.
+
+export async function rejectPayoutAdmin(
+  payoutId:    string,
+  recipientId: string,
+  lockedAmt:   number,
+  fd:          FormData,
+): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  const { data: caller } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single()
+  if (caller?.role !== 'admin') return { error: 'Insufficient permissions' }
+
+  const reason = (fd.get('reason') as string | null)?.trim() || 'Rejected by admin'
+  const adminClient = createAdminClient()
+
+  const { data: rejected } = await (adminClient as any)
+    .from('payouts')
+    .update({
+      status:         'failed',
+      failure_reason: reason,
+      failed_at:      new Date().toISOString(),
+    })
+    .eq('id', payoutId)
+    .eq('status', 'pending')
+    .select('id')
+    .single()
+
+  if (rejected) {
+    await (adminClient as any).rpc('wallet_unlock', {
+      p_user_id: recipientId,
+      p_amount:  lockedAmt,
+    })
+  }
+
+  revalidatePath('/admin/payouts')
+  return { success: true }
+}
+
+// ─── Admin: mark a processing payout as paid ────────────────────────────────
+// Used for bank-transfer payouts where payment is confirmed manually.
+// Admin-only — moderators must not reach this.
+
+export async function markPayoutPaidAdmin(payoutId: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  const { data: caller } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single()
+  if (caller?.role !== 'admin') return { error: 'Insufficient permissions' }
+
+  const adminClient = createAdminClient()
+
+  await (adminClient as any)
+    .from('payouts')
+    .update({ status: 'completed', completed_at: new Date().toISOString() })
+    .eq('id', payoutId)
+    .eq('status', 'processing')
+
+  revalidatePath('/admin/payouts')
+  return { success: true }
+}

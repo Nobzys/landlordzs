@@ -1,14 +1,13 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { revalidatePath } from 'next/cache'
 import {
   ShieldCheck, ChevronLeft, CheckCircle2, XCircle,
   Clock, AlertCircle, FileText,
 } from 'lucide-react'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { adminApproveProfessional, adminRejectProfessional } from '@/lib/actions/auth'
+import { adminApproveProfessional, adminRejectProfessional, suspendProfessionalAdmin, reactivateProfessionalAdmin, banProfessionalAdmin } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatRelative } from '@/lib/utils/format'
@@ -334,17 +333,7 @@ export default async function AdminProfessionalsPage({
                 {tab === 'active' && (
                   <div className="flex gap-2 pt-2 border-t">
                     {/* Suspend */}
-                    <form action={async (fd: FormData) => {
-                      'use server'
-                      const reason = (fd.get('reason') as string | null)?.trim() || 'Account suspended by admin.'
-                      const adminCl = createAdminClient()
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      await (adminCl as any)
-                        .from('profiles')
-                        .update({ account_status: 'suspended' })
-                        .eq('id', userId)
-                      revalidatePath('/admin/professionals')
-                    }} className="flex flex-1 gap-2">
+                    <form action={suspendProfessionalAdmin.bind(null, userId)} className="flex flex-1 gap-2">
                       <input
                         name="reason"
                         placeholder="Suspension reason (optional)"
@@ -366,16 +355,7 @@ export default async function AdminProfessionalsPage({
                 {tab === 'suspended' && (
                   <div className="flex gap-2 pt-2 border-t">
                     {/* Reactivate */}
-                    <form action={async () => {
-                      'use server'
-                      const adminCl = createAdminClient()
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      await (adminCl as any)
-                        .from('profiles')
-                        .update({ account_status: 'active' })
-                        .eq('id', userId)
-                      revalidatePath('/admin/professionals')
-                    }}>
+                    <form action={reactivateProfessionalAdmin.bind(null, userId)}>
                       <Button
                         type="submit"
                         size="sm"
@@ -387,16 +367,7 @@ export default async function AdminProfessionalsPage({
                     </form>
 
                     {/* Permanent ban */}
-                    <form action={async () => {
-                      'use server'
-                      const adminCl = createAdminClient()
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      await (adminCl as any)
-                        .from('profiles')
-                        .update({ account_status: 'banned' })
-                        .eq('id', userId)
-                      revalidatePath('/admin/professionals')
-                    }}>
+                    <form action={banProfessionalAdmin.bind(null, userId)}>
                       <Button type="submit" variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50">
                         Ban
                       </Button>
