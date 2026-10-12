@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { STORAGE_BUCKETS } from '@/lib/utils/constants'
+import { checkRateLimit } from '@/lib/utils/rateLimit'
 import { v4 as uuidv4 } from 'uuid'
 import type { ActionResult } from '@/types/auth'
 
@@ -516,6 +517,9 @@ export async function sendMessage(params: {
 }): Promise<ActionResult<{ messageId: string }>> {
   const { supabase, user } = await requireAuth()
   if (!user) return { error: 'Unauthorized' }
+
+  const rlMsg = await checkRateLimit({ action: 'message', identifier: user.id, limit: 100, windowMs: 60 * 60 * 1000 })
+  if (rlMsg.limited) return { error: rlMsg.error! }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = supabase as any

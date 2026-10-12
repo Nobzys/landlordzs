@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createReviewSchema, type CreateReviewInput } from '@/lib/validations/review'
 import { REVIEWABLE_ROLES } from '@/types/review'
+import { checkRateLimit } from '@/lib/utils/rateLimit'
 import type { ActionResult } from '@/types/auth'
 
 export async function createPropertyReview(
@@ -114,6 +115,9 @@ export async function createReview(input: CreateReviewInput): Promise<ActionResu
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated.' }
+
+  const rlReview = await checkRateLimit({ action: 'review', identifier: user.id, limit: 5, windowMs: 24 * 60 * 60 * 1000 })
+  if (rlReview.limited) return { error: rlReview.error! }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = supabase as any

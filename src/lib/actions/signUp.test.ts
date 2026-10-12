@@ -4,6 +4,8 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('next/headers', () => ({ headers: vi.fn() }))
 vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }))
 vi.mock('@/lib/supabase/admin', () => ({ createAdminClient: vi.fn() }))
+// signUp tests cover auth flow, not rate limiting; bypass the guard
+vi.mock('@/lib/utils/rateLimit', () => ({ checkRateLimit: vi.fn().mockResolvedValue({ limited: false }) }))
 
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'

@@ -22,6 +22,7 @@ import {
   propertyManagerProfileSchema,
 } from '@/lib/validations/auth'
 import { ROLE_DASHBOARDS, APP_URL, APPROVAL_REQUIRED_ROLES } from '@/lib/utils/constants'
+import { checkRateLimit } from '@/lib/utils/rateLimit'
 import type { ActionResult } from '@/types/auth'
 import type { UserRole } from '@/types/auth'
 import type {
@@ -172,6 +173,11 @@ export async function signUp(
   // Use the request Host header so the link in the email always points to the
   // actual server, not the APP_URL constant (which defaults to localhost:3000).
   const headersList = await headers()
+
+  const signUpIp = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const rl = await checkRateLimit({ action: 'signup', identifier: signUpIp, limit: 5, windowMs: 60 * 60 * 1000 })
+  if (rl.limited) return { error: rl.error! }
+
   const host =
     headersList.get('x-forwarded-host') ??
     headersList.get('host') ??
@@ -290,6 +296,10 @@ export async function submitAccountRecoveryRequest(
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message }
   }
+
+  const recoverIp = await getClientIp()
+  const rlRecover = await checkRateLimit({ action: 'recover', identifier: recoverIp, limit: 3, windowMs: 24 * 60 * 60 * 1000 })
+  if (rlRecover.limited) return { error: rlRecover.error! }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const admin = createAdminClient() as any
