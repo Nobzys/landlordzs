@@ -1,20 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { Loader2, CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PaymentMethodSelector } from './PaymentMethodSelector'
-import { useTopUpWallet } from '@/hooks/payments/usePaymentMutations'
+import { useTopUpWallet, useRetryPayment } from '@/hooks/payments/usePaymentMutations'
 import { usePaymentStatus } from '@/hooks/payments/usePaymentStatus'
 import { formatXAF } from '@/lib/utils/format'
 import { toast } from 'sonner'
 
 const QUICK_AMOUNTS = [5_000, 10_000, 25_000, 50_000, 100_000, 500_000]
+const THREE_MINUTES_MS = 3 * 60 * 1000
 
 const schema = z.object({
   amount:   z.number().int().positive().min(500, 'Minimum 500 XAF'),
@@ -26,7 +27,16 @@ type FormValues = z.infer<typeof schema>
 export function WalletTopUpForm({ onSuccess }: { onSuccess?: () => void }) {
   const [txnId, setTxnId]           = useState<string | null>(null)
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null)
-  const topUp = useTopUpWallet()
+  // originalTransactionId of the failed txn being retried (null = fresh payment)
+  const [retryOfTxnId, setRetryOfTxnId] = useState<string | null>(null)
+  // Snapshot of the last submitted amount/provider for pre-populating retry form
+  const [lastSubmit, setLastSubmit] = useState<{ amount: number; provider: FormValues['provider'] } | null>(null)
+  // Wall-clock 'now' updated every 30 s while polling — drives the timeout warning
+  const [now, setNow] = useState<number>(() => Date.now())
+  const [pollingStartTime, setPollingStartTime] = useState<number | null>(null)
+
+  const topUp      = useTopUpWallet()
+  const retryTopUp = useRetryPayment()
 
   const { isPolling, isSuccessful, isFailed } = usePaymentStatus(txnId, {
     onSuccess: () => {
@@ -35,6 +45,26 @@ export function WalletTopUpForm({ onSuccess }: { onSuccess?: () => void }) {
     },
     onFailure: () => toast.error('Payment failed. Please try again.'),
   })
+
+  // Record when polling begins; clear when txnId is cleared
+  useEffect(() => {
+    if (txnId) {
+      const t = Date.now()
+      setPollingStartTime(t)
+      setNow(t)
+    } else {
+      setPollingStartTime(null)
+    }
+  }, [txnId])
+
+  // Refresh 'now' every 30 s while actively polling so the timeout message appears
+  useEffect(() => {
+    if (!isPolling) return
+    const id = setInterval(() => setNow(Date.now()), 30_000)
+    return () => clearInterval(id)
+  }, [isPolling])
+
+  const isLate = isPolling && pollingStartTime !== null && (now - pollingStartTime) > THREE_MINUTES_MS
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -45,9 +75,16 @@ export function WalletTopUpForm({ onSuccess }: { onSuccess?: () => void }) {
   const amount   = watch('amount')
 
   const onSubmit = async (data: FormValues) => {
-    const result = await topUp.mutateAsync({ amount: data.amount, provider: data.provider, phone: data.phone })
+    let result
+    if (retryOfTxnId) {
+      // Server reads amount + provider from DB; phone is re-supplied by the user
+      result = await retryTopUp.mutateAsync({ originalTransactionId: retryOfTxnId, phone: data.phone })
+    } else {
+      result = await topUp.mutateAsync({ amount: data.amount, provider: data.provider, phone: data.phone })
+    }
     if (result.error) return
     if (result.data?.transaction_id) {
+      setLastSubmit({ amount: data.amount, provider: data.provider })
       setTxnId(result.data.transaction_id)
       if (result.data.payment_url) {
         setPaymentUrl(result.data.payment_url)
@@ -55,6 +92,8 @@ export function WalletTopUpForm({ onSuccess }: { onSuccess?: () => void }) {
       }
     }
   }
+
+  const isPending = topUp.isPending || retryTopUp.isPending
 
   if (isSuccessful) {
     return (
@@ -64,7 +103,7 @@ export function WalletTopUpForm({ onSuccess }: { onSuccess?: () => void }) {
           <p className="font-semibold text-lg">Payment Successful!</p>
           <p className="text-sm text-muted-foreground">Your wallet has been topped up.</p>
         </div>
-        <Button onClick={() => { setTxnId(null); onSuccess?.() }}>Done</Button>
+        <Button onClick={() => { setTxnId(null); setRetryOfTxnId(null); onSuccess?.() }}>Done</Button>
       </div>
     )
   }
@@ -77,7 +116,20 @@ export function WalletTopUpForm({ onSuccess }: { onSuccess?: () => void }) {
           <p className="font-semibold text-lg">Payment Failed</p>
           <p className="text-sm text-muted-foreground">Please check your phone and try again.</p>
         </div>
-        <Button variant="outline" onClick={() => { setTxnId(null); setPaymentUrl(null) }}>Try Again</Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setRetryOfTxnId(txnId)
+            setTxnId(null)
+            setPaymentUrl(null)
+            if (lastSubmit) {
+              setValue('amount', lastSubmit.amount)
+              setValue('provider', lastSubmit.provider)
+            }
+          }}
+        >
+          Try Again
+        </Button>
       </div>
     )
   }
@@ -108,6 +160,12 @@ export function WalletTopUpForm({ onSuccess }: { onSuccess?: () => void }) {
             Reopen payment page
           </Button>
         )}
+        {isLate && (
+          <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-4 py-2 text-sm text-amber-800">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>Payment is taking longer than expected. Still checking…</span>
+          </div>
+        )}
         <p className="text-xs text-muted-foreground">Do not close this page</p>
       </div>
     )
@@ -115,6 +173,12 @@ export function WalletTopUpForm({ onSuccess }: { onSuccess?: () => void }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      {retryOfTxnId && (
+        <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-2 text-sm text-amber-800">
+          Retrying your previous payment — amount and method are pre-filled. Re-enter your phone number to continue.
+        </div>
+      )}
+
       {/* Quick amounts */}
       <div className="space-y-2">
         <Label>Amount (XAF)</Label>
@@ -123,8 +187,9 @@ export function WalletTopUpForm({ onSuccess }: { onSuccess?: () => void }) {
             <button
               key={a}
               type="button"
+              disabled={!!retryOfTxnId}
               onClick={() => setValue('amount', a)}
-              className="rounded-lg border py-2 text-sm hover:border-blue-500 hover:bg-blue-50 transition-colors"
+              className="rounded-lg border py-2 text-sm hover:border-blue-500 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {formatXAF(a)}
             </button>
@@ -133,6 +198,7 @@ export function WalletTopUpForm({ onSuccess }: { onSuccess?: () => void }) {
         <Input
           type="number"
           placeholder="Or enter custom amount"
+          disabled={!!retryOfTxnId}
           {...register('amount', { valueAsNumber: true })}
         />
         {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
@@ -143,9 +209,10 @@ export function WalletTopUpForm({ onSuccess }: { onSuccess?: () => void }) {
         <Label>Payment Method</Label>
         <PaymentMethodSelector
           value={provider}
-          onChange={v => setValue('provider', v as any)}
+          onChange={v => !retryOfTxnId && setValue('provider', v as any)}
           amount={amount}
           exclude={['wallet']}
+          disabled={!!retryOfTxnId}
         />
         {errors.provider && <p className="text-xs text-destructive">{errors.provider.message}</p>}
       </div>
@@ -160,8 +227,8 @@ export function WalletTopUpForm({ onSuccess }: { onSuccess?: () => void }) {
         {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
       </div>
 
-      <Button type="submit" className="w-full" disabled={topUp.isPending}>
-        {topUp.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      <Button type="submit" className="w-full" disabled={isPending}>
+        {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {amount ? `Top Up ${formatXAF(amount)}` : 'Top Up Wallet'}
       </Button>
     </form>

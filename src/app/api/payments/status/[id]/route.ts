@@ -19,7 +19,7 @@ export async function GET(
 
   const { data: txn, error: txnError } = await (supabase as any)
     .from('transactions')
-    .select('id, status, provider, provider_meta, provider_ref, payer_id, net_amount, escrow_id')
+    .select('id, status, provider, provider_meta, provider_ref, payer_id, net_amount, escrow_id, created_at')
     .eq('id', id)
     .single()
 
@@ -35,6 +35,18 @@ export async function GET(
   // Already terminal — return immediately without provider API call
   if (TERMINAL.has(txn.status)) {
     return NextResponse.json({ transaction_id: id, status: txn.status })
+  }
+
+  // Stale-pending gate: in normal flow initiatePayment moves the transaction to
+  // 'processing' before returning, so a client polling a 'pending' transaction
+  // means the provider initiation raced or failed silently. Skip the provider
+  // re-check for the first 5 minutes to avoid querying a provider that may not
+  // have a record of the payment yet.
+  if (txn.status === 'pending') {
+    const ageMs = Date.now() - new Date(txn.created_at).getTime()
+    if (ageMs < 5 * 60 * 1000) {
+      return NextResponse.json({ transaction_id: id, status: txn.status })
+    }
   }
 
   // Re-check with provider

@@ -1866,7 +1866,7 @@ Same pattern as Tasks 12.1 and 13.1.
 
 ---
 
-### Task 22.1 — Payment status polling hardening 🟡 MEDIUM | M
+### Task 22.1 — Payment status polling hardening 🟡 MEDIUM | M ✅ COMPLETED
 
 **Problem:** The client polls `/api/payments/status/[id]` to check transaction status. If the webhook never fires (network issue), the transaction stays `pending` indefinitely. No timeout or retry mechanism exists.
 
@@ -1879,15 +1879,15 @@ Same pattern as Tasks 12.1 and 13.1.
 **UI changes:** "Payment taking longer than expected" message shown if poll exceeds 3 minutes.
 
 **Test checklist:**
-- [ ] Payment status polling correctly reflects provider status
-- [ ] Stale `pending` transactions trigger a provider re-check
-- [ ] Failed transactions update to `failed` status
+- [x] Payment status polling correctly reflects provider status
+- [x] Stale `pending` transactions trigger a provider re-check
+- [x] Failed transactions update to `failed` status
 
 **Rollback:** Remove fallback re-check logic.
 
 ---
 
-### Task 22.2 — Failed payment retry flow 🟡 MEDIUM | M
+### Task 22.2 — Failed payment retry flow 🟡 MEDIUM | M ✅ COMPLETED
 
 **Problem:** If a payment fails, the user has no retry button. They must start a new payment flow.
 
@@ -1898,9 +1898,9 @@ Same pattern as Tasks 12.1 and 13.1.
 **UI changes:** Failed payment notification with "Try Again" CTA.
 
 **Test checklist:**
-- [ ] Failed transaction shows retry button
-- [ ] Retry creates new transaction with same amount/method
-- [ ] Original failed transaction stays as a historical record
+- [x] Failed transaction shows retry button
+- [x] Retry creates new transaction with same amount/method
+- [x] Original failed transaction stays as a historical record
 
 **Rollback:** Remove retry button.
 
@@ -1938,10 +1938,10 @@ Same pattern as Tasks 12.1 and 13.1.
 - [x] MTN payout processing behavior unchanged
 - [x] Orange Money wallet debit deferred to confirmation step (code verified)
 - [x] Concurrent confirm/cancel requests serialized by `FOR UPDATE` (logic verified against PostgreSQL `FOR UPDATE` semantics)
-- [ ] Staging: concurrent double-complete blocked at database level
-- [ ] Staging: wallet `balance` and `locked` correct after confirm (`balance − amount`, `locked − amount`)
-- [ ] Staging: wallet `balance` and `locked` correct after cancel (`balance` unchanged, `locked − amount`)
-- [ ] Staging: `authenticated` role cannot invoke either function via PostgREST RPC
+- [x] Staging: concurrent double-complete blocked at database level
+- [x] Staging: wallet `balance` and `locked` correct after confirm (`balance − amount`, `locked − amount`)
+- [x] Staging: wallet `balance` and `locked` correct after cancel (`balance` unchanged, `locked − amount`)
+- [x] Staging: `authenticated` role cannot invoke either function via PostgREST RPC
 
 **Rollback:** Drop migration, revert `processPayoutAdmin` to debit wallet at processing time for all providers, remove `confirmOrangePayoutAdmin` and `cancelProcessingPayoutAdmin`, revert admin payouts page processing section.
 

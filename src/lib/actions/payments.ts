@@ -505,6 +505,47 @@ export async function retryPayoutAdmin(payoutId: string): Promise<ActionResult> 
   return { success: true }
 }
 
+// ─── Retry a failed top-up ───────────────────────────────────────────────────
+// Creates a new transaction with the original's amount and provider (read from
+// the database — client-supplied values are ignored), linked to the original via
+// reference_type='retry_of'. The original transaction is preserved untouched.
+// Phone is re-supplied by the user since it is not stored on the transaction.
+
+export async function retryPayment(
+  originalTransactionId: string,
+  phone: string
+): Promise<ActionResult<PaymentInitiationResult>> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  const { data: original } = await (supabase as any)
+    .from('transactions')
+    .select('id, payer_id, status, amount, provider, type, description, escrow_id')
+    .eq('id', originalTransactionId)
+    .single()
+
+  if (!original || original.payer_id !== user.id) return { error: 'Transaction not found' }
+
+  if (!['failed', 'cancelled'].includes(original.status)) {
+    return { error: 'Only failed or cancelled transactions can be retried' }
+  }
+
+  if (original.escrow_id) {
+    return { error: 'Escrow transactions cannot be retried through this flow' }
+  }
+
+  return initiatePayment({
+    amount:           original.amount,
+    provider:         original.provider,
+    phone,
+    transaction_type: original.type,
+    description:      original.description ?? undefined,
+    reference_type:   'retry_of',
+    reference_id:     originalTransactionId,
+  })
+}
+
 // ─── Cancel payout (user-initiated) ──────────────────────────────────────────
 
 export async function cancelPayout(payoutId: string): Promise<ActionResult> {

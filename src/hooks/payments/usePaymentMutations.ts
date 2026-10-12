@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { queryKeys } from '@/lib/query/keys'
-import { topUpWallet, requestPayout } from '@/lib/actions/payments'
+import { topUpWallet, requestPayout, retryPayment } from '@/lib/actions/payments'
 import { releaseEscrow, disputeEscrow, completeMilestone, approveMilestone, fundEscrow } from '@/lib/actions/escrow'
 import type { RequestPayoutInput } from '@/types/payment'
 import type { DisputeEscrowInput, CompleteMilestoneInput } from '@/lib/validations/payment'
@@ -36,6 +36,20 @@ export function useTopUpWallet() {
       qc.invalidateQueries({ queryKey: queryKeys.transactions.list() })
     },
     onError: () => toast.error('Top-up initiation failed'),
+  })
+}
+
+export function useRetryPayment() {
+  const qc = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ originalTransactionId, phone }: { originalTransactionId: string; phone: string }) =>
+      retryPayment(originalTransactionId, phone),
+    onSuccess: (result) => {
+      if (result.error) { toast.error(result.error); return }
+      qc.invalidateQueries({ queryKey: queryKeys.transactions.list() })
+    },
+    onError: () => toast.error('Retry initiation failed'),
   })
 }
 
