@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { mtnGetPaymentStatus, mtnGetTransferStatus } from '@/lib/utils/mtn-momo'
 
 // MTN MoMo sends async callbacks for both Collections and Disbursements.
 // referenceId for collections  = transaction.id
 // referenceId for disbursements = payout.id
 // We distinguish by looking up in both tables.
+//
+// SECURITY: MTN MoMo callbacks carry no HMAC signature or shared-secret token.
+// The callback body is used only to identify the referenceId; the actual payment
+// status is independently verified via an authenticated server-to-server API call
+// (Bearer token via client credentials) before any wallet credit or status update.
+// Amount and currency are also verified against our stored transaction record.
 
 const TERMINAL_TX  = new Set(['completed', 'failed', 'cancelled', 'refunded'])
 const TERMINAL_PAY = new Set(['completed', 'failed', 'cancelled'])
@@ -12,7 +19,7 @@ const UUID_RE      = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 
 interface MtnCallbackBody {
   referenceId:              string
-  status:                   'SUCCESSFUL' | 'FAILED' | 'PENDING'
+  status?:                  'SUCCESSFUL' | 'FAILED' | 'PENDING'
   financialTransactionId?:  string
   reason?:                  string
 }
@@ -25,15 +32,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { referenceId, status, financialTransactionId, reason } = body
-  if (!referenceId || !status) {
-    return NextResponse.json({ error: 'Missing referenceId or status' }, { status: 400 })
+  const { referenceId, status } = body
+  if (!referenceId) {
+    return NextResponse.json({ error: 'Missing referenceId' }, { status: 400 })
   }
   if (!UUID_RE.test(referenceId)) {
     return NextResponse.json({ error: 'Invalid referenceId' }, { status: 400 })
   }
 
-  // Still in-flight — nothing to do
+  // PENDING callbacks carry no useful information — skip the verification API call
   if (status === 'PENDING') {
     return NextResponse.json({ received: true })
   }
@@ -43,7 +50,7 @@ export async function POST(request: Request) {
   // ── Collection callback (transaction) ─────────────────────────────────────
   const { data: txn } = await (adminClient as any)
     .from('transactions')
-    .select('id, status, payer_id, net_amount, escrow_id')
+    .select('id, status, payer_id, amount, net_amount, escrow_id')
     .eq('id', referenceId)
     .eq('provider', 'mtn_momo')
     .single()
@@ -53,15 +60,40 @@ export async function POST(request: Request) {
       return NextResponse.json({ received: true }) // idempotent
     }
 
-    const newStatus = status === 'SUCCESSFUL' ? 'completed' : 'failed'
+    // Independent server-to-server verification — never trust the callback body's status
+    let verified: Awaited<ReturnType<typeof mtnGetPaymentStatus>>
+    try {
+      verified = await mtnGetPaymentStatus(referenceId)
+    } catch {
+      // Provider API unavailable — return 200 so MTN does not retry storm;
+      // the client-side polling loop will re-check status independently.
+      return NextResponse.json({ received: true })
+    }
+
+    if (verified.status === 'PENDING') {
+      return NextResponse.json({ received: true }) // still in-flight
+    }
+
+    // Verify amount and currency against our stored record (each checked only if present)
+    if (verified.amount !== undefined) {
+      const verifiedAmt = Number(verified.amount)
+      if (isNaN(verifiedAmt) || verifiedAmt !== txn.amount) {
+        return NextResponse.json({ received: true })
+      }
+    }
+    if (verified.currency !== undefined && verified.currency !== 'XAF') {
+      return NextResponse.json({ received: true })
+    }
+
+    const newStatus = verified.status === 'SUCCESSFUL' ? 'completed' : 'failed'
     const update: Record<string, unknown> = {
       status:       newStatus,
-      provider_ref: financialTransactionId ?? referenceId,
+      provider_ref: verified.financialTransactionId ?? referenceId,
     }
     if (newStatus === 'completed') update.completed_at = new Date().toISOString()
     if (newStatus === 'failed') {
       update.failed_at      = new Date().toISOString()
-      update.failure_reason = reason ?? 'MTN payment failed'
+      update.failure_reason = verified.reason?.message ?? 'MTN payment failed'
     }
 
     // CAS: only the first concurrent webhook wins
@@ -99,7 +131,7 @@ export async function POST(request: Request) {
   // ── Disbursement callback (payout) ────────────────────────────────────────
   const { data: payout } = await (adminClient as any)
     .from('payouts')
-    .select('id, status, recipient_id, amount')
+    .select('id, status, recipient_id, amount, net_amount')
     .eq('id', referenceId)
     .eq('provider', 'mtn_momo')
     .single()
@@ -109,7 +141,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ received: true }) // idempotent
     }
 
-    if (status === 'SUCCESSFUL') {
+    // Independent server-to-server verification
+    let verified: Awaited<ReturnType<typeof mtnGetTransferStatus>>
+    try {
+      verified = await mtnGetTransferStatus(referenceId)
+    } catch {
+      return NextResponse.json({ received: true })
+    }
+
+    if (verified.status === 'PENDING') {
+      return NextResponse.json({ received: true })
+    }
+
+    // Verify amount and currency — MTN receives net_amount (after platform fee)
+    if (verified.amount !== undefined) {
+      const verifiedAmt = Number(verified.amount)
+      if (isNaN(verifiedAmt) || verifiedAmt !== payout.net_amount) {
+        return NextResponse.json({ received: true })
+      }
+    }
+    if (verified.currency !== undefined && verified.currency !== 'XAF') {
+      return NextResponse.json({ received: true })
+    }
+
+    if (verified.status === 'SUCCESSFUL') {
       await (adminClient as any)
         .from('payouts')
         .update({ status: 'completed', completed_at: new Date().toISOString() })
@@ -125,7 +180,7 @@ export async function POST(request: Request) {
       .update({
         status:         'failed',
         failed_at:      new Date().toISOString(),
-        failure_reason: reason ?? 'MTN disbursement failed',
+        failure_reason: verified.reason?.message ?? 'MTN disbursement failed',
       })
       .eq('id', referenceId)
       .eq('status', payout.status)

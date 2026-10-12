@@ -67,6 +67,9 @@ export interface MtnPaymentStatusResult {
   status:                  MtnPaymentStatus
   financialTransactionId?: string
   reason?:                 { code: string; message: string }
+  // Returned by the status API; absent in older sandbox responses
+  amount?:                 string
+  currency?:               string
 }
 
 export async function mtnRequestToPay(req: MtnPaymentRequest): Promise<void> {
