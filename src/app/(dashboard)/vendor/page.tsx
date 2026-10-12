@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatXAF } from '@/lib/utils/format'
+import { VendorAnalyticsChart } from '@/components/vendor/VendorAnalyticsChart'
 
 export const metadata: Metadata = { title: 'Vendor Dashboard' }
 
@@ -37,6 +38,36 @@ export default async function VendorPage() {
     .select('balance, currency')
     .eq('user_id', profile.id)
     .single() as { data: { balance: number; currency: string } | null }
+
+  // Fetch last 12 months of order data for analytics
+  const twelveMonthsAgo = new Date()
+  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: recentOrders } = await (supabase as any)
+    .from('orders')
+    .select('created_at, total, status')
+    .eq('vendor_id', profile.id)
+    .gte('created_at', twelveMonthsAgo.toISOString())
+    .order('created_at', { ascending: true }) as {
+      data: Array<{ created_at: string; total: number; status: string }> | null
+    }
+
+  const { revenueData, orderData } = (() => {
+    const rev: Record<string, number> = {}
+    const cnt: Record<string, number> = {}
+    ;(recentOrders ?? []).forEach(o => {
+      const key   = o.created_at.slice(0, 7)
+      cnt[key] = (cnt[key] ?? 0) + 1
+      if (o.status === 'delivered' || o.status === 'paid') {
+        rev[key] = (rev[key] ?? 0) + o.total
+      }
+    })
+    const months = Array.from(new Set([...Object.keys(rev), ...Object.keys(cnt)])).sort()
+    return {
+      revenueData: months.map(k => ({ name: k.slice(5), value: rev[k] ?? 0 })),
+      orderData:   months.map(k => ({ name: k.slice(5), value: cnt[k] ?? 0 })),
+    }
+  })()
 
   const displayName = profile.display_name ?? profile.full_name ?? 'there'
 
@@ -101,6 +132,9 @@ export default async function VendorPage() {
           </p>
         </div>
       </div>
+
+      {/* Analytics charts */}
+      <VendorAnalyticsChart revenueData={revenueData} orderData={orderData} />
 
       {/* Store card */}
       {vendor ? (

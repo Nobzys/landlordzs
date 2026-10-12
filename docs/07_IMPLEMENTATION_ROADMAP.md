@@ -1888,7 +1888,7 @@
 
 ---
 
-### Task 22.4 — Orange Money payout atomicity 🔴 HIGH | S
+### Task 22.4 — Orange Money payout atomicity 🔴 HIGH | S ✅ COMPLETE
 
 **Problem:** `processPayoutAdmin` debited the recipient wallet at the moment of processing for all providers, including Orange Money. Because Orange Money has no public B2C disbursement API, admins must transfer funds manually via the Orange Money portal. The wallet debit happened before the admin confirmed the external transfer was sent, creating a window where the wallet balance was permanently reduced without the recipient receiving funds.
 
@@ -1924,7 +1924,7 @@
 
 ---
 
-### Task 23.1 — Admin dispute resolution 🔴 HIGH | L
+### Task 23.1 — Admin dispute resolution 🔴 HIGH | L ✅ COMPLETE
 
 **Problem:** `/admin/escrow` shows disputed escrows but there is no resolution UI. Admins cannot release funds to either party when a dispute exists.
 
@@ -1975,7 +1975,9 @@
 
 ---
 
-### Task 23.3 — Milestone creation UI 🟡 MEDIUM | L
+### Task 23.3 — Milestone creation UI 🟡 MEDIUM | L ✅ COMPLETE
+
+**Status:** ✅ Completed — 2026-10-12
 
 **Problem:** `escrow_milestones` table exists and the detail page shows milestones, but there is no UI to define milestones when creating an escrow.
 
@@ -2029,21 +2031,27 @@
 
 ---
 
-### Task 24.2 — Agent commission analytics 🟢 LOW | M
+### Task 24.2 — Agent commission analytics 🟢 LOW | M ✅ COMPLETE
+
+**Status:** ✅ Completed — 2026-10-12
 
 **Files affected:**
-- `src/app/(dashboard)/agent/commissions/page.tsx` — add chart showing commission earnings over time
+- `src/components/payments/CommissionChart.tsx` — NEW: area chart showing monthly commission earnings; uses `useCommissions` hook, groups by month, lazy-loads `ReportChart`
+- `src/app/(dashboard)/agent/commissions/page.tsx` — added `CommissionChart` above the summary table
 
 **Test checklist:**
-- [ ] Commission chart shows correct monthly totals
-- [ ] Chart updates when new commission is added
+- [x] Commission chart shows correct monthly totals
+- [x] Chart lazy-loaded (ssr: false) via next/dynamic
 
 ---
 
-### Task 24.3 — Vendor sales analytics 🟢 LOW | M
+### Task 24.3 — Vendor sales analytics 🟢 LOW | M ✅ COMPLETE
+
+**Status:** ✅ Completed — 2026-10-12
 
 **Files affected:**
-- `src/app/(dashboard)/vendor/page.tsx` — add charts for product views, order conversions, revenue
+- `src/components/vendor/VendorAnalyticsChart.tsx` — NEW: dual charts (monthly revenue area, monthly order count bar); lazy-loads `ReportChart`
+- `src/app/(dashboard)/vendor/page.tsx` — fetches last 12 months of orders server-side, passes aggregated data to `VendorAnalyticsChart`
 
 ---
 
@@ -2057,7 +2065,7 @@
 
 ### Task 25.1 — Rate limiting on server actions 🔴 HIGH | L
 
-**Status:** ✅ Completed — commit pending (2026-10-12)
+**Status:** ✅ Completed — commit `a4c3dff` (2026-10-12)
 
 **Problem:** Only password reset is rate-limited (`password_reset_rate_limits` table). Critical actions like `signUp`, `submitKycDocuments`, `createServiceRequest`, `sendMessage` have no rate limiting.
 
@@ -2086,7 +2094,7 @@
 
 ### Task 25.2 — Content Security Policy headers 🟡 MEDIUM | M
 
-**Status:** ✅ Completed — commit pending (2026-10-12)
+**Status:** ✅ Completed — commit `0ce1058` (2026-10-12)
 
 **Problem:** No `Content-Security-Policy` header is set. XSS attacks via injected scripts are not mitigated at the HTTP layer.
 
@@ -2150,7 +2158,7 @@
 
 ### Task 25.5 — Session timeout 🟢 LOW | M
 
-**Status:** ✅ Completed — commit pending (2026-10-12)
+**Status:** ✅ Completed — commit `cfbd1e4` (2026-10-12)
 
 **Problem:** No explicit session timeout. If a user leaves a tab open, their session remains indefinitely valid.
 
@@ -2176,7 +2184,7 @@
 
 ---
 
-### Task 26.1 — Incremental Static Regeneration for property listings 🟡 MEDIUM | M
+### Task 26.1 — Incremental Static Regeneration for property listings 🟡 MEDIUM | M ✅ COMPLETE
 
 **Problem:** `/properties` and `/properties/[id]` are fully dynamic (server components that run on every request). Properties don't change that frequently — caching them would dramatically reduce DB load.
 

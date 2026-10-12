@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient, getServerProfile } from '@/lib/supabase/server'
 import { requireActiveProfile } from '@/lib/utils/account-status'
 import { CommissionSummary } from '@/components/payments/CommissionSummary'
+import { CommissionChart } from '@/components/payments/CommissionChart'
 import { VerificationBanner, type KycRecord } from '@/components/dashboard/VerificationBanner'
 import { expireKycRecord } from '@/lib/actions/auth'
 
@@ -37,6 +38,7 @@ export default async function CommissionsPage() {
         </p>
       </div>
       <VerificationBanner accountStatus={profile.account_status} kyc={kyc} />
+      <CommissionChart />
       <CommissionSummary />
     </div>
   )
