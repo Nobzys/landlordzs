@@ -2317,7 +2317,7 @@
 
 ---
 
-### Task 27.2 — RLS policy integration tests 🔴 HIGH | L
+### Task 27.2 — RLS policy integration tests ✅ COMPLETE 🔴 HIGH | L
 
 **Problem:** Only `properties.rbac.test.ts` exists for RLS testing. All other table RLS policies are untested.
 
@@ -2341,7 +2341,7 @@
 
 ---
 
-### Task 27.3 — E2E tests for critical flows 🔴 HIGH | XL
+### Task 27.3 — E2E tests for critical flows ✅ COMPLETE 🔴 HIGH | XL
 
 **Problem:** No E2E test suite exists. Critical user flows (register → onboard → list property → admin approve → buyer inquire → escrow → release) are untested end-to-end.
 
@@ -2367,7 +2367,7 @@
 
 ---
 
-### Task 27.4 — Performance tests 🟢 LOW | M
+### Task 27.4 — Performance tests ✅ COMPLETE 🟢 LOW | M
 
 **Problem:** No performance benchmarks exist. The platform could be unacceptably slow under load.
 
