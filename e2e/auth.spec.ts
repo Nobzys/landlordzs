@@ -41,10 +41,16 @@ test.describe.serial('Auth flows (signup -> verify -> login -> reset -> expired 
 
     await page.getByRole('button', { name: 'Confirm my email' }).click()
     await page.waitForURL(/\/onboarding/)
+    // Let router.refresh() from ConfirmEmailForm complete before the next test
+    await page.waitForLoadState('networkidle')
   })
 
   test('sign out returns to the login page', async () => {
-    await page.goto('/account')
+    // Navigate directly to the wallet page (skips the /account → /account/wallet redirect
+    // chain that can race with pending post-confirmation router operations)
+    await page.goto('/account/wallet')
+    await page.waitForURL(/\/account/)
+    await page.waitForLoadState('networkidle')
     await page.getByRole('button', { name: 'Sign Out' }).click()
     await page.waitForURL(/\/login/)
   })
@@ -63,7 +69,9 @@ test.describe.serial('Auth flows (signup -> verify -> login -> reset -> expired 
     // reachable by logged-out visitors — middleware redirects an
     // authenticated, onboarding-incomplete user to /onboarding instead,
     // which mirrors real usage (a logged-in user wouldn't need this flow).
-    await page.goto('/account')
+    await page.goto('/account/wallet')
+    await page.waitForURL(/\/account/)
+    await page.waitForLoadState('networkidle')
     await page.getByRole('button', { name: 'Sign Out' }).click()
     await page.waitForURL(/\/login/)
 
@@ -90,7 +98,9 @@ test.describe.serial('Auth flows (signup -> verify -> login -> reset -> expired 
     // it rather than creating a new one). /confirm is also an AUTH_ROUTE, so
     // without signing out first, middleware would bounce the user to
     // /onboarding before the "Confirm my email" button ever renders.
-    await page.goto('/account')
+    await page.goto('/account/wallet')
+    await page.waitForURL(/\/account/)
+    await page.waitForLoadState('networkidle')
     await page.getByRole('button', { name: 'Sign Out' }).click()
     await page.waitForURL(/\/login/)
 
