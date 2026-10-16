@@ -10,8 +10,14 @@ import { mtnGetPaymentStatus, mtnGetTransferStatus } from '@/lib/utils/mtn-momo'
 // SECURITY: MTN MoMo callbacks carry no HMAC signature or shared-secret token.
 // The callback body is used only to identify the referenceId; the actual payment
 // status is independently verified via an authenticated server-to-server API call
-// (Bearer token via client credentials) before any wallet credit or status update.
+// (Bearer token via client credentials) before any status change or wallet credit.
 // Amount and currency are also verified against our stored transaction record.
+//
+// ATOMICITY: Status transitions and wallet operations are performed inside
+// finalize_payment_webhook / reverse_mtn_payout — single PLPGSQL functions that
+// execute both the CAS status update and the wallet credit in one database
+// transaction.  A failure in either step rolls back both, leaving the transaction
+// in its pre-call state so that a subsequent provider retry can succeed.
 
 const TERMINAL_TX  = new Set(['completed', 'failed', 'cancelled', 'refunded'])
 const TERMINAL_PAY = new Set(['completed', 'failed', 'cancelled'])
@@ -50,7 +56,7 @@ export async function POST(request: Request) {
   // ── Collection callback (transaction) ─────────────────────────────────────
   const { data: txn } = await (adminClient as any)
     .from('transactions')
-    .select('id, status, payer_id, amount, net_amount, escrow_id')
+    .select('id, status, amount, net_amount, escrow_id')
     .eq('id', referenceId)
     .eq('provider', 'mtn_momo')
     .single()
@@ -65,8 +71,6 @@ export async function POST(request: Request) {
     try {
       verified = await mtnGetPaymentStatus(referenceId)
     } catch {
-      // Provider API unavailable — return 200 so MTN does not retry storm;
-      // the client-side polling loop will re-check status independently.
       return NextResponse.json({ received: true })
     }
 
@@ -74,7 +78,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ received: true }) // still in-flight
     }
 
-    // Verify amount and currency against our stored record (each checked only if present)
+    // Verify amount and currency against our stored record
     if (verified.amount !== undefined) {
       const verifiedAmt = Number(verified.amount)
       if (isNaN(verifiedAmt) || verifiedAmt !== txn.amount) {
@@ -86,43 +90,39 @@ export async function POST(request: Request) {
     }
 
     const newStatus = verified.status === 'SUCCESSFUL' ? 'completed' : 'failed'
-    const update: Record<string, unknown> = {
-      status:       newStatus,
-      provider_ref: verified.financialTransactionId ?? referenceId,
-    }
-    if (newStatus === 'completed') update.completed_at = new Date().toISOString()
-    if (newStatus === 'failed') {
-      update.failed_at      = new Date().toISOString()
-      update.failure_reason = verified.reason?.message ?? 'MTN payment failed'
-    }
 
-    // CAS: only the first concurrent webhook wins
-    const { data: updated } = await (adminClient as any)
-      .from('transactions')
-      .update(update)
-      .eq('id', referenceId)
-      .eq('status', txn.status)
-      .select('id')
-
-    if (newStatus === 'completed' && updated && updated.length > 0) {
-      if (!txn.escrow_id) {
-        // Wallet top-up: credit user
-        await (adminClient as any).rpc('wallet_transfer', {
-          p_from_id:  null,
-          p_to_id:    txn.payer_id,
-          p_amount:   txn.net_amount,
-          p_ref_type: 'transaction',
-          p_ref_id:   referenceId,
-          p_desc:     'Top-up via MTN MoMo (webhook)',
-        })
-      } else {
-        // Escrow payment: mark escrow funded
-        await (adminClient as any)
-          .from('escrow_accounts')
-          .update({ status: 'funded', funded_at: new Date().toISOString() })
-          .eq('id', txn.escrow_id)
-          .eq('status', 'pending')
+    // Atomically: CAS-updates transaction status + credits wallet (or funds escrow).
+    // If the wallet_transfer inside the RPC raises an exception, the entire DB
+    // transaction rolls back — the transaction stays in its pre-call state so the
+    // next provider retry can succeed.
+    const { data: result, error: rpcErr } = await (adminClient as any).rpc(
+      'finalize_payment_webhook',
+      {
+        p_txn_id:         referenceId,
+        p_new_status:     newStatus,
+        p_current_status: txn.status,
+        p_provider_ref:   verified.financialTransactionId ?? referenceId,
+        p_failure_reason: newStatus === 'failed'
+          ? (verified.reason?.message ?? 'MTN payment failed')
+          : null,
+        p_desc: 'Top-up via MTN MoMo (webhook)',
       }
+    )
+
+    if (rpcErr) {
+      console.error(
+        '[webhook/mtn] finalize_payment_webhook failed — provider payment confirmed '
+        + 'but DB transaction did not commit; next provider retry may recover this',
+        { referenceId, newStatus, error: rpcErr.message }
+      )
+    } else if (result !== 'completed_and_credited'
+            && result !== 'completed_and_escrow_funded'
+            && result !== 'completed_escrow_already_settled'
+            && result !== 'failed'
+            && result !== 'already_terminal') {
+      // Unexpected result (cas_missed, not_found) — log for investigation
+      console.warn('[webhook/mtn] finalize_payment_webhook unexpected result',
+        { referenceId, result })
     }
 
     return NextResponse.json({ received: true })
@@ -165,36 +165,45 @@ export async function POST(request: Request) {
     }
 
     if (verified.status === 'SUCCESSFUL') {
-      await (adminClient as any)
+      // Payout succeeded: CAS-update to completed.
+      // No wallet operation needed here — the wallet was already debited in
+      // processPayoutAdmin when the disbursement was initiated.
+      const { data: payUpdated } = await (adminClient as any)
         .from('payouts')
         .update({ status: 'completed', completed_at: new Date().toISOString() })
         .eq('id', referenceId)
         .eq('status', payout.status)
+        .select('id')
+
+      if (!payUpdated || payUpdated.length === 0) {
+        // CAS missed — another callback already updated this row
+        return NextResponse.json({ received: true })
+      }
 
       return NextResponse.json({ received: true })
     }
 
-    // FAILED: wallet was already debited in processPayoutAdmin — credit it back
-    const { data: updated } = await (adminClient as any)
-      .from('payouts')
-      .update({
-        status:         'failed',
-        failed_at:      new Date().toISOString(),
-        failure_reason: verified.reason?.message ?? 'MTN disbursement failed',
-      })
-      .eq('id', referenceId)
-      .eq('status', payout.status)
-      .select('id')
+    // FAILED: atomically mark payout failed AND credit wallet back.
+    // reverse_mtn_payout uses FOR UPDATE + wallet_transfer in one DB transaction.
+    const { data: reversal, error: reversalErr } = await (adminClient as any).rpc(
+      'reverse_mtn_payout',
+      {
+        p_payout_id:      referenceId,
+        p_current_status: payout.status,
+        p_failure_reason: verified.reason?.message ?? 'MTN disbursement failed',
+      }
+    )
 
-    if (updated && updated.length > 0) {
-      await (adminClient as any).rpc('wallet_transfer', {
-        p_from_id:  null,
-        p_to_id:    payout.recipient_id,
-        p_amount:   payout.amount,
-        p_ref_type: 'payout',
-        p_ref_id:   referenceId,
-        p_desc:     'Payout reversal — MTN disbursement failed',
-      })
+    if (reversalErr) {
+      console.error(
+        '[webhook/mtn] reverse_mtn_payout failed — payout may be in inconsistent state; '
+        + 'admin reconciliation required',
+        { referenceId, recipient_id: payout.recipient_id, amount: payout.amount,
+          error: reversalErr.message }
+      )
+    } else if (reversal !== 'reversed' && reversal !== 'already_terminal') {
+      console.warn('[webhook/mtn] reverse_mtn_payout unexpected result',
+        { referenceId, reversal })
     }
 
     return NextResponse.json({ received: true })

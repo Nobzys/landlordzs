@@ -2410,6 +2410,66 @@
 
 ---
 
+## Phase 28 — Webhook Financial Integrity ✅ COMPLETE (2026-10-16)
+
+### Task 28.1 — Database-level atomicity and idempotency ✅ COMPLETE
+
+**Goal:** Replace the non-atomic two-step webhook pattern (CAS status update → wallet_transfer) with a single PLPGSQL transaction, and add a UNIQUE constraint to prevent duplicate wallet credits.
+
+**Files:**
+- `supabase/migrations/20261016000001_webhook_financial_integrity.sql` — new migration
+
+**Changes:**
+- `uq_wallet_tx_transaction_credit` — UNIQUE partial index on `wallet_transactions(reference_id, user_id) WHERE reference_type='transaction' AND type='credit'`; pre-check block aborts migration if duplicate credits exist
+- `finalize_payment_webhook(p_txn_id, p_new_status, p_current_status, p_provider_ref, p_failure_reason, p_desc)` — atomic PLPGSQL: FOR UPDATE lock + CAS guard + status update + wallet_transfer or escrow funding in one DB transaction; returns result string: `completed_and_credited | completed_and_escrow_funded | completed_escrow_already_settled | failed | already_terminal | cas_missed | not_found`
+- `reverse_mtn_payout(p_payout_id, p_current_status, p_failure_reason)` — atomic PLPGSQL: FOR UPDATE + payout status update + wallet_transfer reversal credit; returns `reversed | already_terminal | cas_missed | not_found`
+- `find_missing_wallet_credits()` — read-only query returning completed top-up transactions with no wallet credit (pre-migration reconciliation + monitoring)
+- `apply_missing_wallet_credit(p_txn_id, p_actor_id)` — idempotent recovery function with admin_logs audit trail; returns `credited | already_credited | not_found | not_completed | is_escrow_payment | payer_missing`
+- All four functions restricted to `service_role` via `REVOKE ALL … FROM PUBLIC` + `GRANT EXECUTE … TO service_role`
+
+**Staging:** ⏳ Pending `supabase db push` to staging
+
+### Task 28.2 — Webhook handler rewrites ✅ COMPLETE
+
+**Goal:** Replace two-step CAS+wallet_transfer calls in both MTN and Orange handlers with single atomic RPC calls.
+
+**Files:**
+- `src/app/api/payments/webhook/mtn/route.ts` — rewritten
+- `src/app/api/payments/webhook/orange/route.ts` — rewritten
+
+**MTN changes:**
+- Transaction path: single `rpc('finalize_payment_webhook', ...)` replaces two-step `from('transactions').update()` + `rpc('wallet_transfer', ...)`
+- Payout FAILED path: single `rpc('reverse_mtn_payout', ...)` replaces two-step `from('payouts').update()` + `rpc('wallet_transfer', ...)`
+- Payout SUCCESSFUL path: unchanged (CAS update via `from('payouts').update().eq('status', payout.status)`)
+
+**Orange changes:**
+- Single `rpc('finalize_payment_webhook', ...)` replaces two-step pattern for both SUCCESS and FAILED/CANCELLED outcomes
+- Select now fetches only `id, status, amount, provider_meta` (payer_id, net_amount, escrow_id handled inside RPC)
+- No direct `from('escrow_accounts')` call — escrow update is inside the RPC
+
+### Task 28.3 — Admin reconciliation action ✅ COMPLETE
+
+**Goal:** Expose `apply_missing_wallet_credit` to admin UI.
+
+**Files:**
+- `src/lib/actions/payments.ts` — `adminReconcileWalletCredit(txnId)` added
+
+**Changes:** Server action with auth + admin role check; calls `apply_missing_wallet_credit` RPC; revalidates `/admin/payments` and `/admin/analytics` on success.
+
+### Task 28.4 — Test suite update ✅ COMPLETE
+
+**Goal:** Rewrite webhook test files to match the new RPC-centric handler architecture.
+
+**Files:**
+- `src/app/api/payments/webhook/mtn/route.test.ts` — complete rewrite
+- `src/app/api/payments/webhook/orange/route.test.ts` — complete rewrite
+
+**Coverage:** 30 MTN tests + 33 Orange tests covering: input validation, notif_token authentication, forged callbacks (F1), amount/currency mismatch, provider unavailability, idempotency, atomicity (already_terminal, cas_missed), RPC failure rollback, escrow funding path, payout SUCCESSFUL/FAILED, payout CAS miss, reverse_mtn_payout error.
+
+**Verification:** `npx vitest run` — 226 passed, 0 failed. `npx tsc --noEmit` — 0 errors.
+
+---
+
 ## Dependency Graph Summary
 
 ```

@@ -645,3 +645,39 @@ export async function markPayoutPaidAdmin(payoutId: string): Promise<ActionResul
   revalidatePath('/admin/payouts')
   return { success: true }
 }
+
+// ─── Admin: reconcile a missing wallet credit ────────────────────────────────
+// Called when find_missing_wallet_credits() identifies a completed transaction
+// with no corresponding wallet_transactions credit entry.
+// The admin must verify the provider-confirmed payment before calling this.
+// The underlying RPC is idempotent: a second call for the same txnId returns
+// 'already_credited' without any wallet change.
+
+export async function adminReconcileWalletCredit(txnId: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  const { data: caller } = await (supabase as any)
+    .from('profiles').select('role').eq('id', user.id).single()
+  if (caller?.role !== 'admin') return { error: 'Insufficient permissions' }
+
+  const adminClient = createAdminClient()
+  const { data: result, error: rpcError } = await (adminClient as any).rpc(
+    'apply_missing_wallet_credit',
+    { p_txn_id: txnId, p_actor_id: user.id }
+  )
+
+  if (rpcError) return { error: rpcError.message }
+
+  if (result === 'already_credited') {
+    return { success: true }
+  }
+  if (result !== 'credited') {
+    return { error: `Recovery returned unexpected status: ${result}` }
+  }
+
+  revalidatePath('/admin/payments')
+  revalidatePath('/admin/analytics')
+  return { success: true }
+}
